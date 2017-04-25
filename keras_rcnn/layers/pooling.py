@@ -24,7 +24,7 @@ class ROI(keras.engine.topology.Layer):
 
         outputs = []
 
-        for index, _ in enumerate(self.regions_of_interest):
+        for index in range(self.regions_of_interest):
             x = regions_of_interest[0, index, 0]
             y = regions_of_interest[0, index, 1]
             w = regions_of_interest[0, index, 2]
