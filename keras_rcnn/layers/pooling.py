@@ -67,17 +67,3 @@ class ROI(keras.engine.topology.Layer):
             self.pool_size,
             self.channels
         )
-
-
-class SpatialPyramid(keras.engine.topology.Layer):
-    def __init__(self, **kwargs):
-        super(SpatialPyramid, self).__init__(**kwargs)
-
-    def build(self, input_shape):
-        super(SpatialPyramid, self).build(input_shape)
-
-    def call(self, x, **kwargs):
-        return
-
-    def compute_output_shape(self, input_shape):
-        return
