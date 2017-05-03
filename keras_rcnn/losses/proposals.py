@@ -1,10 +1,4 @@
-"""
-
-"""
-
 import keras
-import keras.backend
-import keras.objectives
 
 
 def classification(anchors):
