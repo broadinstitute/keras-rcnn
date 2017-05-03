@@ -8,3 +8,7 @@ def non_maximum_suppression(boxes, scores, maximum, threshold=0.5):
         max_output_size=maximum,
         scores=scores
     )
+
+
+def resize_images(images, shape):
+    return tensorflow.image.resize_images(images, shape)
