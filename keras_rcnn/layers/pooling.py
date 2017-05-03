@@ -3,10 +3,10 @@ import tensorflow
 
 
 class ROI(keras.engine.topology.Layer):
-    def __init__(self, pool_size, regions, **kwargs):
+    def __init__(self, size, regions, **kwargs):
         self.channels = None
 
-        self.pool_size = pool_size
+        self.size = size
 
         self.regions = regions
 
@@ -37,7 +37,7 @@ class ROI(keras.engine.topology.Layer):
 
             image = image[:, y:y + h, x:x + w, :]
 
-            shape = (self.pool_size, self.pool_size)
+            shape = (self.size, self.size)
 
             resized = tensorflow.image.resize_images(image, shape)
 
@@ -45,7 +45,7 @@ class ROI(keras.engine.topology.Layer):
 
         y = keras.backend.concatenate(outputs, axis=0)
 
-        shape = (1, self.regions, self.pool_size, self.pool_size, self.channels)
+        shape = (1, self.regions, self.size, self.size, self.channels)
 
         y = keras.backend.reshape(y, shape)
 
@@ -54,4 +54,4 @@ class ROI(keras.engine.topology.Layer):
         return keras.backend.permute_dimensions(y, pattern)
 
     def compute_output_shape(self, input_shape):
-        return None, self.regions, self.pool_size, self.pool_size, self.channels
+        return None, self.regions, self.size, self.size, self.channels
