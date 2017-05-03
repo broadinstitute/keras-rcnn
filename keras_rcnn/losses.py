@@ -1,28 +1,5 @@
 """
 
-For training a region proposal network (RPN), we assign a binary class label
-(of being an object or not) to each anchor. We assign a positive label to two
-kinds of anchors:
-
-    (i) the anchor/anchors with the highest Intersection-over-Union (IoU)
-    overlap with a ground-truth box, or
-
-    (ii) an anchor that has an IoU overlap higher than 0.7 with any
-    ground-truth box.
-
-A single ground-truth box may assign positive labels to multiple anchors.
-Usually the second condition is sufficient to determine the positive samples;
-but we still adopt the first condition for the reason that in some rare cases
-the second condition may find no positive sample. We assign a negative label to
-a non-positive anchor if its IoU ratio is lower than 0.3 for all ground-truth
-boxes. Anchors that are neither positive nor negative do not contribute to the
-training objective.
-
-With these definitions, we minimize an objective function following the
-multi-task loss in Fast R-CNN [2].
-
-Our loss function for an image is defined as:
-
 """
 
 import keras
