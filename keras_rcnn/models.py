@@ -19,8 +19,8 @@ class RCNN(keras.models.Model):
         score = keras.layers.TimeDistributed(score)
 
         boxes = keras.layers.Dense(4 * (classes - 1))(y)
-        boxes = keras.layers.Activation("linear")(score)
-        boxes = keras.layers.TimeDistributed(score)
+        boxes = keras.layers.Activation("linear")(boxes)
+        boxes = keras.layers.TimeDistributed(boxes)
 
         super(RCNN, self).__init__(inputs, [score, boxes])
 
