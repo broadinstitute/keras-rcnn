@@ -1,8 +1,5 @@
 # -*- coding: utf-8 -*-
 
-import keras.layers
-import keras.models
-import keras.layers
 import keras
 import keras_rcnn.layers
 
