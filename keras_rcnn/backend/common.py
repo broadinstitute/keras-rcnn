@@ -1,6 +1,5 @@
 import keras.backend
 import numpy
-import six.moves
 
 
 def clip(boxes, shape):
@@ -14,20 +13,31 @@ def clip(boxes, shape):
     return keras.backend.concatenate(proposals)
 
 
-def anchor(base_size=15, ratios=(0.5, 1, 2), scales=(8, 16, 32)):
-    base_anchor = numpy.array([0, 0, base_size, base_size])
+def anchor(base_size=16, ratios=None, scales=None):
+    """
+    Generate anchor (reference) windows by enumerating aspect ratios X
+    scales wrt a reference (0, 0, 15, 15) window.
+    """
+    if ratios is None:
+        ratios = numpy.array([0.5, 1, 2])
 
-    ratio_anchors = _ratio_enum(base_anchor, numpy.asarray(ratios))
+    if scales is None:
+        scales = numpy.array([8, 16, 32])
 
-    anchors = numpy.vstack(
-        [_scale_enum(ratio_anchors[i, :], numpy.asarray(scales))
-         for i in six.moves.range(len(ratio_anchors))])
+    base_anchor = numpy.array([1, 1, base_size, base_size]) - 1
+
+    ratio_anchors = _ratio_enum(base_anchor, ratios)
+
+    anchors = numpy.vstack([_scale_enum(ratio_anchors[i, :], scales) for i in range(ratio_anchors.shape[0])])
 
     return anchors
 
 
 def _whctrs(anchor):
-    # Return width, height, x center, and y center for an anchor (window).
+    """
+    Return width, height, x center, and y center for an anchor (window).
+    """
+
     w = anchor[2] - anchor[0] + 1
     h = anchor[3] - anchor[1] + 1
     x_ctr = anchor[0] + 0.5 * (w - 1)
@@ -36,26 +46,39 @@ def _whctrs(anchor):
 
 
 def _mkanchors(ws, hs, x_ctr, y_ctr):
-    # Given a vector of widths (ws) and heights (hs) around a center
-    # (x_ctr, y_ctr), output a set of anchors (windows).
-    ws, hs = ws[:, None], hs[:, None]
-    anchors = numpy.hstack((x_ctr - 0.5 * (ws - 1), y_ctr - 0.5 * (hs - 1), x_ctr + 0.5 * (ws - 1), y_ctr + 0.5 * (hs - 1)))
+    """
+    Given a vector of widths (ws) and heights (hs) around a center
+    (x_ctr, y_ctr), output a set of anchors (windows).
+    """
+
+    ws = ws[:, numpy.newaxis]
+    hs = hs[:, numpy.newaxis]
+    anchors = numpy.hstack((x_ctr - 0.5 * (ws - 1),
+                            y_ctr - 0.5 * (hs - 1),
+                            x_ctr + 0.5 * (ws - 1),
+                            y_ctr + 0.5 * (hs - 1)))
     return anchors
 
 
 def _ratio_enum(anchor, ratios):
-    # Enumerate a set of anchors for each aspect ratio wrt an anchor.
+    """
+    Enumerate a set of anchors for each aspect ratio wrt an anchor.
+    """
+
     w, h, x_ctr, y_ctr = _whctrs(anchor)
     size = w * h
     size_ratios = size / ratios
-    ws = numpy.rint(numpy.sqrt(size_ratios))
-    hs = numpy.rint(ws * ratios)
+    ws = numpy.round(numpy.sqrt(size_ratios))
+    hs = numpy.round(ws * ratios)
     anchors = _mkanchors(ws, hs, x_ctr, y_ctr)
     return anchors
 
 
 def _scale_enum(anchor, scales):
-    # Enumerate a set of anchors for each scale wrt an anchor.
+    """
+    Enumerate a set of anchors for each scale wrt an anchor.
+    """
+
     w, h, x_ctr, y_ctr = _whctrs(anchor)
     ws = w * scales
     hs = h * scales
