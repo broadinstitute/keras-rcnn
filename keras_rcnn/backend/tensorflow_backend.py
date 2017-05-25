@@ -1,6 +1,8 @@
 import keras.backend
 import tensorflow
 
+import keras_rcnn.backend
+
 
 def bbox_transform_inv(shifted, boxes):
     if boxes.shape[0] == 0:
@@ -51,6 +53,36 @@ def non_maximum_suppression(boxes, scores, maximum, threshold=0.5):
         max_output_size=maximum,
         scores=scores
     )
+
+
+def propose(boxes, scores):
+    shape = keras.backend.int_shape(boxes)[1:3]
+
+    shifted = keras_rcnn.backend.shift(shape, 16)
+
+    proposals = keras.backend.reshape(boxes, (-1, 4))
+
+    proposals = keras_rcnn.backend.bbox_transform_inv(shifted, proposals)
+
+    proposals = keras_rcnn.backend.clip(proposals, shape)
+
+    indicies = keras_rcnn.backend.filter_boxes(proposals, 1)
+
+    proposals = keras.backend.gather(proposals, indicies)
+
+    scores = scores[:, :, :, :9]
+    scores = keras.backend.reshape(scores, (-1, 1))
+    scores = keras.backend.gather(scores, indicies)
+    scores = keras.backend.flatten(scores)
+
+    proposals = keras.backend.cast(proposals, tensorflow.float32)
+    scores = keras.backend.cast(scores, tensorflow.float32)
+
+    indicies = keras_rcnn.backend.non_maximum_suppression(proposals, scores, 100, 0.7)
+
+    proposals = keras.backend.gather(proposals, indicies)
+
+    return keras.backend.expand_dims(proposals, 0)
 
 
 def resize_images(images, shape):

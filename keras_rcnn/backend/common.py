@@ -15,8 +15,7 @@ def clip(boxes, shape):
 
 def anchor(base_size=16, ratios=None, scales=None):
     """
-    Generate anchor (reference) windows by enumerating aspect ratios X
-    scales wrt a reference (0, 0, 15, 15) window.
+    Generates a regular grid of multi-aspect and multi-scale anchor boxes.
     """
     if ratios is None:
         ratios = numpy.array([0.5, 1, 2])
