@@ -87,3 +87,29 @@ def propose(boxes, scores):
 
 def resize_images(images, shape):
     return tensorflow.image.resize_images(images, shape)
+
+
+def overlap(x, y):
+    n = x.shape[0]
+
+    k = y.shape[0]
+
+    overlaps = []
+
+    for k_index in range(k):
+        area = ((y[k_index, 2] - y[k_index, 0] + 1) * (y[k_index, 3] - y[k_index, 1] + 1))
+
+        for n_index in range(n):
+            iw = (min(x[n_index, 2], y[k_index, 2]) - max(x[n_index, 0], y[k_index, 0]) + 1)
+
+            if iw > 0:
+                ih = (min(x[n_index, 3], y[k_index, 3]) - max(x[n_index, 1], y[k_index, 1]) + 1)
+
+                if ih > 0:
+                    ua = float((x[n_index, 2] - x[n_index, 0] + 1) * (x[n_index, 3] - x[n_index, 1] + 1) + area - iw * ih)
+
+                    overlaps.append(iw * ih / ua)
+
+    overlaps = keras.backend.reshape(overlaps, (n, k))
+
+    return overlaps
