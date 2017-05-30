@@ -18,12 +18,12 @@ class TestAnchor:
 
         assert n_all_bbox == 1764
 
-    def test_regression(self, anchor_layer, feat_h, feat_w, gt_boxes, img_info, regional_proposal_network_y_pred):
-        all_bbox = keras_rcnn.backend.shift((feat_h, feat_w), anchor_layer.stride)
+    def test_regression(self, anchor_layer, gt_boxes):
+        _, y_true, inds_inside, _ = anchor_layer.call(gt_boxes)
 
-        inds_inside, all_inside_bbox = anchor_layer.inside_image(all_bbox, img_info)
+        y_true = keras.backend.eval(y_true)
 
-        # anchor_layer.regression(gt_boxes[:, :4], regional_proposal_network_y_pred, inds_inside)
+        # anchor_layer.regression(y_true, y_pred, inds_inside)
 
         assert True
 

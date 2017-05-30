@@ -115,28 +115,28 @@ class Anchor(keras.engine.topology.Layer):
     def regression(self, y_true, y_pred, indicies_inside_image):
         # y_pred has the shape of (1, 4 x n_anchors, feat_h, feat_w)
         # Reshape it into (4, A, K)
-        y_pred = y_pred.reshape(4, self.n_anchors, -1)
+        y_true = y_true.reshape(4, self.n_anchors, -1)
 
         # Transpose it into (K, A, 4)
-        y_pred = y_pred.transpose(2, 1, 0)
+        y_true = y_true.transpose(2, 1, 0)
 
         # Reshape it into (K x A, 4)
-        y_pred = y_pred.reshape(-1, 4)
+        y_true = y_true.reshape(-1, 4)
 
         # Keep the number of bbox
-        n_bounding_boxes = y_pred.shape[0]
+        n_bounding_boxes = y_true.shape[0]
 
         # Select bbox and ravel it
-        y_pred = y_pred[indicies_inside_image].flatten()
+        y_true = y_true[indicies_inside_image].flatten()
 
         # Create batch dimension
-        y_pred = numpy.expand_dims(y_pred, 0)
+        y_true = numpy.expand_dims(y_true, 0)
 
         # Ravel the targets and create batch dimension
-        y_true = y_true.ravel()[None, :]
+        y_pred = y_pred.ravel()[None, :]
 
         # Calc Smooth L1 Loss (When delta=1, huber loss is SmoothL1Loss)
-        loss = keras_rcnn.losses.logcosh(y_true, y_pred)
+        loss = keras_rcnn.losses.logcosh(y_pred, y_true)
 
         loss /= n_bounding_boxes
 
