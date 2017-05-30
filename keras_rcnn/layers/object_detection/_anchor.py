@@ -17,10 +17,10 @@ class Anchor(keras.engine.topology.Layer):
     RPN_FG_FRACTION = 0.5
     RPN_BATCHSIZE = 256
 
-    def __init__(self, features, img_info, stride=16, scales=None, ratios=None, **kwargs):
+    def __init__(self, features, image_shape, stride=16, scales=None, ratios=None, **kwargs):
         self.feat_h, self.feat_w = features
 
-        self.img_info = img_info
+        self.image_shape = image_shape
 
         self.output_dim = (None, None, 4)
 
@@ -53,7 +53,7 @@ class Anchor(keras.engine.topology.Layer):
         # (feat_h x feat_w x n_anchors, 4)
         all_bbox = self._generate_all_bbox_use_array_info(self.feat_h, self.feat_w)
 
-        inds_inside, all_inside_bbox = self.inside_image(all_bbox, self.img_info)
+        inds_inside, all_inside_bbox = self.inside_image(all_bbox, self.image_shape)
 
         argmax_overlaps_inds, bbox_labels = self.label(inds_inside, all_inside_bbox, inputs)
 
