@@ -70,3 +70,8 @@ def regional_proposal_network_layer():
 @pytest.fixture()
 def x():
     return numpy.arange(2 * 9 * 14 * 14, dtype=numpy.float32).reshape(1, 18, 14, 14)
+
+
+@pytest.fixture()
+def regional_proposal_network_y_pred():
+    return numpy.random.random((1, 4 * 9, 14, 14))

@@ -2,6 +2,12 @@ import keras.engine
 import numpy
 
 import keras_rcnn.backend
+import keras_rcnn.losses
+
+RPN_NEGATIVE_OVERLAP = 0.3
+RPN_POSITIVE_OVERLAP = 0.7
+RPN_FG_FRACTION = 0.5
+RPN_BATCHSIZE = 256
 
 
 class Anchor(keras.engine.topology.Layer):
@@ -12,12 +18,9 @@ class Anchor(keras.engine.topology.Layer):
         1. anchor classification labels
         2. bounding-box regression targets.
     """
-    RPN_NEGATIVE_OVERLAP = 0.3
-    RPN_POSITIVE_OVERLAP = 0.7
-    RPN_FG_FRACTION = 0.5
-    RPN_BATCHSIZE = 256
+    def __init__(self, features, image_shape, delta=3, scales=None, ratios=None, stride=16, **kwargs):
+        self.delta = delta
 
-    def __init__(self, features, image_shape, scales=None, ratios=None, stride=16, **kwargs):
         self.features = features
 
         self.feat_h, self.feat_w = features
@@ -42,6 +45,10 @@ class Anchor(keras.engine.topology.Layer):
         self.shifted_anchors = keras_rcnn.backend.shift(self.features, self.stride)
 
         super(Anchor, self).__init__(**kwargs)
+
+    @property
+    def n_anchors(self):
+        return len(self.ratios) * len(self.scales)
 
     def build(self, input_shape):
         super(Anchor, self).build(input_shape)
@@ -87,20 +94,53 @@ class Anchor(keras.engine.topology.Layer):
         argmax_overlaps_inds, max_overlaps, gt_argmax_overlaps_inds = self.overlapping(anchors, gt_boxes, inds_inside)
 
         # assign bg labels first so that positive labels can clobber them
-        labels[max_overlaps < self.RPN_NEGATIVE_OVERLAP] = 0
+        labels[max_overlaps < RPN_NEGATIVE_OVERLAP] = 0
 
         # fg label: for each gt, anchor with highest overlap
         labels[gt_argmax_overlaps_inds] = 1
 
         # fg label: above threshold IOU
-        labels[max_overlaps >= self.RPN_POSITIVE_OVERLAP] = 1
+        labels[max_overlaps >= RPN_POSITIVE_OVERLAP] = 1
 
         # assign bg labels last so that negative labels can clobber positives
-        labels[max_overlaps < self.RPN_NEGATIVE_OVERLAP] = 0
+        labels[max_overlaps < RPN_NEGATIVE_OVERLAP] = 0
 
         labels = self.balance(labels)
 
         return argmax_overlaps_inds, labels
+
+    def classification(self):
+        pass
+
+    def regression(self, y_true, y_pred, indicies_inside_image):
+        # y_pred has the shape of (1, 4 x n_anchors, feat_h, feat_w)
+        # Reshape it into (4, A, K)
+        y_pred = y_pred.reshape(4, self.n_anchors, -1)
+
+        # Transpose it into (K, A, 4)
+        y_pred = y_pred.transpose(2, 1, 0)
+
+        # Reshape it into (K x A, 4)
+        y_pred = y_pred.reshape(-1, 4)
+
+        # Keep the number of bbox
+        n_bounding_boxes = y_pred.shape[0]
+
+        # Select bbox and ravel it
+        y_pred = y_pred[indicies_inside_image].flatten()
+
+        # Create batch dimension
+        y_pred = numpy.expand_dims(y_pred, 0)
+
+        # Ravel the targets and create batch dimension
+        y_true = y_true.ravel()[None, :]
+
+        # Calc Smooth L1 Loss (When delta=1, huber loss is SmoothL1Loss)
+        loss = keras_rcnn.losses.logcosh(y_true, y_pred)
+
+        loss /= n_bounding_boxes
+
+        return loss.reshape(())
 
     def balance(self, labels):
         # subsample positive labels if we have too many
@@ -111,27 +151,29 @@ class Anchor(keras.engine.topology.Layer):
 
         return labels
 
-    def subsample_positive_labels(self, labels):
-        num_fg = int(self.RPN_FG_FRACTION * self.RPN_BATCHSIZE)
+    @staticmethod
+    def subsample_positive_labels(labels):
+        num_fg = int(RPN_FG_FRACTION * RPN_BATCHSIZE)
 
         fg_inds = numpy.where(labels == 1)[0]
 
         if len(fg_inds) > num_fg:
-            disable_inds = numpy.random.choice(fg_inds, size=int(len(fg_inds) - num_fg), replace=False)
+            size = int(len(fg_inds) - num_fg)
 
-            labels[disable_inds] = -1
+            labels[numpy.random.choice(fg_inds, size, replace=False)] = -1
 
         return labels
 
-    def subsample_negative_labels(self, labels):
-        num_bg = self.RPN_BATCHSIZE - numpy.sum(labels == 1)
+    @staticmethod
+    def subsample_negative_labels(labels):
+        num_bg = RPN_BATCHSIZE - numpy.sum(labels[labels == 1])
 
         bg_inds = numpy.where(labels == 0)[0]
 
         if len(bg_inds) > num_bg:
-            disable_inds = numpy.random.choice(bg_inds, size=int(len(bg_inds) - num_bg), replace=False)
+            size = bg_inds.shape[0] - num_bg
 
-            labels[disable_inds] = -1
+            labels[numpy.random.choice(bg_inds, size, replace=False)] = -1
 
         return labels
 

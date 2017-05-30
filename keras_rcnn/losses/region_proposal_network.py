@@ -36,3 +36,10 @@ def regression(anchors):
         return 1.0 * (a / b)
 
     return f
+
+
+def logcosh(y_true, y_pred):
+    def _cosh(x):
+        return (keras.backend.exp(x) + keras.backend.exp(-x)) / 2
+
+    return keras.backend.mean(keras.backend.log(_cosh(y_pred - y_true)), axis=-1)
