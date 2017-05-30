@@ -36,6 +36,13 @@ def gt_boxes():
 
 
 @pytest.fixture()
+def image_features():
+    image = keras.layers.Input((224, 224, 3))
+
+    return keras.layers.Conv2D(512, (3, 3), activation="relu")(image)
+
+
+@pytest.fixture()
 def img_info():
     return numpy.array([224, 224], dtype=numpy.int32)
 
@@ -53,6 +60,11 @@ def object_proposal_model():
     y = keras_rcnn.layers.object_detection.ObjectProposal(300)([a, b])
 
     return keras.models.Model([a, b], y)
+
+
+@pytest.fixture()
+def regional_proposal_network_layer():
+    return keras_rcnn.layers.object_detection.RegionProposalNetwork()
 
 
 @pytest.fixture()

@@ -8,7 +8,7 @@ class TestAnchor:
         assert True
 
     def test_call(self, anchor_layer, gt_boxes):
-        bbox_labels, bbox_reg_targets, inds_inside, n_all_bbox = anchor_layer._call(gt_boxes)
+        bbox_labels, bbox_reg_targets, inds_inside, n_all_bbox = anchor_layer.call(gt_boxes)
 
         assert bbox_labels.shape == (84, )
 
@@ -32,8 +32,8 @@ class TestAnchor:
 
         assert bbox_labels.shape == (84, )
 
-    def test_inside_image(self, anchor_layer, feat_h, feat_w, img_info):
-        all_anchors = anchor_layer._generate_all_bbox_use_array_info(feat_h, feat_w)
+    def test_inside_image(self, anchor_layer, img_info):
+        all_anchors = anchor_layer.shifted_anchors
 
         inds_inside, all_inside_anchors = anchor_layer.inside_image(all_anchors, img_info)
 
@@ -41,8 +41,8 @@ class TestAnchor:
 
         assert all_inside_anchors.shape == (84, 4)
 
-    def test_overlapping(self, anchor_layer, feat_h, feat_w, gt_boxes, img_info):
-        all_anchors = anchor_layer._generate_all_bbox_use_array_info(feat_h, feat_w)
+    def test_overlapping(self, anchor_layer, gt_boxes, img_info):
+        all_anchors = anchor_layer.shifted_anchors
 
         inds_inside, all_inside_anchors = anchor_layer.inside_image(all_anchors, img_info)
 

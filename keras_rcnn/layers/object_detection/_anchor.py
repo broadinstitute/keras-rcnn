@@ -17,7 +17,9 @@ class Anchor(keras.engine.topology.Layer):
     RPN_FG_FRACTION = 0.5
     RPN_BATCHSIZE = 256
 
-    def __init__(self, features, image_shape, stride=16, scales=None, ratios=None, **kwargs):
+    def __init__(self, features, image_shape, scales=None, ratios=None, stride=16, **kwargs):
+        self.features = features
+
         self.feat_h, self.feat_w = features
 
         self.image_shape = image_shape
@@ -36,24 +38,16 @@ class Anchor(keras.engine.topology.Layer):
 
         self.stride = stride
 
+        # (feat_h x feat_w x n_anchors, 4)
+        self.shifted_anchors = keras_rcnn.backend.shift(self.features, self.stride)
+
         super(Anchor, self).__init__(**kwargs)
 
     def build(self, input_shape):
         super(Anchor, self).build(input_shape)
 
     def call(self, inputs, **kwargs):
-        gt_boxes = inputs
-
-        return self._call(gt_boxes)
-
-    def compute_output_shape(self, input_shape):
-        return self.output_dim
-
-    def _call(self, inputs):
-        # (feat_h x feat_w x n_anchors, 4)
-        all_bbox = self._generate_all_bbox_use_array_info(self.feat_h, self.feat_w)
-
-        inds_inside, all_inside_bbox = self.inside_image(all_bbox, self.image_shape)
+        inds_inside, all_inside_bbox = self.inside_image(self.shifted_anchors, self.image_shape)
 
         argmax_overlaps_inds, bbox_labels = self.label(inds_inside, all_inside_bbox, inputs)
 
@@ -61,10 +55,10 @@ class Anchor(keras.engine.topology.Layer):
         gt_boxes = inputs[argmax_overlaps_inds]
         bbox_reg_targets = keras_rcnn.backend.bbox_transform(all_inside_bbox, gt_boxes)
 
-        return bbox_labels, bbox_reg_targets, inds_inside, len(all_bbox)
+        return bbox_labels, bbox_reg_targets, inds_inside, len(self.shifted_anchors)
 
-    def _generate_all_bbox_use_array_info(self, feat_h, feat_w):
-        return keras_rcnn.backend.shift((feat_h, feat_w), self.stride)
+    def compute_output_shape(self, input_shape):
+        return self.output_dim
 
     @staticmethod
     def inside_image(anchors, img_info):
@@ -72,11 +66,6 @@ class Anchor(keras.engine.topology.Layer):
         Calc indicies of anchors which are inside of the image size.
         Calc indicies of anchors which are located completely inside of the image
         whose size is speficied by img_info ((height, width, scale)-shaped array).
-
-        :param anchors:
-        :param img_info:
-
-        :return:
         """
         inds_inside = numpy.where(
             (anchors[:, 0] >= 0) &
@@ -91,12 +80,6 @@ class Anchor(keras.engine.topology.Layer):
         """
         Create bbox labels.
         label: 1 is positive, 0 is negative, -1 is dont care
-
-        :param inds_inside:
-        :param anchors:
-        :param gt_boxes:
-
-        :return:
         """
         # assign ignore labels first
         labels = numpy.ones((len(inds_inside),), dtype=numpy.int32) * -1
@@ -115,21 +98,20 @@ class Anchor(keras.engine.topology.Layer):
         # assign bg labels last so that negative labels can clobber positives
         labels[max_overlaps < self.RPN_NEGATIVE_OVERLAP] = 0
 
+        labels = self.balance(labels)
+
+        return argmax_overlaps_inds, labels
+
+    def balance(self, labels):
         # subsample positive labels if we have too many
         labels = self.subsample_positive_labels(labels)
 
         # subsample negative labels if we have too many
         labels = self.subsample_negative_labels(labels)
 
-        return argmax_overlaps_inds, labels
+        return labels
 
     def subsample_positive_labels(self, labels):
-        """
-
-        :param labels:
-
-        :return:
-        """
         num_fg = int(self.RPN_FG_FRACTION * self.RPN_BATCHSIZE)
 
         fg_inds = numpy.where(labels == 1)[0]
@@ -142,12 +124,6 @@ class Anchor(keras.engine.topology.Layer):
         return labels
 
     def subsample_negative_labels(self, labels):
-        """
-
-        :param labels:
-
-        :return:
-        """
         num_bg = self.RPN_BATCHSIZE - numpy.sum(labels == 1)
 
         bg_inds = numpy.where(labels == 0)[0]
@@ -163,11 +139,7 @@ class Anchor(keras.engine.topology.Layer):
     def overlapping(anchors, gt_boxes, inds_inside):
         # overlaps between the anchors and the gt boxes
         # overlaps (ex, gt)
-
         overlaps = keras_rcnn.backend.bbox_overlaps(anchors, gt_boxes[:, :4])
-
-        # TODO(mitmul): Remove this when bbox_overlaps for GPU comes
-        overlaps = numpy.asarray(overlaps)
 
         argmax_overlaps_inds = overlaps.argmax(axis=1)
         gt_argmax_overlaps_inds = overlaps.argmax(axis=0)
