@@ -4,20 +4,32 @@ import numpy
 import keras_rcnn.layers.object_detection
 
 
-class TestObjectProposal:
+class TestAnchor:
+    def test_build(self):
+        assert True
+
     def test_call(self):
-        a = keras.layers.Input((14, 14, 4 * 9))
-        b = keras.layers.Input((14, 14, 2 * 9))
+        assert True
 
-        y = keras_rcnn.layers.object_detection.ObjectProposal(300)([a, b])
+    def test_compute_output_shape(self):
+        assert True
 
-        model = keras.models.Model([a, b], y)
 
-        model.compile("sgd", "mse")
+class TestObjectProposal:
+    def test_build(self):
+        assert True
+
+    def test_call(self, object_proposal):
+        object_proposal.compile("sgd", "mse")
 
         a = numpy.random.rand(1, 14, 14, 4 * 9)
         b = numpy.random.rand(1, 14, 14, 2 * 9)
 
-        prediction = model.predict([a, b])
+        prediction = object_proposal.predict([a, b])
 
         assert prediction.shape == (1, 100, 4)
+
+    def test_compute_output_shape(self, object_proposal):
+        layer = object_proposal.layers[-1]
+
+        assert layer.compute_output_shape((14, 14)) == (None, None, 4)
