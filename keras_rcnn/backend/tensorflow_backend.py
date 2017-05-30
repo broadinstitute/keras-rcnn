@@ -1,4 +1,5 @@
 import keras.backend
+import numpy
 import tensorflow
 
 import keras_rcnn.backend
@@ -94,7 +95,7 @@ def overlap(x, y):
 
     k = y.shape[0]
 
-    overlaps = []
+    overlaps = numpy.zeros((n, k), dtype=numpy.float32)
 
     for k_index in range(k):
         area = ((y[k_index, 2] - y[k_index, 0] + 1) * (y[k_index, 3] - y[k_index, 1] + 1))
@@ -108,8 +109,38 @@ def overlap(x, y):
                 if ih > 0:
                     ua = float((x[n_index, 2] - x[n_index, 0] + 1) * (x[n_index, 3] - x[n_index, 1] + 1) + area - iw * ih)
 
-                    overlaps.append(iw * ih / ua)
+                    overlaps[n, k] = iw * ih / ua
 
-    overlaps = keras.backend.reshape(overlaps, (n, k))
+    return overlaps
+
+
+def bbox_overlaps(boxes, query_boxes):
+    """
+    Parameters
+    ----------
+    boxes: (N, 4) ndarray of float
+    query_boxes: (K, 4) ndarray of float
+    Returns
+    -------
+    overlaps: (N, K) ndarray of overlap between boxes and query_boxes
+    """
+    N = boxes.shape[0]
+    K = query_boxes.shape[0]
+
+    overlaps = numpy.zeros((N, K), dtype=numpy.float)
+
+    for k in range(K):
+        box_area = ((query_boxes[k, 2] - query_boxes[k, 0] + 1) * (query_boxes[k, 3] - query_boxes[k, 1] + 1))
+
+        for n in range(N):
+            iw = (min(boxes[n, 2], query_boxes[k, 2]) - max(boxes[n, 0], query_boxes[k, 0]) + 1)
+
+            if iw > 0:
+                ih = (min(boxes[n, 3], query_boxes[k, 3]) - max(boxes[n, 1], query_boxes[k, 1]) + 1)
+
+                if ih > 0:
+                    ua = float((boxes[n, 2] - boxes[n, 0] + 1) * (boxes[n, 3] - boxes[n, 1] + 1) + box_area - iw * ih)
+
+                    overlaps[n, k] = iw * ih / ua
 
     return overlaps
