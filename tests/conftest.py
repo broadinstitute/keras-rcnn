@@ -15,6 +15,49 @@ def anchor_layer():
 
 
 @pytest.fixture()
+def convolution_neural_network():
+    options = {
+        "activation": "relu",
+        "kernel_size": (3, 3),
+        "padding": "same"
+    }
+
+    shape = (224, 224, 3)
+
+    x = keras.layers.Input(shape)
+
+    y = keras.layers.Conv2D(64, **options)(x)
+    y = keras.layers.Conv2D(64, **options)(y)
+
+    y = keras.layers.MaxPooling2D(strides=(2, 2))(y)
+
+    y = keras.layers.Conv2D(128, **options)(y)
+    y = keras.layers.Conv2D(128, **options)(y)
+
+    y = keras.layers.MaxPooling2D(strides=(2, 2))(y)
+
+    y = keras.layers.Conv2D(256, **options)(y)
+    y = keras.layers.Conv2D(256, **options)(y)
+    y = keras.layers.Conv2D(256, **options)(y)
+    y = keras.layers.Conv2D(256, **options)(y)
+
+    y = keras.layers.MaxPooling2D(strides=(2, 2))(y)
+
+    y = keras.layers.Conv2D(512, **options)(y)
+    y = keras.layers.Conv2D(512, **options)(y)
+    y = keras.layers.Conv2D(512, **options)(y)
+    y = keras.layers.Conv2D(512, **options)(y)
+
+    y = keras.layers.MaxPooling2D(strides=(2, 2))(y)
+
+    y = keras.layers.Conv2D(512, **options)(y)
+    y = keras.layers.Conv2D(512, **options)(y)
+    y = keras.layers.Conv2D(512, **options)(y)
+
+    return keras.models.Model(x, y)
+
+
+@pytest.fixture()
 def feat_h():
     return 14
 
@@ -70,6 +113,59 @@ def object_proposal_model():
 @pytest.fixture()
 def regional_proposal_network_layer():
     return keras_rcnn.layers.object_detection.RegionProposalNetwork()
+
+
+@pytest.fixture()
+def region_proposal_network():
+    options = {
+        "activation": "relu",
+        "kernel_size": (3, 3),
+        "padding": "same"
+    }
+
+    shape = (224, 224, 3)
+
+    x = keras.layers.Input(shape)
+
+    y = keras.layers.Conv2D(64, **options)(x)
+    y = keras.layers.Conv2D(64, **options)(y)
+
+    y = keras.layers.MaxPooling2D(strides=(2, 2))(y)
+
+    y = keras.layers.Conv2D(128, **options)(y)
+    y = keras.layers.Conv2D(128, **options)(y)
+
+    y = keras.layers.MaxPooling2D(strides=(2, 2))(y)
+
+    y = keras.layers.Conv2D(256, **options)(y)
+    y = keras.layers.Conv2D(256, **options)(y)
+    y = keras.layers.Conv2D(256, **options)(y)
+    y = keras.layers.Conv2D(256, **options)(y)
+
+    y = keras.layers.MaxPooling2D(strides=(2, 2))(y)
+
+    y = keras.layers.Conv2D(512, **options)(y)
+    y = keras.layers.Conv2D(512, **options)(y)
+    y = keras.layers.Conv2D(512, **options)(y)
+    y = keras.layers.Conv2D(512, **options)(y)
+
+    y = keras.layers.MaxPooling2D(strides=(2, 2))(y)
+
+    y = keras.layers.Conv2D(512, **options)(y)
+    y = keras.layers.Conv2D(512, **options)(y)
+    y = keras.layers.Conv2D(512, **options)(y)
+
+    y = keras.layers.Conv2D(512, **options)(y)
+
+    a = keras.layers.Conv2D(9 * 1, (1, 1), activation="sigmoid")(y)
+
+    b = keras.layers.Conv2D(9 * 4, (1, 1))(y)
+
+    y = keras_rcnn.layers.object_detection.ObjectProposal(300)([a, b])
+
+    model = keras.models.Model(x, y)
+
+    model.compile("sgd", "mse")
 
 
 @pytest.fixture()

@@ -56,7 +56,7 @@ def non_maximum_suppression(boxes, scores, maximum, threshold=0.5):
     )
 
 
-def propose(boxes, scores):
+def propose(boxes, scores, maximum):
     shape = keras.backend.int_shape(boxes)[1:3]
 
     shifted = keras_rcnn.backend.shift(shape, 16)
@@ -79,7 +79,7 @@ def propose(boxes, scores):
     proposals = keras.backend.cast(proposals, tensorflow.float32)
     scores = keras.backend.cast(scores, tensorflow.float32)
 
-    indicies = keras_rcnn.backend.non_maximum_suppression(proposals, scores, 100, 0.7)
+    indicies = keras_rcnn.backend.non_maximum_suppression(proposals, scores, maximum, 0.7)
 
     proposals = keras.backend.gather(proposals, indicies)
 
