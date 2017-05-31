@@ -1,3 +1,5 @@
+import itertools
+
 import keras.backend
 import numpy
 import tensorflow

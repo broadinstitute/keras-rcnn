@@ -32,20 +32,14 @@ class TestObjectProposal:
 
         y = keras.layers.Conv2D(256, **options)(y)
         y = keras.layers.Conv2D(256, **options)(y)
-        y = keras.layers.Conv2D(256, **options)(y)
-        y = keras.layers.Conv2D(256, **options)(y)
 
         y = keras.layers.MaxPooling2D(strides=(2, 2))(y)
 
         y = keras.layers.Conv2D(512, **options)(y)
         y = keras.layers.Conv2D(512, **options)(y)
-        y = keras.layers.Conv2D(512, **options)(y)
-        y = keras.layers.Conv2D(512, **options)(y)
 
         y = keras.layers.MaxPooling2D(strides=(2, 2))(y)
 
-        y = keras.layers.Conv2D(512, **options)(y)
-        y = keras.layers.Conv2D(512, **options)(y)
         y = keras.layers.Conv2D(512, **options)(y)
 
         y = keras.layers.Conv2D(512, **options)(y)
@@ -60,11 +54,11 @@ class TestObjectProposal:
 
         model.compile("sgd", "mse")
 
-        image = numpy.random.rand(1, 224, 224, 3)
+        image = numpy.random.rand(1, *shape)
 
         prediction = model.predict(image)
 
         assert prediction.shape == (1, 300, 4)
 
     def test_compute_output_shape(self, object_proposal_layer):
-        assert object_proposal_layer.compute_output_shape((14, 14)) == (None, 300, 4)
+        assert object_proposal_layer.compute_output_shape((14, 14)) == (None, None, 4)

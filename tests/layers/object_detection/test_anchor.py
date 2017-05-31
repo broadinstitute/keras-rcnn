@@ -1,6 +1,7 @@
 import keras.backend
 
 import keras_rcnn.backend
+import keras_rcnn.layers.object_detection
 
 
 class TestAnchor:
@@ -17,6 +18,13 @@ class TestAnchor:
         assert inds_inside.shape == (84, )
 
         assert n_all_bbox == 1764
+
+    # def test_predict(self):
+    #     shape = (None, 5)
+    #
+    #     x = keras.layers.Input(shape)
+    #
+    #     y = keras_rcnn.layers.object_detection.Anchor((14, 14), (224, 224))(x)
 
     def test_regression(self, anchor_layer, gt_boxes):
         _, y_true, inds_inside, _ = anchor_layer.call(gt_boxes)
