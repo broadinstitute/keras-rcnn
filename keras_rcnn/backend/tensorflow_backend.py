@@ -95,7 +95,7 @@ def overlap(x, y):
 
     k = y.shape[0]
 
-    overlaps = numpy.zeros((n, k), dtype=numpy.float32)
+    overlaps = keras.backend.zeros((n, k), dtype=numpy.float32)
 
     for k_index in range(k):
         area = ((y[k_index, 2] - y[k_index, 0] + 1) * (y[k_index, 3] - y[k_index, 1] + 1))

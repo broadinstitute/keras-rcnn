@@ -16,4 +16,4 @@ class TestObjectProposal:
         assert prediction.shape == (1, 100, 4)
 
     def test_compute_output_shape(self, object_proposal_layer):
-        assert object_proposal_layer.compute_output_shape((14, 14)) == (None, None, 4)
+        assert object_proposal_layer.compute_output_shape((14, 14)) == (None, 300, 4)

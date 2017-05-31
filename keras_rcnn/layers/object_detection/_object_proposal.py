@@ -9,7 +9,7 @@ class ObjectProposal(keras.engine.topology.Layer):
     """
 
     def __init__(self, proposals, **kwargs):
-        self.output_dim = (None, None, 4)
+        self.output_dim = (None, proposals, 4)
 
         self.proposals = proposals
 
