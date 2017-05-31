@@ -37,9 +37,14 @@ def gt_boxes():
 
 @pytest.fixture()
 def image_features():
-    image = keras.layers.Input((224, 224, 3))
+    features = keras.layers.Input((14, 14, 3))
 
-    return keras.layers.Conv2D(512, (3, 3), activation="relu")(image)
+    return keras.layers.Conv2D(512, (1, 1), activation="relu")(features)
+
+
+@pytest.fixture()
+def image_features_npy():
+    return numpy.random.random((1, 14, 14, 512))
 
 
 @pytest.fixture()

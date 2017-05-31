@@ -27,10 +27,9 @@ class RPN(keras.models.Model):
         y = keras.layers.Conv2D(512, (3, 3), padding="same")(inputs)
         y = keras.layers.Activation("relu")(y)
 
-        score = keras.layers.Conv2D(anchors, (1, 1))(y)
+        score = keras.layers.Conv2D(anchors, (1, 1), activation="sigmoid")(y)
         score = keras.layers.Activation("sigmoid")(score)
 
         boxes = keras.layers.Conv2D(anchors * 4, (1, 1))(y)
-        boxes = keras.layers.Activation("linear")(boxes)
 
         super(RPN, self).__init__(inputs, [score, boxes])

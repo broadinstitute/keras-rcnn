@@ -29,9 +29,7 @@ class RegionProposalNetwork(keras.engine.topology.Layer):
 
     @image_features.setter
     def image_features(self, value):
-        self._image_features = keras.backend.conv2d(value, 512, (3, 3), "same")
-
-        self._image_features = keras.backend.relu(self.image_features)
+        self._image_features = keras.layers.Conv2D(512, (3, 3), activation="relu", padding="same")(value)
 
     @property
     def n_anchors(self):
@@ -43,21 +41,17 @@ class RegionProposalNetwork(keras.engine.topology.Layer):
     def call(self, inputs, **kwargs):
         self.bounding_boxes, self.image_features = inputs
 
-        rpn_cls_score = self.classifier()
-
-        rpn_bbox_pred = self.regressor()
-
         return inputs
 
-    def classifier(self):
-        x = keras.backend.conv2d(self.image_features, self.n_anchors * 2, (1, 1))
+    def classify(self):
+        x = keras.layers.Conv2D(self.n_anchors * 1, (1, 1))(self.image_features)
 
-        return keras.backend.sigmoid(x)
+        return keras.layers.Activation("sigmoid")(x)
 
     def compute_output_shape(self, input_shape):
         return (None, self.proposals, 4), (None, self.proposals, 1)
 
-    def regressor(self):
-        x = keras.backend.conv2d(self.image_features, self.n_anchors * 4, (1, 1))
+    def regress(self):
+        x = keras.layers.Conv2D(self.n_anchors * 4, (1, 1))(self.image_features)
 
-        return keras.backend.sigmoid(x)
+        return x
