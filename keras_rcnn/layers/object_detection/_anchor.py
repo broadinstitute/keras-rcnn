@@ -136,11 +136,11 @@ class Anchor(keras.engine.topology.Layer):
         y_pred = y_pred.ravel()[None, :]
 
         # Calc Smooth L1 Loss (When delta=1, huber loss is SmoothL1Loss)
-        loss = keras_rcnn.losses.logcosh(y_pred, y_true)
+        # loss = keras_rcnn.losses.logcosh(y_pred, y_true)
 
-        loss /= n_bounding_boxes
-
-        return loss.reshape(())
+        # loss /= n_bounding_boxes
+        #
+        # return loss.reshape(())
 
     def balance(self, labels):
         # subsample positive labels if we have too many
