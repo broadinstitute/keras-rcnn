@@ -2,7 +2,7 @@ import keras.backend
 import keras.losses
 
 
-def rcnn_classification(y_true, y_pred):
+def classification(y_true, y_pred):
     """
     Classification loss of Faster R-CNN.
 
@@ -14,7 +14,7 @@ def rcnn_classification(y_true, y_pred):
     return keras.backend.mean(keras.losses.categorical_crossentropy(y_true, y_pred))
 
 
-def rcnn_regression(classes):
+def regression(classes):
     """
     Return the regression loss of Faster R-CNN.
 

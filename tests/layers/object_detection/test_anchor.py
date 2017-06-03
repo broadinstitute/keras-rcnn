@@ -41,9 +41,9 @@ class TestAnchor:
     def test_label(self, anchor_layer, feat_h, feat_w, gt_boxes, img_info):
         all_bbox = keras_rcnn.backend.shift((feat_h, feat_w), anchor_layer.stride)
 
-        inds_inside, all_inside_bbox = anchor_layer.inside_image(all_bbox, img_info)
+        inds_inside, all_inside_bbox = anchor_layer._inside_image(all_bbox, img_info)
 
-        argmax_overlaps_inds, bbox_labels = anchor_layer.label(inds_inside, all_inside_bbox, gt_boxes)
+        argmax_overlaps_inds, bbox_labels = anchor_layer._label(gt_boxes, all_inside_bbox, inds_inside)
 
         assert argmax_overlaps_inds.shape == (84, )
 
@@ -52,7 +52,7 @@ class TestAnchor:
     def test_inside_image(self, anchor_layer, img_info):
         all_anchors = anchor_layer.shifted_anchors
 
-        inds_inside, all_inside_anchors = anchor_layer.inside_image(all_anchors, img_info)
+        inds_inside, all_inside_anchors = anchor_layer._inside_image(all_anchors, img_info)
 
         assert inds_inside.shape == (84,)
 
@@ -61,9 +61,9 @@ class TestAnchor:
     def test_overlapping(self, anchor_layer, gt_boxes, img_info):
         all_anchors = anchor_layer.shifted_anchors
 
-        inds_inside, all_inside_anchors = anchor_layer.inside_image(all_anchors, img_info)
+        inds_inside, all_inside_anchors = anchor_layer._inside_image(all_anchors, img_info)
 
-        argmax_overlaps_inds, max_overlaps, gt_argmax_overlaps_inds = anchor_layer.overlapping(all_inside_anchors, gt_boxes, inds_inside)
+        argmax_overlaps_inds, max_overlaps, gt_argmax_overlaps_inds = anchor_layer._overlapping(gt_boxes, all_inside_anchors, inds_inside)
 
         assert argmax_overlaps_inds.shape == (84, )
 
