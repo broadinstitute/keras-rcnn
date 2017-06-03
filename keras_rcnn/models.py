@@ -24,11 +24,9 @@ class RCNN(keras.models.Model):
 
 class RPN(keras.models.Model):
     def __init__(self, inputs, anchors):
-        y = keras.layers.Conv2D(512, (3, 3), padding="same")(inputs)
-        y = keras.layers.Activation("relu")(y)
+        y = keras.layers.Conv2D(512, (3, 3), activation="relu", padding="same")(inputs)
 
         score = keras.layers.Conv2D(anchors, (1, 1), activation="sigmoid")(y)
-        score = keras.layers.Activation("sigmoid")(score)
 
         boxes = keras.layers.Conv2D(anchors * 4, (1, 1))(y)
 

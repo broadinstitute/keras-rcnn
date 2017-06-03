@@ -60,6 +60,7 @@ class Anchor(keras.engine.topology.Layer):
 
         # Convert fixed anchors in (x, y, w, h) to (dx, dy, dw, dh)
         gt_boxes = inputs[argmax_overlaps_inds]
+
         bbox_reg_targets = keras_rcnn.backend.bbox_transform(all_inside_bbox, gt_boxes)
 
         return bbox_labels, bbox_reg_targets, inds_inside, len(self.shifted_anchors)
