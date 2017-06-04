@@ -1,11 +1,22 @@
-from __future__ import absolute_import
+import json
+import os.path
 
-import pickle
+import keras.utils.data_utils
 
 
 def load_data():
-    """Loads malaria dataset.
-    # Returns
-        Tuple of dictionaries: `train, validation, test`.
-    """
-    return pickle.load('/home/jhung0/malaria_data.pkl')
+    origin = "http://keras-rcnn.storage.googleapis.com/malaria.tar.gz"
+
+    pathname = keras.utils.data_utils.get_file("malaria", origin=origin, untar=True)
+
+    filename = os.path.join(pathname, "training.json")
+
+    with open(filename) as data:
+        training = json.load(data)
+
+    filename = os.path.join(pathname, "test.json")
+
+    with open(filename) as data:
+        test = json.load(data)
+
+    return training, test
