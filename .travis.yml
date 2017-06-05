@@ -1,5 +1,7 @@
 before_install: pip install tensorflow
 cache: pip
+  directories:
+    - ~/.keras
 deploy:
   on:
     distributions: sdist bdist_wheel
