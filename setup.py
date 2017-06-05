@@ -8,8 +8,7 @@ setuptools.setup(
             "codecov",
             "pytest",
             "pytest-cov",
-            "pytest-pep8",
-            "pytest-xdist"
+            "pytest-pep8"
         ],
     },
     install_requires=[
