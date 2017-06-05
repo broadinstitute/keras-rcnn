@@ -1,3 +1,5 @@
+after_script:
+  - codecov
 before_install:
   - pip install tensorflow
 cache: pip
@@ -11,12 +13,8 @@ deploy:
   provider: pypi
   user: '0x00b1'
 dist: trusty
-install: pip install --editable .[tests]
+install: pip install --editable .[test]
 language: python
 script:
-  # unit tests
-  - py.test tests/ --cov keras_rcnn/
-  # pep8: To be enabled
-  #- py.test --pep8 -m pep8
-after_script:
-  - codecov
+  - pytest tests/ --cov keras_rcnn/
+  - pytest --pep8 -m pep8
