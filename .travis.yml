@@ -17,4 +17,4 @@ install: pip install --editable .[test]
 language: python
 script:
   - pytest tests/ --cov keras_rcnn/
-  - pytest --pep8 -m pep8
+  # - pytest --pep8 -m pep8
