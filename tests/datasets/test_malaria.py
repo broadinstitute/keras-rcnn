@@ -1,7 +1,6 @@
-from __future__ import print_function
-import pytest
-from keras.datasets import malaria
+import keras_rcnn.datasets.malaria
 
-training, test = malaria.load_data()
-assert len(training) == 1208
-assert len(test) == 120
+def test_load_data():
+    training, test = malaria.load_data()
+    assert len(training) == 1208
+    assert len(test) == 120
