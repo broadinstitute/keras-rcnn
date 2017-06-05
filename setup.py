@@ -6,6 +6,13 @@ setuptools.setup(
     install_requires=[
         "keras"
     ],
+    extras_require={
+        "tests": ["pytest",
+                  "pytest-pep8",
+                  "pytest-xdist",
+                  "pytest-cov",
+                  "codecov"],
+    },
     license="MIT",
     name="keras-rcnn",
     package_data={
