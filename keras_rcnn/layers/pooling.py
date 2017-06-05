@@ -80,13 +80,13 @@ class ROIAlign(ROI):
     def call(self, x, **kwargs):
         image, regions = x[0], x[1]
 
-        # convert regions from (x, y, h, w) to (x1, y1, x2, y2)
+        # convert regions from (x, y, w, h) to (x1, y1, x2, y2)
         regions = keras.backend.cast(regions, keras.backend.floatx())
         regions = regions / (self.stride + 0.0)
         x1 = regions[:, 0]
         y1 = regions[:, 1]
-        x2 = regions[:, 0] + regions[:, 3]
-        y2 = regions[:, 1] + regions[:, 2]
+        x2 = regions[:, 0] + regions[:, 2]
+        y2 = regions[:, 1] + regions[:, 3]
 
         # normalize the boxes
         shape = image._keras_shape
