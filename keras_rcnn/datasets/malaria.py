@@ -5,10 +5,11 @@ import keras.utils.data_utils
 
 
 def load_data():
-    """Loads the malaria dataset.
+    """
+    Loads the malaria dataset.
     It is made up of images of blood smears from different patients taken with different microscope cameras.
     Each image has a collection of bounding box coordinates and corresponding class labels for each cell present.
-    # Returns
+    :return:
         Tuple of list of dictionaries where each dictionary corresponds to an image: `training, test`.
     """
     origin = "http://keras-rcnn.storage.googleapis.com/malaria.tar.gz"
