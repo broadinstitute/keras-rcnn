@@ -3,16 +3,18 @@ import setuptools
 setuptools.setup(
     author="Allen Goodman",
     author_email="allen.goodman@icloud.com",
+    extras_require={
+        "test": [
+            "codecov",
+            "pytest",
+            "pytest-cov",
+            "pytest-pep8",
+            "pytest-xdist"
+        ],
+    },
     install_requires=[
         "keras"
     ],
-    extras_require={
-        "tests": ["pytest",
-                  "pytest-pep8",
-                  "pytest-xdist",
-                  "pytest-cov",
-                  "codecov"],
-    },
     license="MIT",
     name="keras-rcnn",
     package_data={
