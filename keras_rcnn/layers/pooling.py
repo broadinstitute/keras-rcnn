@@ -96,9 +96,10 @@ class ROIAlign(ROI):
         y1 /= h
         x2 /= w
         y2 /= h
-        boxes = keras.backend.concatenate([y1[:, numpy.newaxis],
-                                           x1[:, numpy.newaxis],
-                                           y2[:, numpy.newaxis],
-                                           x2[:, numpy.newaxis]], axis=1)
+        x1 = keras.backend.expand_dims(x1, axis=-1)
+        y1 = keras.backend.expand_dims(y1, axis=-1)
+        x2 = keras.backend.expand_dims(x2, axis=-1)
+        y2 = keras.backend.expand_dims(y2, axis=-1)
+        boxes = keras.backend.concatenate([y1, x1, y2, x2], axis=1)
         slices = keras_rcnn.backend.crop_and_resize(image, boxes, self.size)
         return slices
