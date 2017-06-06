@@ -82,7 +82,7 @@ class ROIAlign(ROI):
 
         # convert regions from (x, y, w, h) to (x1, y1, x2, y2)
         regions = keras.backend.cast(regions, keras.backend.floatx())
-        regions = regions / (self.stride + 0.0)
+        regions = regions / self.stride
         x1 = regions[:, 0]
         y1 = regions[:, 1]
         x2 = regions[:, 0] + regions[:, 2]
