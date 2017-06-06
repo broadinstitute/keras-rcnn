@@ -65,7 +65,7 @@ def load_data():
             x['width'] = image.shape[0]
             x['height'] = image.shape[1]
             basename, imagename = image_file.split('/images/')
-            label_file = os.path.join(basename, 'labels', imagename.rsplit('.')[-1] + '.xml')
+            label_file = os.path.join(basename, 'labels', imagename.rsplit('.')[0] + '.xml')
             x['bboxes'] = get_data(label_file)
 
         dictionary.append(x)
@@ -73,6 +73,6 @@ def load_data():
     return dictionary
 
 data = load_data()
-with open('malaria-data.pickle', 'wb') as f:
+with open('/home/jhung0/malaria-data.pickle', 'wb') as f:
     pickle.dump(data, f)
 print data
