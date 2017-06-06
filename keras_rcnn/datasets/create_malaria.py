@@ -54,6 +54,8 @@ def load_data():
 
     for t in ['training', 'validation', 'test']:
 
+        dictionary_t = []
+
         dir_ = os.path.join(directory, 'images', t)
 
         image_files = glob.glob(os.path.join(dir_,"*"))
@@ -68,7 +70,9 @@ def load_data():
             label_file = os.path.join(basename, 'labels', imagename.rsplit('.')[0] + '.xml')
             x['bboxes'] = get_data(label_file)
 
-        dictionary.append(x)
+            dictionary_t.append(x)
+            
+        dictionary.append(dictionary_t)
 
     return dictionary
 
