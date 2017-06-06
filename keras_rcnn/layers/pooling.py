@@ -89,7 +89,7 @@ class ROIAlign(ROI):
         y2 = regions[:, 1] + regions[:, 3]
 
         # normalize the boxes
-        shape = image._keras_shape
+        shape = keras.backend.int_shape(image)
         h = keras.backend.cast(shape[1], keras.backend.floatx())
         w = keras.backend.cast(shape[2], keras.backend.floatx())
         x1 /= w
