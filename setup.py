@@ -3,6 +3,15 @@ import setuptools
 setuptools.setup(
     author="Allen Goodman",
     author_email="allen.goodman@icloud.com",
+    extras_require={
+        "test": [
+            "codecov",
+            "pytest",
+            "pytest-cov",
+            "pytest-pep8",
+            "pytest-runner"
+        ],
+    },
     install_requires=[
         "keras"
     ],
