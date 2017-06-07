@@ -26,4 +26,10 @@ def load_data():
     with open(filename) as data:
         test = json.load(data)
 
+    for dictionary in training:
+        dictionary["filename"] = os.path.join(pathname, dictionary["filename"])
+
+    for dictionary in test:
+        dictionary["filename"] = os.path.join(pathname, dictionary["filename"])
+
     return training, test
