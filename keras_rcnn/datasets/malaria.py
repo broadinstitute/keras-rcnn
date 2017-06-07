@@ -14,7 +14,7 @@ def load_data():
     """
     origin = "http://keras-rcnn.storage.googleapis.com/malaria.tar.gz"
 
-    pathname = keras.utils.data_utils.get_file("malaria/images", origin=origin, untar=True)
+    pathname = keras.utils.data_utils.get_file("malaria", origin=origin, untar=True)
 
     filename = os.path.join(pathname, "training.json")
 
@@ -26,6 +26,8 @@ def load_data():
     with open(filename) as data:
         test = json.load(data)
 
+    pathname = os.path.join(pathname, 'images')
+    
     for dictionary in training:
         dictionary["filename"] = os.path.join(pathname, dictionary["filename"])
 
