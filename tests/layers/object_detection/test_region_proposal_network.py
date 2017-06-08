@@ -1,4 +1,4 @@
-class TestRegionProposalNetwork:
+class TestRPN:
     def test_build(self):
         assert True
 
@@ -8,7 +8,5 @@ class TestRegionProposalNetwork:
     def test_compute_output_shape(self):
         assert True
 
-    def test_image_features(self, image_features, image_features_npy, gt_boxes, regional_proposal_network_layer):
-        # regional_proposal_network_layer.call([gt_boxes, image_features])
-
+    def test_image_features(self):
         assert True
