@@ -1,7 +1,7 @@
 import keras.backend
 
 import keras_rcnn.backend
-import keras_rcnn.layers.object_detection
+import keras_rcnn.layers
 
 
 class TestAnchor:

@@ -1,7 +1,3 @@
-import keras.engine.topology
-import tensorflow
+from .object_detection import (Anchor, ObjectProposal, RegionProposalNetwork)
 
-import keras_rcnn.backend
 from .pooling import ROI
-
-

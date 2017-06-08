@@ -2,7 +2,7 @@ import keras.layers
 import keras.models
 import numpy
 
-import keras_rcnn.layers.object_detection
+import keras_rcnn.layers
 
 
 class TestObjectProposal:
@@ -48,7 +48,7 @@ class TestObjectProposal:
 
         b = keras.layers.Conv2D(9 * 2, (1, 1), activation="sigmoid")(y)
 
-        y = keras_rcnn.layers.object_detection.ObjectProposal(300)([a, b])
+        y = keras_rcnn.layers.ObjectProposal(300)([a, b])
 
         model = keras.models.Model(x, y)
 
