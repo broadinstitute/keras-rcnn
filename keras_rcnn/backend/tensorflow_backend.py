@@ -90,6 +90,22 @@ def resize_images(images, shape):
     return tensorflow.image.resize_images(images, shape)
 
 
+def crop_and_resize(image, regions, size):
+    """Crop the image given boxes and resize with bilinear interplotation.
+
+    # Parameters
+    image: input image of shape (1, height, width, channels)
+    regions: Regions of interest of shape (number of regions, 4),
+    each row [y1, x1, y2, x2]
+    size: Fixed size [h, w], e.g. [7, 7], for the output slices.
+
+    # Returns
+    4D Tensor (number of regions, slice_height, slice_width, channels)
+    """
+    ind = tensorflow.zeros(regions.get_shape()[0], tensorflow.int32)
+    return tensorflow.image.crop_and_resize(image, regions, ind, size)
+
+
 def bbox_overlaps(boxes, query_boxes):
     """
     Parameters

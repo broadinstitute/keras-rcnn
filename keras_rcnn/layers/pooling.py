@@ -1,14 +1,28 @@
 import keras.engine.topology
 import tensorflow
+import numpy
+import keras_rcnn.backend
 
 
 class ROI(keras.engine.topology.Layer):
-    def __init__(self, size, regions, **kwargs):
+    """ROI pooling layer proposed in Mask R-CNN (Kaiming He et. al.).
+
+    :param size: Fixed size [h, w], e.g. [7, 7], for the output slices.
+    :param regions: Integer, number of regions of interest.
+    :param stride: Integer, pooling stride.
+
+    :return: slices: 4D Tensor (number of regions, slice_height,
+    slice_width, channels)
+    """
+
+    def __init__(self, size, regions, stride=1, **kwargs):
         self.channels = None
 
         self.size = size
 
         self.regions = regions
+
+        self.stride = stride
 
         super(ROI, self).__init__(**kwargs)
 
@@ -18,40 +32,31 @@ class ROI(keras.engine.topology.Layer):
         super(ROI, self).build(input_shape)
 
     def call(self, x, **kwargs):
-        image = x[0]
+        image, regions = x[0], x[1]
 
-        regions = x[1]
+        # convert regions from (x, y, w, h) to (x1, y1, x2, y2)
+        regions = keras.backend.cast(regions, keras.backend.floatx())
+        regions = regions / self.stride
+        x1 = regions[:, 0]
+        y1 = regions[:, 1]
+        x2 = regions[:, 0] + regions[:, 2]
+        y2 = regions[:, 1] + regions[:, 3]
 
-        outputs = []
-
-        for index in range(self.regions):
-            x = regions[0, index, 0]
-            y = regions[0, index, 1]
-            w = regions[0, index, 2]
-            h = regions[0, index, 3]
-
-            x = keras.backend.cast(x, "int32")
-            y = keras.backend.cast(y, "int32")
-            w = keras.backend.cast(w, "int32")
-            h = keras.backend.cast(h, "int32")
-
-            image = image[:, y:y + h, x:x + w, :]
-
-            shape = (self.size, self.size)
-
-            resized = tensorflow.image.resize_images(image, shape)
-
-            outputs.append(resized)
-
-        y = keras.backend.concatenate(outputs, axis=0)
-
-        shape = (1, self.regions, self.size, self.size, self.channels)
-
-        y = keras.backend.reshape(y, shape)
-
-        pattern = (0, 1, 2, 3, 4)
-
-        return keras.backend.permute_dimensions(y, pattern)
+        # normalize the boxes
+        shape = keras.backend.int_shape(image)
+        h = keras.backend.cast(shape[1], keras.backend.floatx())
+        w = keras.backend.cast(shape[2], keras.backend.floatx())
+        x1 /= w
+        y1 /= h
+        x2 /= w
+        y2 /= h
+        x1 = keras.backend.expand_dims(x1, axis=-1)
+        y1 = keras.backend.expand_dims(y1, axis=-1)
+        x2 = keras.backend.expand_dims(x2, axis=-1)
+        y2 = keras.backend.expand_dims(y2, axis=-1)
+        boxes = keras.backend.concatenate([y1, x1, y2, x2], axis=1)
+        slices = keras_rcnn.backend.crop_and_resize(image, boxes, self.size)
+        return slices
 
     def compute_output_shape(self, input_shape):
         return None, self.regions, self.size, self.size, self.channels

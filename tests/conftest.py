@@ -96,6 +96,11 @@ def img_info():
 
 
 @pytest.fixture()
+def pooling():
+    return keras.layers.ROI([7, 7], 2, 1)
+
+
+@pytest.fixture()
 def object_proposal_layer():
     return keras_rcnn.layers.object_detection.ObjectProposal(300)
 
