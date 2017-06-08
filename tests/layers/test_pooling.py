@@ -1,7 +1,7 @@
 import numpy
 import keras.backend
 import keras_rcnn.layers
-import unittest.mock
+import mock
 
 
 def test_roi():
@@ -13,8 +13,8 @@ def test_roi():
     slices = roi_align([image, regions])
     assert keras.backend.eval(slices).shape == (2, 7, 7, 3)
 
-    with unittest.mock.patch("keras_rcnn.backend.crop_and_resize",
-                             lambda x, y, z: y):
+    with mock.patch("keras_rcnn.backend.crop_and_resize",
+                    lambda x, y, z: y):
         boxes = roi_align([image, regions])
         assert numpy.allclose(
             keras.backend.eval(boxes),

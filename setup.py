@@ -6,6 +6,7 @@ setuptools.setup(
     extras_require={
         "test": [
             "codecov",
+            "mock",
             "pytest",
             "pytest-cov",
             "pytest-pep8",
