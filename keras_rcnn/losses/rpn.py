@@ -1,21 +1,21 @@
 import keras
 
 
-def proposals(anchors, *args, **kwargs):
-    def f(y_true, y_pred):
-        # separate y_pred into rpn_cls_pred and rpn_reg_pred
-        y_pred_classification, y_pred_regression = separate_pred(y_pred)
-
-        # convert y_true from gt_boxes to gt_anchors
-        y_true_classification, y_true_regression = encode(y_true, y_pred_classification)
-
-        classification = _classification(anchors=anchors)(y_true_classification, y_pred_classification)
-
-        regression = _regression(anchors=anchors)(y_true_regression, y_pred_regression)
-
-        return classification + regression
-
-    return f
+# def proposal(anchors, *args, **kwargs):
+#     def f(y_true, y_pred):
+#         # separate y_pred into rpn_cls_pred and rpn_reg_pred
+#         y_pred_classification, y_pred_regression = separate_pred(y_pred)
+#
+#         # convert y_true from gt_boxes to gt_anchors
+#         y_true_classification, y_true_regression = encode(y_true, y_pred_classification)
+#
+#         classification = _classification(anchors=anchors)(y_true_classification, y_pred_classification)
+#
+#         regression = _regression(anchors=anchors)(y_true_regression, y_pred_regression)
+#
+#         return classification + regression
+#
+#     return f
 
 
 def _classification(anchors=9):
