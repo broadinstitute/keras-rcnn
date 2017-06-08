@@ -112,7 +112,7 @@ def object_proposal_model():
 
 @pytest.fixture()
 def regional_proposal_network_layer():
-    return keras_rcnn.layers.object_detection.RegionProposalNetwork()
+    return keras_rcnn.layers.object_detection.RPN()
 
 
 @pytest.fixture()
