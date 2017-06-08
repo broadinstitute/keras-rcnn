@@ -5,62 +5,7 @@ import keras_rcnn.backend
 
 
 class ROI(keras.engine.topology.Layer):
-    def __init__(self, size, regions, **kwargs):
-        self.channels = None
-
-        self.size = size
-
-        self.regions = regions
-
-        super(ROI, self).__init__(**kwargs)
-
-    def build(self, input_shape):
-        self.channels = input_shape[0][3]
-
-        super(ROI, self).build(input_shape)
-
-    def call(self, x, **kwargs):
-        image = x[0]
-
-        regions = x[1]
-
-        outputs = []
-
-        for index in range(self.regions):
-            x = regions[0, index, 0]
-            y = regions[0, index, 1]
-            w = regions[0, index, 2]
-            h = regions[0, index, 3]
-
-            x = keras.backend.cast(x, "int32")
-            y = keras.backend.cast(y, "int32")
-            w = keras.backend.cast(w, "int32")
-            h = keras.backend.cast(h, "int32")
-
-            image = image[:, y:y + h, x:x + w, :]
-
-            shape = (self.size, self.size)
-
-            resized = tensorflow.image.resize_images(image, shape)
-
-            outputs.append(resized)
-
-        y = keras.backend.concatenate(outputs, axis=0)
-
-        shape = (1, self.regions, self.size, self.size, self.channels)
-
-        y = keras.backend.reshape(y, shape)
-
-        pattern = (0, 1, 2, 3, 4)
-
-        return keras.backend.permute_dimensions(y, pattern)
-
-    def compute_output_shape(self, input_shape):
-        return None, self.regions, self.size, self.size, self.channels
-
-
-class ROIAlign(ROI):
-    """ROIAlign pooling layer proposed in Mask R-CNN (Kaiming He et. al.).
+    """ROI pooling layer proposed in Mask R-CNN (Kaiming He et. al.).
 
     # Parameters
     size: Fixed size [h, w], e.g. [7, 7], for the output slices.
@@ -72,10 +17,20 @@ class ROIAlign(ROI):
     """
 
     def __init__(self, size, regions, stride=1, **kwargs):
+        self.channels = None
+
+        self.size = size
+
+        self.regions = regions
+
         self.stride = stride
-        super(ROIAlign, self).__init__(size=size,
-                                       regions=regions,
-                                       **kwargs)
+
+        super(ROI, self).__init__(**kwargs)
+
+    def build(self, input_shape):
+        self.channels = input_shape[0][3]
+
+        super(ROI, self).build(input_shape)
 
     def call(self, x, **kwargs):
         image, regions = x[0], x[1]
@@ -103,3 +58,6 @@ class ROIAlign(ROI):
         boxes = keras.backend.concatenate([y1, x1, y2, x2], axis=1)
         slices = keras_rcnn.backend.crop_and_resize(image, boxes, self.size)
         return slices
+
+    def compute_output_shape(self, input_shape):
+        return None, self.regions, self.size, self.size, self.channels

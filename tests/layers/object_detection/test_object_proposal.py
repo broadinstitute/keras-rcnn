@@ -2,7 +2,7 @@ import keras.layers
 import keras.models
 import numpy
 
-import keras_rcnn.layers.object_detection
+import keras_rcnn.layers
 
 
 class TestObjectProposal:
@@ -41,14 +41,12 @@ class TestObjectProposal:
         y = keras.layers.MaxPooling2D(strides=(2, 2))(y)
 
         y = keras.layers.Conv2D(512, **options)(y)
-
         y = keras.layers.Conv2D(512, **options)(y)
 
         a = keras.layers.Conv2D(9 * 4, (1, 1))(y)
-
         b = keras.layers.Conv2D(9 * 2, (1, 1), activation="sigmoid")(y)
 
-        y = keras_rcnn.layers.object_detection.ObjectProposal(300)([a, b])
+        y = keras_rcnn.layers.ObjectProposal()([a, b])
 
         model = keras.models.Model(x, y)
 

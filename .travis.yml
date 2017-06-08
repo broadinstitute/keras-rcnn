@@ -1,5 +1,11 @@
-before_install: pip install tensorflow
-cache: pip
+after_script:
+  - codecov
+before_install:
+  - pip install tensorflow
+cache:
+  directories:
+    - $HOME/.cache/pip
+    - $HOME/.keras/datasets
 deploy:
   on:
     distributions: sdist bdist_wheel
@@ -10,6 +16,8 @@ deploy:
   provider: pypi
   user: '0x00b1'
 dist: trusty
-install: pip install --editable .
+install: pip install --editable .[test]
 language: python
-script: pytest
+script:
+  - pytest tests/ --cov keras_rcnn/
+  # - pytest --pep8 -m pep8
