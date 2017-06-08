@@ -80,7 +80,7 @@ def anchor(image, shape, resized):
     y_is_box_valid = numpy.zeros((output_height, output_width, num_anchors))
     y_rpn_regr = numpy.zeros((output_height, output_width, num_anchors * 4))
 
-    num_bboxes = len(image['bboxes'])
+    num_bboxes = len(image['boxes'])
 
     num_anchors_for_bbox = numpy.zeros(num_bboxes).astype(int)
     best_anchor_for_bbox = -1 * numpy.ones((num_bboxes, 4)).astype(int)
@@ -91,7 +91,7 @@ def anchor(image, shape, resized):
     # get the GT box coordinates, and resize to account for image resizing
     gta = numpy.zeros((num_bboxes, 4))
 
-    for bbox_num, bbox in enumerate(image['bboxes']):
+    for bbox_num, bbox in enumerate(image['boxes']):
         # get the GT box coordinates, and resize to account for image resizing
         gta[bbox_num, 0] = bbox['x1'] * (resized_width / float(width))
         gta[bbox_num, 1] = bbox['x2'] * (resized_width / float(width))
@@ -145,7 +145,7 @@ def anchor(image, shape, resized):
                             tw = numpy.log((gta[bbox_num, 1] - gta[bbox_num, 0]) / (x2_anc - x1_anc))
                             th = numpy.log((gta[bbox_num, 3] - gta[bbox_num, 2]) / (y2_anc - y1_anc))
 
-                        if image['bboxes'][bbox_num]['class'] != 'bg':
+                        if image['boxes'][bbox_num]['class'] != 'bg':
                             # all GT boxes should be mapped to an anchor box, so we keep track of which anchor box was best
                             if curr_iou > best_iou_for_bbox[bbox_num]:
                                 best_anchor_for_bbox[bbox_num] = [jy, ix, anchor_ratio_idx, anchor_size_idx]
@@ -307,11 +307,11 @@ class DictionaryIterator(Iterator):
 
         index = index_array[0]
 
-        pathname = self.dictionary[index]["filepath"]
+        pathname = self.dictionary[index]["filename"]
 
         image = skimage.io.imread(pathname)
 
-        x, y = self.dictionary[index]["width"], self.dictionary[index]["height"]
+        x, y, _ = self.dictionary[index]["shape"]
 
         if x <= y:
             resized = minimum, int((minimum / x) * y)
