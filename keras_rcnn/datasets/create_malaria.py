@@ -77,6 +77,6 @@ def load_data():
     return dictionary
 
 data = load_data()
-with open('/home/jhung0/malaria-data.pickle', 'wb') as f:
+with open(os.path.join(os.path.expanduser("~"), 'malaria-data.pickle'), 'wb') as f:
     pickle.dump(data, f)
 print data
