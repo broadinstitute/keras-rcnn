@@ -2,6 +2,25 @@ import keras.backend
 import numpy
 
 
+def anchor(base_size=16, ratios=None, scales=None):
+    """
+    Generates a regular grid of multi-aspect and multi-scale anchor boxes.
+    """
+    if ratios is None:
+        ratios = numpy.array([0.5, 1, 2])
+
+    if scales is None:
+        scales = numpy.array([8, 16, 32])
+
+    base_anchor = numpy.array([1, 1, base_size, base_size]) - 1
+
+    ratio_anchors = _ratio_enum(base_anchor, ratios)
+
+    anchors = numpy.vstack([_scale_enum(ratio_anchors[i, :], scales) for i in range(ratio_anchors.shape[0])])
+
+    return anchors
+
+
 def bbox_transform(ex_rois, gt_rois):
     ex_widths = ex_rois[:, 2] - ex_rois[:, 0] + 1.0
     ex_heights = ex_rois[:, 3] - ex_rois[:, 1] + 1.0
@@ -36,35 +55,26 @@ def clip(boxes, shape):
     return keras.backend.concatenate(proposals)
 
 
-def anchor(base_size=16, ratios=None, scales=None):
-    """
-    Generates a regular grid of multi-aspect and multi-scale anchor boxes.
-    """
-    if ratios is None:
-        ratios = numpy.array([0.5, 1, 2])
+def shift(shape, stride):
+    shift_x = numpy.arange(0, shape[0]) * stride
+    shift_y = numpy.arange(0, shape[1]) * stride
 
-    if scales is None:
-        scales = numpy.array([8, 16, 32])
+    shift_x, shift_y = numpy.meshgrid(shift_x, shift_y)
 
-    base_anchor = numpy.array([1, 1, base_size, base_size]) - 1
+    shifts = numpy.vstack((shift_x.ravel(), shift_y.ravel(), shift_x.ravel(), shift_y.ravel())).transpose()
 
-    ratio_anchors = _ratio_enum(base_anchor, ratios)
+    anchors = anchor()
 
-    anchors = numpy.vstack([_scale_enum(ratio_anchors[i, :], scales) for i in range(ratio_anchors.shape[0])])
+    # Create all bbox
+    number_of_anchors = len(anchors)
 
-    return anchors
+    k = len(shifts)  # number of base points = feat_h * feat_w
 
+    bbox = anchors.reshape(1, number_of_anchors, 4) + shifts.reshape(k, 1, 4)
 
-def _whctrs(anchor):
-    """
-    Return width, height, x center, and y center for an anchor (window).
-    """
+    bbox = bbox.reshape(k * number_of_anchors, 4)
 
-    w = anchor[2] - anchor[0] + 1
-    h = anchor[3] - anchor[1] + 1
-    x_ctr = anchor[0] + 0.5 * (w - 1)
-    y_ctr = anchor[1] + 0.5 * (h - 1)
-    return w, h, x_ctr, y_ctr
+    return bbox
 
 
 def _mkanchors(ws, hs, x_ctr, y_ctr):
@@ -108,23 +118,13 @@ def _scale_enum(anchor, scales):
     return anchors
 
 
-def shift(shape, stride):
-    shift_x = numpy.arange(0, shape[0]) * stride
-    shift_y = numpy.arange(0, shape[1]) * stride
+def _whctrs(anchor):
+    """
+    Return width, height, x center, and y center for an anchor (window).
+    """
 
-    shift_x, shift_y = numpy.meshgrid(shift_x, shift_y)
-
-    shifts = numpy.vstack((shift_x.ravel(), shift_y.ravel(), shift_x.ravel(), shift_y.ravel())).transpose()
-
-    anchors = anchor()
-
-    # Create all bbox
-    number_of_anchors = len(anchors)
-
-    k = len(shifts)  # number of base points = feat_h * feat_w
-
-    bbox = anchors.reshape(1, number_of_anchors, 4) + shifts.reshape(k, 1, 4)
-
-    bbox = bbox.reshape(k * number_of_anchors, 4)
-
-    return bbox
+    w = anchor[2] - anchor[0] + 1
+    h = anchor[3] - anchor[1] + 1
+    x_ctr = anchor[0] + 0.5 * (w - 1)
+    y_ctr = anchor[1] + 0.5 * (h - 1)
+    return w, h, x_ctr, y_ctr

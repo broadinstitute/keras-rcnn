@@ -54,12 +54,13 @@ class Anchor(keras.engine.topology.Layer):
         super(Anchor, self).build(input_shape)
 
     def call(self, inputs, **kwargs):
-        inds_inside, all_inside_bbox = self.inside_image(self.shifted_anchors, self.image_shape)
+        inds_inside, all_inside_bbox = self._inside_image(self.shifted_anchors, self.image_shape)
 
-        argmax_overlaps_inds, bbox_labels = self.label(inds_inside, all_inside_bbox, inputs)
+        argmax_overlaps_inds, bbox_labels = self._label(inputs, all_inside_bbox, inds_inside)
 
         # Convert fixed anchors in (x, y, w, h) to (dx, dy, dw, dh)
         gt_boxes = inputs[argmax_overlaps_inds]
+
         bbox_reg_targets = keras_rcnn.backend.bbox_transform(all_inside_bbox, gt_boxes)
 
         return bbox_labels, bbox_reg_targets, inds_inside, len(self.shifted_anchors)
@@ -68,30 +69,41 @@ class Anchor(keras.engine.topology.Layer):
         return self.output_dim
 
     @staticmethod
-    def inside_image(anchors, img_info):
+    def _inside_image(y_pred, img_info):
         """
         Calc indicies of anchors which are inside of the image size.
         Calc indicies of anchors which are located completely inside of the image
         whose size is speficied by img_info ((height, width, scale)-shaped array).
+
+        :param y_pred: anchors
+        :param img_info:
+
+        :return:
         """
         inds_inside = numpy.where(
-            (anchors[:, 0] >= 0) &
-            (anchors[:, 1] >= 0) &
-            (anchors[:, 2] < img_info[1]) &  # width
-            (anchors[:, 3] < img_info[0])  # height
+            (y_pred[:, 0] >= 0) &
+            (y_pred[:, 1] >= 0) &
+            (y_pred[:, 2] < img_info[1]) &  # width
+            (y_pred[:, 3] < img_info[0])  # height
         )[0]
 
-        return inds_inside, anchors[inds_inside]
+        return inds_inside, y_pred[inds_inside]
 
-    def label(self, inds_inside, anchors, gt_boxes):
+    def _label(self, y_true, y_pred, inds_inside):
         """
         Create bbox labels.
         label: 1 is positive, 0 is negative, -1 is dont care
+
+        :param inds_inside:
+        :param y_pred: anchors
+        :param y_true:
+
+        :return:
         """
         # assign ignore labels first
         labels = numpy.ones((len(inds_inside),), dtype=numpy.int32) * -1
 
-        argmax_overlaps_inds, max_overlaps, gt_argmax_overlaps_inds = self.overlapping(anchors, gt_boxes, inds_inside)
+        argmax_overlaps_inds, max_overlaps, gt_argmax_overlaps_inds = self._overlapping(y_true, y_pred, inds_inside)
 
         # assign bg labels first so that positive labels can clobber them
         labels[max_overlaps < RPN_NEGATIVE_OVERLAP] = 0
@@ -105,16 +117,23 @@ class Anchor(keras.engine.topology.Layer):
         # assign bg labels last so that negative labels can clobber positives
         labels[max_overlaps < RPN_NEGATIVE_OVERLAP] = 0
 
-        labels = self.balance(labels)
+        labels = self._balance(labels)
 
         return argmax_overlaps_inds, labels
 
-    def classification(self):
+    def _classification(self):
         pass
 
-    def regression(self, y_true, y_pred, indicies_inside_image):
+    def _regression(self, y_true, y_pred, indicies_inside_image):
+        """
+
+        :param y_true:
+        :param y_pred:
+        :param indicies_inside_image:
+        """
         # y_pred has the shape of (1, 4 x n_anchors, feat_h, feat_w)
         # Reshape it into (4, A, K)
+
         y_true = y_true.reshape(4, self.n_anchors, -1)
 
         # Transpose it into (K, A, 4)
@@ -136,23 +155,35 @@ class Anchor(keras.engine.topology.Layer):
         y_pred = y_pred.ravel()[None, :]
 
         # Calc Smooth L1 Loss (When delta=1, huber loss is SmoothL1Loss)
-        loss = keras_rcnn.losses.logcosh(y_pred, y_true)
+        # loss = keras_rcnn.losses.logcosh(y_pred, y_true)
 
-        loss /= n_bounding_boxes
+        # loss /= n_bounding_boxes
+        #
+        # return loss.reshape(())
 
-        return loss.reshape(())
+    def _balance(self, labels):
+        """
 
-    def balance(self, labels):
+        :param labels:
+
+        :return:
+        """
         # subsample positive labels if we have too many
-        labels = self.subsample_positive_labels(labels)
+        labels = self._subsample_positive_labels(labels)
 
         # subsample negative labels if we have too many
-        labels = self.subsample_negative_labels(labels)
+        labels = self._subsample_negative_labels(labels)
 
         return labels
 
     @staticmethod
-    def subsample_positive_labels(labels):
+    def _subsample_positive_labels(labels):
+        """
+
+        :param labels:
+
+        :return:
+        """
         num_fg = int(RPN_FG_FRACTION * RPN_BATCHSIZE)
 
         fg_inds = numpy.where(labels == 1)[0]
@@ -165,7 +196,13 @@ class Anchor(keras.engine.topology.Layer):
         return labels
 
     @staticmethod
-    def subsample_negative_labels(labels):
+    def _subsample_negative_labels(labels):
+        """
+
+        :param labels:
+
+        :return:
+        """
         num_bg = RPN_BATCHSIZE - numpy.sum(labels[labels == 1])
 
         bg_inds = numpy.where(labels == 0)[0]
@@ -178,10 +215,17 @@ class Anchor(keras.engine.topology.Layer):
         return labels
 
     @staticmethod
-    def overlapping(anchors, gt_boxes, inds_inside):
-        # overlaps between the anchors and the gt boxes
-        # overlaps (ex, gt)
-        overlaps = keras_rcnn.backend.bbox_overlaps(anchors, gt_boxes[:, :4])
+    def _overlapping(y_true, y_pred, inds_inside):
+        """
+        overlaps between the anchors and the gt boxes
+
+        :param y_pred: anchors
+        :param y_true:
+        :param inds_inside:
+
+        :return:
+        """
+        overlaps = keras_rcnn.backend.bbox_overlaps(y_pred, y_true[:, :4])
 
         argmax_overlaps_inds = overlaps.argmax(axis=1)
         gt_argmax_overlaps_inds = overlaps.argmax(axis=0)

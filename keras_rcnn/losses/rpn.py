@@ -1,13 +1,23 @@
 import keras
 
 
-def classification(anchors):
+def classification(anchors=9):
+    """
+    Return the classification loss of region proposal network.
+
+    :param anchors: Integer, number of anchors at each sliding position. Equal to number of scales * number of aspect ratios.
+
+    :return: A loss function for region propose classification.
+    """
+
     def f(y_true, y_pred):
+        # Binary classification loss
         x, y = y_pred[:, :, :, :], y_true[:, :, :, anchors:]
 
         a = y_true[:, :, :, :anchors] * keras.backend.binary_crossentropy(x, y)
         a = keras.backend.sum(a)
 
+        # Divided by anchor overlaps
         b = keras.backend.epsilon() + y_true[:, :, :, :anchors]
         b = keras.backend.sum(b)
 
@@ -16,8 +26,16 @@ def classification(anchors):
     return f
 
 
-def regression(anchors):
+def regression(anchors=9):
+    """
+    Return the regression loss of region proposal network.
+
+    :param anchors: Integer, number of anchors at each sliding position. Equal to number of scales * number of aspect ratios.
+
+    :return: A loss function region propose regression.
+    """
     def f(y_true, y_pred):
+        # Robust L1 Loss
         x = y_true[:, :, :, 4 * anchors:] - y_pred
 
         mask = keras.backend.less_equal(keras.backend.abs(x), 1.0)
@@ -30,16 +48,10 @@ def regression(anchors):
         a = a_x * a_y
         a = keras.backend.sum(a)
 
+        # Divided by anchor overlaps
         b = keras.backend.epsilon() + a_x
         b = keras.backend.sum(b)
 
         return 1.0 * (a / b)
 
     return f
-
-
-def logcosh(y_true, y_pred):
-    def _cosh(x):
-        return (keras.backend.exp(x) + keras.backend.exp(-x)) / 2
-
-    return keras.backend.mean(keras.backend.log(_cosh(y_pred - y_true)), axis=-1)
