@@ -1,6 +1,7 @@
 before_install: pip install tensorflow
-cache: pip
+cache:
   directories:
+    - $HOME/.cache/pip
     - $HOME/.keras/datasets
 deploy:
   on:
