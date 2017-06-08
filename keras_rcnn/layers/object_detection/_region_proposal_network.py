@@ -36,4 +36,4 @@ class RPN(keras.engine.topology.Layer):
         return inputs
 
     def compute_output_shape(self, input_shape):
-        return (None, self.proposals, 4), (None, self.proposals, 1)
+        return (None, self.proposals, 1), (None, self.proposals, 4)
