@@ -7,13 +7,12 @@ import keras_rcnn.backend
 class ROI(keras.engine.topology.Layer):
     """ROI pooling layer proposed in Mask R-CNN (Kaiming He et. al.).
 
-    # Parameters
-    size: Fixed size [h, w], e.g. [7, 7], for the output slices.
-    regions: Integer, number of regions of interest.
-    stride: Integer, pooling stride.
+    :param size: Fixed size [h, w], e.g. [7, 7], for the output slices.
+    :param regions: Integer, number of regions of interest.
+    :param stride: Integer, pooling stride.
 
-    # Returns
-    4D Tensor (number of regions, slice_height, slice_width, channels)
+    :return: slices: 4D Tensor (number of regions, slice_height,
+    slice_width, channels)
     """
 
     def __init__(self, size, regions, stride=1, **kwargs):
