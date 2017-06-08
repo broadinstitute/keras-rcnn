@@ -11,7 +11,7 @@ def load_data():
     Hung, et al.’s malaria dataset is a collection of blood smears from multiple 
     patients captured by a variety of microscopes. Images are accompanied by 
     bounding boxes that capture each cell’s location and corresponding class labels 
-    that describes each cell’s phenotype.
+    that describe each cell’s phenotype.
     """
     origin = "http://keras-rcnn.storage.googleapis.com/malaria.tar.gz"
 
