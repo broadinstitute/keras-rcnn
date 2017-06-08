@@ -41,11 +41,9 @@ class TestObjectProposal:
         y = keras.layers.MaxPooling2D(strides=(2, 2))(y)
 
         y = keras.layers.Conv2D(512, **options)(y)
-
         y = keras.layers.Conv2D(512, **options)(y)
 
         a = keras.layers.Conv2D(9 * 4, (1, 1))(y)
-
         b = keras.layers.Conv2D(9 * 2, (1, 1), activation="sigmoid")(y)
 
         y = keras_rcnn.layers.ObjectProposal(300)([a, b])
