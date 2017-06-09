@@ -19,6 +19,8 @@ class RCNN(keras.models.Model):
             axis = 3
         else:
             axis = 1
+
+        # ResNet50 head
         y = keras_resnet.ResNet50(inputs)
         features = y.layers[-2].output
 
@@ -37,7 +39,7 @@ class RCNN(keras.models.Model):
         y = keras.layers.TimeDistributed(
             keras.layers.Conv2D(1024, (1, 1)))(y)
 
-        # res5 as in Mask R-CNN
+        # ResNet tail as in Mask R-CNN
         block = keras_resnet.block.bottleneck
         for i in range(3):
             y = keras.layers.TimeDistributed(
