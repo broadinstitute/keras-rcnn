@@ -34,7 +34,7 @@ class RCNN(keras.models.Model):
         proposals = keras_rcnn.layers.object_detection.ObjectProposal(
             rois)([rpn_classification, rpn_regression])
 
-        y = keras_rcnn.layers.ROI((7, 7), rois)([y, proposals])
+        y = keras_rcnn.layers.ROI((7, 7), rois)([inputs, proposals])
 
         y = keras.layers.TimeDistributed(
             keras.layers.Conv2D(1024, (1, 1)))(y)
