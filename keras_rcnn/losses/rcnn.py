@@ -41,3 +41,10 @@ def regression(classes):
         return 1.0 * (a / b)
 
     return f
+
+def mask(y_true, y_pred):
+    """
+    Mask loss of Mask R-CNN.
+    :param y_true
+    :param y_pred
+    """
