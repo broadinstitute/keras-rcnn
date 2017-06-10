@@ -32,15 +32,15 @@ class ROI(keras.engine.topology.Layer):
         super(ROI, self).build(input_shape)
 
     def call(self, x, **kwargs):
-        image, regions = x[0], x[1]
+        image, boxes = x[0], x[1]
 
         # convert regions from (x, y, w, h) to (x1, y1, x2, y2)
-        regions = keras.backend.cast(regions, keras.backend.floatx())
-        regions = regions / self.stride
-        x1 = regions[:, 0]
-        y1 = regions[:, 1]
-        x2 = regions[:, 0] + regions[:, 2]
-        y2 = regions[:, 1] + regions[:, 3]
+        boxes = keras.backend.cast(boxes, keras.backend.floatx())
+        boxes = boxes / self.stride
+        x1 = boxes[..., 0]
+        y1 = boxes[..., 1]
+        x2 = boxes[..., 0] + boxes[..., 2]
+        y2 = boxes[..., 1] + boxes[..., 3]
 
         # normalize the boxes
         shape = keras.backend.int_shape(image)
@@ -54,7 +54,7 @@ class ROI(keras.engine.topology.Layer):
         y1 = keras.backend.expand_dims(y1, axis=-1)
         x2 = keras.backend.expand_dims(x2, axis=-1)
         y2 = keras.backend.expand_dims(y2, axis=-1)
-        boxes = keras.backend.concatenate([y1, x1, y2, x2], axis=1)
+        boxes = keras.backend.concatenate([y1, x1, y2, x2], axis=-1)
         slices = keras_rcnn.backend.crop_and_resize(image, boxes, self.size)
         return slices
 
