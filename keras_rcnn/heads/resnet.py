@@ -13,7 +13,7 @@ def ResHead(classes, mask=False):
             keras.layers.Conv2D(1024, (1, 1)))(x)
 
         # conv5 block as in Deep Residual Networks with first conv operates
-        # on a 7×7 RoI with stride 1 (instead of 14×14 / stride 2)
+        # on a 7x7 RoI with stride 1 (instead of 14x14 / stride 2)
         for i in range(3):
             y = _bottleneck(512, (1, 1))(y)
 
@@ -32,7 +32,7 @@ def ResHead(classes, mask=False):
         boxes = keras.layers.TimeDistributed(
             keras.layers.Dense(4 * classes))(y)
 
-        # TODO{JihongJu} mask branch
+        # TODO{JihongJu} the mask branch
 
         return [score, boxes]
     return f
