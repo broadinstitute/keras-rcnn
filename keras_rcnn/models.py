@@ -16,11 +16,6 @@ class RCNN(keras.models.Model):
     """
 
     def __init__(self, inputs, classes, rois):
-        if keras.backend.image_data_format() == "channels_last":
-            axis = 3
-        else:
-            axis = 1
-
         # ResNet50 as body
         y = keras_resnet.ResNet50(inputs)
         features = y.layers[-2].output
