@@ -32,10 +32,7 @@ class RCNN(keras.models.Model):
 
         slices = keras_rcnn.layers.ROI((7, 7), rois)([inputs, proposals])
 
-        y = keras.layers.TimeDistributed(
-            keras.layers.Conv2D(1024, (1, 1)))(slices)
-
-        [score, boxes] = keras_rcnn.heads.ResHead(classes)(y)
+        [score, boxes] = keras_rcnn.heads.ResHead(classes)(slices)
 
         super(RCNN, self).__init__(inputs,
                                    [rpn_prediction, score, boxes])

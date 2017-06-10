@@ -1,13 +1,16 @@
 import keras
 
 
-def ResHead(classes):
+def ResHead(classes, mask=False):
     """Resnet heads as in Mask R-CNN."""
-    def f(y):
+    def f(x):
         if keras.backend.image_data_format() == "channels_last":
             channel_axis = 3
         else:
             channel_axis = 1
+
+        y = keras.layers.TimeDistributed(
+            keras.layers.Conv2D(1024, (1, 1)))(x)
 
         # conv5 block as in Deep Residual Networks with first conv operates
         # on a 7×7 RoI with stride 1 (instead of 14×14 / stride 2)
@@ -28,6 +31,8 @@ def ResHead(classes):
 
         boxes = keras.layers.TimeDistributed(
             keras.layers.Dense(4 * classes))(y)
+
+        # TODO{JihongJu} mask branch
 
         return [score, boxes]
     return f
