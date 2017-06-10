@@ -13,6 +13,8 @@ class RCNN(keras.models.Model):
     :param inputs: input tensor (e.g. an instance of `keras.layers.Input`)
     :param classes: integer, number of classes
     :param rois: integer, number of regions of interest per image
+
+    :return model: a functional model API for R-CNN.
     """
 
     def __init__(self, inputs, classes, rois):
@@ -30,7 +32,7 @@ class RCNN(keras.models.Model):
         proposals = keras_rcnn.layers.object_detection.ObjectProposal(
             rois)([rpn_regression, rpn_classification])
 
-        slices = keras_rcnn.layers.ROI((7, 7), rois)([inputs, proposals])
+        slices = keras_rcnn.layers.ROI((7, 7))([inputs, proposals])
 
         [score, boxes] = keras_rcnn.heads.ResHead(classes)(slices)
 
