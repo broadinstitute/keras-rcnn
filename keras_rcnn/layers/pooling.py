@@ -10,8 +10,7 @@ class ROI(keras.engine.topology.Layer):
     :param size: Fixed size [h, w], e.g. [7, 7], for the output slices.
     :param regions: Integer, number of regions of interest.
     :param stride: Integer, pooling stride.
-
-    :return: slices: 4D Tensor (number of regions, slice_height,
+    :return: slices: 5D Tensor (number of regions, slice_height,
     slice_width, channels)
     """
 
@@ -19,8 +18,6 @@ class ROI(keras.engine.topology.Layer):
         self.channels = None
 
         self.size = size
-
-        self.regions = regions
 
         self.stride = stride
 
@@ -55,8 +52,9 @@ class ROI(keras.engine.topology.Layer):
         x2 = keras.backend.expand_dims(x2, axis=-1)
         y2 = keras.backend.expand_dims(y2, axis=-1)
         boxes = keras.backend.concatenate([y1, x1, y2, x2], axis=-1)
+
         slices = keras_rcnn.backend.crop_and_resize(image, boxes, self.size)
-        return slices
+        return keras.backend.expand_dims(slices, axis=0)
 
     def compute_output_shape(self, input_shape):
-        return None, self.regions, self.size, self.size, self.channels
+        return (1, None, self.size[0], self.size[1], self.channels)

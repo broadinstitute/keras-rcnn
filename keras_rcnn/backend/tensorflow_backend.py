@@ -95,27 +95,20 @@ def crop_and_resize(image, boxes, size):
     """Crop the image given boxes and resize with bilinear interplotation.
 
     # Parameters
-    image: Input image of shape (batch, image_height, image_width, depth)
-    boxes: Regions of interest of shape (batch, num_boxes, 4),
+    image: Input image of shape (1, image_height, image_width, depth)
+    boxes: Regions of interest of shape (1, num_boxes, 4),
     each row [y1, x1, y2, x2]
     size: Fixed size [h, w], e.g. [7, 7], for the output slices.
 
     # Returns
     4D Tensor (number of regions, slice_height, slice_width, channels)
     """
-    batch, num_boxes, _ = keras.backend.int_shape(boxes)
-    box_inds = []
-    for j in range(batch):
-        box_ind = tensorflow.ones(num_boxes, tensorflow.int32)
-        box_ind = tensorflow.multiply(j, box_ind)
-        box_inds.append(box_ind)
-    box_inds = tensorflow.concat(box_inds, axis=0)
+    box_ind = tensorflow.zeros_like(boxes, tensorflow.int32)
+    box_ind = box_ind[..., 0]
+    box_ind = tensorflow.reshape(box_ind, [-1])
 
     boxes = tensorflow.reshape(boxes, [-1, 4])
-    slices = tensorflow.image.crop_and_resize(image, boxes, box_inds, size)
-
-    depth = keras.backend.int_shape(image)[-1]
-    return tensorflow.reshape(slices, [batch, -1, size[0], size[1], depth])
+    return tensorflow.image.crop_and_resize(image, boxes, box_ind, size)
 
 
 def bbox_overlaps(boxes, query_boxes):

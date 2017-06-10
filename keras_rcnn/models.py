@@ -3,6 +3,7 @@
 import keras
 import keras_resnet
 import keras_rcnn.layers
+import keras_rcnn.heads
 
 
 class RCNN(keras.models.Model):
@@ -20,7 +21,7 @@ class RCNN(keras.models.Model):
         else:
             axis = 1
 
-        # ResNet50 head
+        # ResNet50 as body
         y = keras_resnet.ResNet50(inputs)
         features = y.layers[-2].output
 
@@ -32,32 +33,14 @@ class RCNN(keras.models.Model):
             [rpn_classification, rpn_regression])
 
         proposals = keras_rcnn.layers.object_detection.ObjectProposal(
-            rois)([rpn_classification, rpn_regression])
+            rois)([rpn_regression, rpn_classification])
 
-        y = keras_rcnn.layers.ROI((7, 7), rois)([inputs, proposals])
-
-        y = keras.layers.TimeDistributed(
-            keras.layers.Conv2D(1024, (1, 1)))(y)
-
-        # ResNet tail as in Mask R-CNN
-        block = keras_resnet.block.bottleneck
-        for i in range(3):
-            y = keras.layers.TimeDistributed(
-                block(512, (1, 1), i == 0))(y)
+        slices = keras_rcnn.layers.ROI((7, 7), rois)([inputs, proposals])
 
         y = keras.layers.TimeDistributed(
-            keras.layers.BatchNormalization(axis=axis))(y)
-        y = keras.layers.TimeDistributed(
-            keras.layers.Activation("relu"))(y)
+            keras.layers.Conv2D(1024, (1, 1)))(slices)
 
-        y = keras.layers.TimeDistributed(
-            keras.layers.AveragePooling2D((7, 7)))(y)
-
-        score = keras.layers.TimeDistributed(
-            keras.layers.Dense(classes, activation="softmax"))(y)
-
-        boxes = keras.layers.TimeDistributed(
-            keras.layers.Dense(4 * classes))(y)
+        [score, boxes] = keras_rcnn.heads.ResHead(classes)(y)
 
         super(RCNN, self).__init__(inputs,
                                    [rpn_prediction, score, boxes])
