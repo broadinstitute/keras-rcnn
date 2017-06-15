@@ -225,7 +225,7 @@ class Anchor(keras.engine.topology.Layer):
 
         :return:
         """
-        overlaps = keras_rcnn.backend.bbox_overlaps(y_pred, y_true[:, :4])
+        overlaps = keras_rcnn.backend.overlap(y_pred, y_true[:, :4])
 
         argmax_overlaps_inds = overlaps.argmax(axis=1)
         gt_argmax_overlaps_inds = overlaps.argmax(axis=0)
