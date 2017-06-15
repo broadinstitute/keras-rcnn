@@ -1,3 +1,5 @@
+import itertools
+
 import keras.backend
 import numpy
 import tensorflow
@@ -79,8 +81,7 @@ def propose(boxes, scores, maximum):
     proposals = keras.backend.cast(proposals, tensorflow.float32)
     scores = keras.backend.cast(scores, tensorflow.float32)
 
-    indicies = keras_rcnn.backend.non_maximum_suppression(
-        proposals, scores, maximum, 0.7)
+    indicies = keras_rcnn.backend.non_maximum_suppression(proposals, scores, maximum, 0.7)
 
     proposals = keras.backend.gather(proposals, indicies)
 
@@ -93,13 +94,11 @@ def resize_images(images, shape):
 
 def crop_and_resize(image, boxes, size):
     """Crop the image given boxes and resize with bilinear interplotation.
-
     # Parameters
     image: Input image of shape (1, image_height, image_width, depth)
     boxes: Regions of interest of shape (1, num_boxes, 4),
     each row [y1, x1, y2, x2]
     size: Fixed size [h, w], e.g. [7, 7], for the output slices.
-
     # Returns
     4D Tensor (number of regions, slice_height, slice_width, channels)
     """
@@ -111,37 +110,30 @@ def crop_and_resize(image, boxes, size):
     return tensorflow.image.crop_and_resize(image, boxes, box_ind, size)
 
 
-def bbox_overlaps(boxes, query_boxes):
+def overlap(a, b):
     """
     Parameters
     ----------
-    boxes: (N, 4) ndarray of float
-    query_boxes: (K, 4) ndarray of float
+    a: (N, 4) ndarray of float
+    b: (K, 4) ndarray of float
     Returns
     -------
     overlaps: (N, K) ndarray of overlap between boxes and query_boxes
     """
-    N = boxes.shape[0]
-    K = query_boxes.shape[0]
 
-    overlaps = numpy.zeros((N, K), dtype=numpy.float)
+    overlaps = numpy.zeros((a.shape[0], b.shape[0]), dtype=numpy.float)
 
-    for k in range(K):
-        box_area = ((query_boxes[k, 2] - query_boxes[k, 0] + 1)
-                    * (query_boxes[k, 3] - query_boxes[k, 1] + 1))
+    for k, n in itertools.product(range(b.shape[0]), range(a.shape[0])):
+        area = ((b[k, 2] - b[k, 0] + 1) * (b[k, 3] - b[k, 1] + 1))
 
-        for n in range(N):
-            iw = (min(boxes[n, 2], query_boxes[k, 2]) -
-                  max(boxes[n, 0], query_boxes[k, 0]) + 1)
+        iw = (min(a[n, 2], b[k, 2]) - max(a[n, 0], b[k, 0]) + 1)
 
-            if iw > 0:
-                ih = (min(boxes[n, 3], query_boxes[k, 3]) -
-                      max(boxes[n, 1], query_boxes[k, 1]) + 1)
+        if iw > 0:
+            ih = (min(a[n, 3], b[k, 3]) - max(a[n, 1], b[k, 1]) + 1)
 
-                if ih > 0:
-                    ua = float((boxes[n, 2] - boxes[n, 0] + 1) *
-                               (boxes[n, 3] - boxes[n, 1] + 1) + box_area - iw * ih)
+            if ih > 0:
+                ua = float((a[n, 2] - a[n, 0] + 1) * (a[n, 3] - a[n, 1] + 1) + area - iw * ih)
 
-                    overlaps[n, k] = iw * ih / ua
+                overlaps[n, k] = iw * ih / ua
 
     return overlaps
