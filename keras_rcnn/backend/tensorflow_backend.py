@@ -81,8 +81,7 @@ def propose(boxes, scores, maximum):
     proposals = keras.backend.cast(proposals, tensorflow.float32)
     scores = keras.backend.cast(scores, tensorflow.float32)
 
-    indicies = keras_rcnn.backend.non_maximum_suppression(proposals, scores,
-                                                          maximum, 0.7)
+    indicies = keras_rcnn.backend.non_maximum_suppression(proposals, scores, maximum, 0.7)
 
     proposals = keras.backend.gather(proposals, indicies)
 
@@ -133,8 +132,7 @@ def overlap(a, b):
             ih = (min(a[n, 3], b[k, 3]) - max(a[n, 1], b[k, 1]) + 1)
 
             if ih > 0:
-                ua = float((a[n, 2] - a[n, 0] + 1) * (
-                a[n, 3] - a[n, 1] + 1) + area - iw * ih)
+                ua = float((a[n, 2] - a[n, 0] + 1) * (a[n, 3] - a[n, 1] + 1) + area - iw * ih)
 
                 overlaps[n, k] = iw * ih / ua
 
