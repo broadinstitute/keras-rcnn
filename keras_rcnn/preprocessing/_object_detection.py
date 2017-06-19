@@ -236,7 +236,7 @@ def anchor(image, shape, resized):
     return y1, y2
 
 
-class Iterator:
+class _Iterator:
     def __init__(self, n, batch_size, shuffle, seed):
         self.batch_index = 0
 
@@ -293,13 +293,13 @@ class Iterator:
         pass
 
 
-class DictionaryIterator(Iterator):
+class _DictionaryIterator(_Iterator):
     def __init__(self, dictionary, generator, shuffle=False, seed=None):
         self.dictionary = dictionary
 
         self.generator = generator
 
-        Iterator.__init__(self, len(dictionary), 1, shuffle, seed)
+        _Iterator.__init__(self, len(dictionary), 1, shuffle, seed)
 
     def next(self):
         with self.lock:
@@ -332,4 +332,4 @@ class ObjectDetectionGenerator:
         pass
 
     def flow(self, dictionary, shuffle=True, seed=None):
-        return DictionaryIterator(dictionary, self, shuffle=shuffle, seed=seed)
+        return _DictionaryIterator(dictionary, self, shuffle=shuffle, seed=seed)

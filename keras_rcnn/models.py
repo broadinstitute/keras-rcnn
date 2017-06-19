@@ -38,3 +38,14 @@ class RCNN(keras.models.Model):
 
         super(RCNN, self).__init__(inputs,
                                    [rpn_prediction, score, boxes])
+
+class RPN(keras.models.Model):
+    def __init__(self, inputs):
+        y = inputs.layers[-2].output
+
+        a = keras.layers.Conv2D(9 * 1, (1, 1), activation="sigmoid")(y)
+        b = keras.layers.Conv2D(9 * 4, (1, 1))(y)
+
+        y = keras.layers.concatenate([a, b])
+
+        super(RPN, self).__init__(inputs, y)
