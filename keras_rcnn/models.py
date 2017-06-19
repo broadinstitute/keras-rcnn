@@ -23,11 +23,12 @@ class RCNN(keras.models.Model):
 
 
 class RPN(keras.models.Model):
-    def __init__(self, inputs, anchors):
-        y = keras.layers.Conv2D(512, (3, 3), activation="relu", padding="same")(inputs)
+    def __init__(self, inputs):
+        y = inputs.layers[-2].output
 
-        score = keras.layers.Conv2D(anchors, (1, 1), activation="sigmoid")(y)
+        a = keras.layers.Conv2D(9 * 1, (1, 1), activation="sigmoid")(y)
+        b = keras.layers.Conv2D(9 * 4, (1, 1))(y)
 
-        boxes = keras.layers.Conv2D(anchors * 4, (1, 1))(y)
+        y = keras.layers.concatenate([a, b])
 
-        super(RPN, self).__init__(inputs, [score, boxes])
+        super(RPN, self).__init__(inputs, y)
