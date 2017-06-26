@@ -138,9 +138,9 @@ def overlap(a, b):
     def body(i, l):
         area = ((b[:, 2] - b[:, 0] + 1) * (b[:, 3] - b[:, 1] + 1))
 
-        iw = tensorflow.maximum( (tensorflow.minimum(a[i, 2], b[:, 2]) - tensorflow.maximum(a[i, 0], b[:, 0]) + 1), 0.0 )
+        iw = tensorflow.maximum((tensorflow.minimum(a[i, 2], b[:, 2]) - tensorflow.maximum(a[i, 0], b[:, 0]) + 1), 0.0)
 
-        ih = tensorflow.maximum( (tensorflow.minimum(a[i, 3], b[:, 3]) - tensorflow.maximum(a[i, 1], b[:, 1]) + 1), 0.0 )
+        ih = tensorflow.maximum((tensorflow.minimum(a[i, 3], b[:, 3]) - tensorflow.maximum(a[i, 1], b[:, 1]) + 1), 0.0)
 
         ua = (a[i, 2] - a[i, 0] + 1) * (a[i, 3] - a[i, 1] + 1) + area - iw * ih
 
@@ -172,11 +172,20 @@ def overlapping(y_true, y_pred, inds_inside):
     """
     overlaps = overlap(y_pred, y_true[:, :4])
 
-    argmax_overlaps_inds = tensorflow.argmax(overlaps, axis=1)
+    argmax_overlaps_inds = keras.backend.argmax(overlaps, axis=1)
 
-    gt_argmax_overlaps_inds = tensorflow.argmax(overlaps, axis=0)
+    gt_argmax_overlaps_inds = keras.backend.argmax(overlaps, axis=0)
 
-    max_overlaps = tensorflow.gather_nd(overlaps, tensorflow.transpose(tensorflow.stack([tensorflow.range(tensorflow.shape(inds_inside)[0]), tensorflow.cast(argmax_overlaps_inds, tensorflow.int32)], axis=0)))
+    indices = keras.backend.stack(
+        [
+            tensorflow.range(keras.backend.shape(inds_inside)[0]),
+            keras.backend.cast(argmax_overlaps_inds, tensorflow.int32)
+        ]
+    )
+
+    indices = keras.backend.transpose(indices)
+
+    max_overlaps = tensorflow.gather_nd(overlaps, indices)
 
     return argmax_overlaps_inds, max_overlaps, gt_argmax_overlaps_inds
 
@@ -233,19 +242,21 @@ def subsample_negative_labels(labels):
     
     bg_inds = tensorflow.where(tensorflow.equal(labels, 0))
     
-    bg_inds = tensorflow.shape(bg_inds)[0]
+    bg_inds = keras.backend.shape(bg_inds)[0]
     
-    size = tensorflow.cast(bg_inds, tensorflow.int32) - tensorflow.cast(num_bg, tensorflow.int32)
-    
+    size = keras.backend.cast(bg_inds, tensorflow.int32) - keras.backend.cast(num_bg, tensorflow.int32)
+
     def more_negative():
-        elems = tensorflow.gather(tensorflow.range(bg_inds), tensorflow.multinomial(tensorflow.log(tensorflow.ones((bg_inds, 1)) * 10.), size))
+        indices = tensorflow.multinomial(keras.backend.log(keras.backend.ones((bg_inds, 1)) * 10.), size)
+
+        elems = keras.backend.gather(tensorflow.range(bg_inds), indices)
         
         return tensorflow.scatter_update(tensorflow.Variable(labels, validate_shape=False), elems, -1)
 
     def less_negative():
         return labels
 
-    return tensorflow.cond(tensorflow.less_equal(size, 0), lambda: less_negative(), lambda: more_negative())
+    return tensorflow.cond(keras.backend.less_equal(size, 0), lambda: less_negative(), lambda: more_negative())
 
 
 def shift(shape, stride):
@@ -285,21 +296,21 @@ def shift(shape, stride):
     return boxes
 
 
-def inside_image(y_pred, img_info):
+def inside_image(y_pred, shape):
     """
     Calc indicies of anchors which are located completely inside of the image
     whose size is specified by img_info ((height, width, scale)-shaped array).
     :param y_pred: anchors
-    :param img_info:
+    :param shape:
     :return:
     """
     inds_inside = tensorflow.where(
         (y_pred[:, 0] >= 0) &
         (y_pred[:, 1] >= 0) &
-        (y_pred[:, 2] < img_info[1]) &  # width
-        (y_pred[:, 3] < img_info[0])  # height
+        (y_pred[:, 2] < shape[1]) &  # width
+        (y_pred[:, 3] < shape[0])  # height
     )
 
-    inds_inside = tensorflow.cast(inds_inside, tensorflow.int32)
+    inds_inside = keras.backend.cast(inds_inside, tensorflow.int32)
 
     return inds_inside[:, 0], keras.backend.reshape(keras.backend.gather(y_pred, inds_inside), [keras.backend.shape(inds_inside)[0], 4])
