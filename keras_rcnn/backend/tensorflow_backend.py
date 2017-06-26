@@ -1,7 +1,4 @@
-import itertools
-
 import keras.backend
-import numpy
 import tensorflow
 
 import keras_rcnn.backend
@@ -84,6 +81,7 @@ def propose(boxes, scores, maximum):
     scores = keras.backend.flatten(scores)
 
     proposals = keras.backend.cast(proposals, tensorflow.float32)
+
     scores = keras.backend.cast(scores, tensorflow.float32)
 
     indicies = keras_rcnn.backend.non_maximum_suppression(proposals, scores, maximum, 0.7)
@@ -112,6 +110,7 @@ def crop_and_resize(image, boxes, size):
     box_ind = tensorflow.reshape(box_ind, [-1])
 
     boxes = tensorflow.reshape(boxes, [-1, 4])
+
     return tensorflow.image.crop_and_resize(image, boxes, box_ind, size)
 
 
@@ -125,21 +124,30 @@ def overlap(a, b):
     -------
     overlaps: (N, K) ndarray of overlap between boxes and query_boxes
     """
-    N = tensorflow.shape(a)[0]
-    K = tensorflow.shape(b)[0]
+    n = tensorflow.shape(a)[0]
+
+    k = tensorflow.shape(b)[0]
+
     i = tensorflow.constant(0)
+
     initial_overlaps = tensorflow.Variable([])
 
     def cond(i, l):
-        return i < N
+        return i < n
 
     def body(i, l):
         area = ((b[:, 2] - b[:, 0] + 1) * (b[:, 3] - b[:, 1] + 1))
+
         iw = tensorflow.maximum( (tensorflow.minimum(a[i, 2], b[:, 2]) - tensorflow.maximum(a[i, 0], b[:, 0]) + 1), 0.0 )
+
         ih = tensorflow.maximum( (tensorflow.minimum(a[i, 3], b[:, 3]) - tensorflow.maximum(a[i, 1], b[:, 1]) + 1), 0.0 )
+
         ua = (a[i, 2] - a[i, 0] + 1) * (a[i, 3] - a[i, 1] + 1) + area - iw * ih
+
         iou = iw * ih / ua
+
         l = tensorflow.concat([l, iou], 0)
+
         return i+1, l
 
     index, final_overlaps = tensorflow.while_loop(
@@ -149,7 +157,7 @@ def overlap(a, b):
         shape_invariants=[i.get_shape(), tensorflow.TensorShape([None])]
     )
 
-    final_overlaps = tensorflow.reshape(final_overlaps, (N, K))
+    final_overlaps = tensorflow.reshape(final_overlaps, (n, k))
 
     return final_overlaps
 
@@ -165,12 +173,10 @@ def overlapping(y_true, y_pred, inds_inside):
     overlaps = overlap(y_pred, y_true[:, :4])
 
     argmax_overlaps_inds = tensorflow.argmax(overlaps, axis=1)
+
     gt_argmax_overlaps_inds = tensorflow.argmax(overlaps, axis=0)
 
-    max_overlaps = tensorflow.gather_nd(overlaps, tensorflow.transpose(
-        tensorflow.stack([tensorflow.range(tensorflow.shape(inds_inside)[0]),
-                          tensorflow.cast(argmax_overlaps_inds,
-                                          tensorflow.int32)], axis=0)))
+    max_overlaps = tensorflow.gather_nd(overlaps, tensorflow.transpose(tensorflow.stack([tensorflow.range(tensorflow.shape(inds_inside)[0]), tensorflow.cast(argmax_overlaps_inds, tensorflow.int32)], axis=0)))
 
     return argmax_overlaps_inds, max_overlaps, gt_argmax_overlaps_inds
 
@@ -197,26 +203,24 @@ def subsample_positive_labels(labels):
     :return:
     """
     num_fg = RPN_FG_FRACTION * RPN_BATCHSIZE
+
     fg_inds = tensorflow.where(tensorflow.equal(labels, 1))
+
     fg_inds = tensorflow.shape(fg_inds)[0]
-    size = tensorflow.cast(fg_inds, tensorflow.int32) - tensorflow.cast(num_fg,
-                                                                        tensorflow.int32)
+
+    size = tensorflow.cast(fg_inds, tensorflow.int32) - tensorflow.cast(num_fg, tensorflow.int32)
 
     def more_positive():
-        print(tensorflow.multinomial(
-            tensorflow.log(tensorflow.ones((fg_inds, 1)) * 10.), size))
-        elems = tensorflow.gather(tensorflow.range(fg_inds),
-                                  tensorflow.multinomial(tensorflow.log(
-                                      tensorflow.ones((fg_inds, 1)) * 10.),
-                                                         size))
-        return tensorflow.scatter_update(
-            tensorflow.Variable(labels, validate_shape=False), elems, -1)
+        print(tensorflow.multinomial(tensorflow.log(tensorflow.ones((fg_inds, 1)) * 10.), size))
+
+        elems = tensorflow.gather(tensorflow.range(fg_inds), tensorflow.multinomial(tensorflow.log(tensorflow.ones((fg_inds, 1)) * 10.), size))
+        
+        return tensorflow.scatter_update(tensorflow.Variable(labels, validate_shape=False), elems, -1)
 
     def less_positive():
         return labels
 
-    return tensorflow.cond(tensorflow.less_equal(size, 0),
-                           lambda: less_positive(), lambda: more_positive())
+    return tensorflow.cond(tensorflow.less_equal(size, 0), lambda: less_positive(), lambda: more_positive())
 
 
 def subsample_negative_labels(labels):
@@ -225,30 +229,23 @@ def subsample_negative_labels(labels):
     :param labels: array of labels (1 is positive, 0 is negative, -1 is dont care)
     :return:
     """
-    num_bg = RPN_BATCHSIZE - tensorflow.reduce_sum(tensorflow.gather(labels,
-                                                                     tensorflow.where(
-                                                                         tensorflow.equal(
-                                                                             labels,
-                                                                             1))))
-
+    num_bg = RPN_BATCHSIZE - tensorflow.reduce_sum(tensorflow.gather(labels, tensorflow.where(tensorflow.equal(labels, 1))))
+    
     bg_inds = tensorflow.where(tensorflow.equal(labels, 0))
+    
     bg_inds = tensorflow.shape(bg_inds)[0]
-    size = tensorflow.cast(bg_inds, tensorflow.int32) - tensorflow.cast(num_bg,
-                                                                        tensorflow.int32)
-
+    
+    size = tensorflow.cast(bg_inds, tensorflow.int32) - tensorflow.cast(num_bg, tensorflow.int32)
+    
     def more_negative():
-        elems = tensorflow.gather(tensorflow.range(bg_inds),
-                                  tensorflow.multinomial(tensorflow.log(
-                                      tensorflow.ones((bg_inds, 1)) * 10.),
-                                                         size))
-        return tensorflow.scatter_update(
-            tensorflow.Variable(labels, validate_shape=False), elems, -1)
+        elems = tensorflow.gather(tensorflow.range(bg_inds), tensorflow.multinomial(tensorflow.log(tensorflow.ones((bg_inds, 1)) * 10.), size))
+        
+        return tensorflow.scatter_update(tensorflow.Variable(labels, validate_shape=False), elems, -1)
 
     def less_negative():
         return labels
 
-    return tensorflow.cond(tensorflow.less_equal(size, 0),
-                           lambda: less_negative(), lambda: more_negative())
+    return tensorflow.cond(tensorflow.less_equal(size, 0), lambda: less_negative(), lambda: more_negative())
 
 
 def shift(shape, stride):
