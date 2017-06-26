@@ -6,15 +6,6 @@ import keras_rcnn.layers.object_detection
 
 
 @pytest.fixture()
-def anchor_layer():
-    features = (14, 14)
-
-    shape = (224, 224)
-
-    return keras_rcnn.layers.object_detection.Anchor(features, shape)
-
-
-@pytest.fixture()
 def convolution_neural_network():
     options = {
         "activation": "relu",
@@ -113,11 +104,6 @@ def object_proposal_model():
     y = keras_rcnn.layers.object_detection.ObjectProposal(300)([a, b])
 
     return keras.models.Model([a, b], y)
-
-
-@pytest.fixture()
-def regional_proposal_network_layer():
-    return keras_rcnn.layers.object_detection.RPN()
 
 
 @pytest.fixture()

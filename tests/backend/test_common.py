@@ -1,6 +1,8 @@
-import keras_rcnn.backend
+import keras.backend
 import numpy
 import numpy.testing
+
+import keras_rcnn.backend
 
 
 def test_anchor():
@@ -16,18 +18,15 @@ def test_anchor():
        [-168., -344., 183., 359.]]
     )
 
+    x = keras.backend.variable(x)
+
     y = keras_rcnn.backend.anchor()
+
+    x = keras.backend.eval(x)
+    y = keras.backend.eval(y)
 
     numpy.testing.assert_array_equal(x, y)
 
 
 def test_clip():
     pass
-
-
-def test_shift():
-    x = (1764, 4)
-
-    y = keras_rcnn.backend.shift((14, 14), 16).shape
-
-    assert x == y
