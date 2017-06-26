@@ -11,7 +11,7 @@ RPN_BATCHSIZE = 256
 
 def bbox_transform_inv(shifted, boxes):
     if boxes.shape[0] == 0:
-        return tensorflow.zeros((0, boxes.shape[1]), dtype=boxes.dtype)
+        return keras.backend.zeros((0, boxes.shape[1]), dtype=boxes.dtype)
 
     a = shifted[:, 2] - shifted[:, 0] + 1.0
     b = shifted[:, 3] - shifted[:, 1] + 1.0
@@ -27,8 +27,8 @@ def bbox_transform_inv(shifted, boxes):
     pred_ctr_x = dx * a[:, tensorflow.newaxis] + ctr_x[:, tensorflow.newaxis]
     pred_ctr_y = dy * b[:, tensorflow.newaxis] + ctr_y[:, tensorflow.newaxis]
 
-    pred_w = tensorflow.exp(dw) * a[:, tensorflow.newaxis]
-    pred_h = tensorflow.exp(dh) * b[:, tensorflow.newaxis]
+    pred_w = keras.backend.exp(dw) * a[:, tensorflow.newaxis]
+    pred_h = keras.backend.exp(dh) * b[:, tensorflow.newaxis]
 
     pred_boxes = [
         pred_ctr_x - 0.5 * pred_w,
@@ -105,11 +105,11 @@ def crop_and_resize(image, boxes, size):
     # Returns
     4D Tensor (number of regions, slice_height, slice_width, channels)
     """
-    box_ind = tensorflow.zeros_like(boxes, tensorflow.int32)
+    box_ind = keras.backend.zeros_like(boxes, tensorflow.int32)
     box_ind = box_ind[..., 0]
-    box_ind = tensorflow.reshape(box_ind, [-1])
+    box_ind = keras.backend.reshape(box_ind, [-1])
 
-    boxes = tensorflow.reshape(boxes, [-1, 4])
+    boxes = keras.backend.reshape(boxes, [-1, 4])
 
     return tensorflow.image.crop_and_resize(image, boxes, box_ind, size)
 
@@ -299,6 +299,7 @@ def inside_image(y_pred, img_info):
         (y_pred[:, 2] < img_info[1]) &  # width
         (y_pred[:, 3] < img_info[0])  # height
     )
+
     inds_inside = tensorflow.cast(inds_inside, tensorflow.int32)
 
-    return inds_inside[:, 0], tensorflow.reshape(tensorflow.gather(y_pred, inds_inside), [tensorflow.shape(inds_inside)[0], 4])
+    return inds_inside[:, 0], keras.backend.reshape(keras.backend.gather(y_pred, inds_inside), [keras.backend.shape(inds_inside)[0], 4])
