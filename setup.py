@@ -32,5 +32,5 @@ setuptools.setup(
         ]
     ),
     url="https://github.com/broadinstitute/keras-rcnn",
-    version="0.0.1"
+    version="0.0.2"
 )

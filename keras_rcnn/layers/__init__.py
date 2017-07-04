@@ -1,4 +1,3 @@
-from .object_detection import (Anchor, ObjectProposal, RPN)
+from .object_detection import (ObjectProposal)
 
-import keras_rcnn.backend
 from .pooling import ROI
