@@ -1,4 +1,5 @@
 import numpy
+import keras.layers
 import keras.backend
 import keras_rcnn.backend
 
@@ -32,6 +33,17 @@ def test_inside_image():
     all_inside_anchors = keras.backend.eval(all_inside_anchors)
 
     assert all_inside_anchors.shape == (84, 4)
+
+
+def test_propose():
+    rpn_scores = keras.backend.variable(numpy.random.random((1, 7, 7, 9)))
+    rpn_boxes = keras.backend.variable(numpy.random.random((1, 7, 7, 36)))
+    proposals = keras_rcnn.backend.propose(rpn_boxes, rpn_scores, 300)
+    assert keras.backend.eval(proposals).shape[0] == 1
+    assert keras.backend.eval(proposals).shape[-1] == 4
+
+    proposals = keras_rcnn.backend.propose(rpn_boxes, rpn_scores, 10)
+    assert keras.backend.eval(proposals).shape == (1, 10, 4)
 
 
 def test_overlap():
