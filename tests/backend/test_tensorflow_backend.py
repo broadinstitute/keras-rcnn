@@ -83,18 +83,20 @@ def test_resize_images():
 
 
 def test_subsample_positive_labels():
-    p = numpy.ones((10,))
-    vp = tensorflow.convert_to_tensor(p,
-                                      dtype=tensorflow.float32)  # keras.backend.variable(p)
-    expected = keras.backend.eval(
-        keras_rcnn.backend.subsample_positive_labels(vp))
-    numpy.testing.assert_array_equal(p, expected)
-    p2 = numpy.ones((1000,))
-    vp2 = tensorflow.convert_to_tensor(p2,
-                                       dtype=tensorflow.float32)  # keras.backend.variable(p2)
-    expected2 = keras.backend.eval(
-        keras_rcnn.backend.subsample_positive_labels(vp2))
-    assert numpy.sum(expected2) < numpy.sum(p2)
+    x = keras.backend.ones((10,))
+
+    y = keras_rcnn.backend.subsample_positive_labels(x)
+
+    numpy.testing.assert_array_equal(
+        keras.backend.eval(x),
+        keras.backend.eval(y)
+    )
+
+    x = keras.backend.ones((1000,))
+
+    y = keras_rcnn.backend.subsample_positive_labels(x)
+
+    assert keras.backend.eval(keras.backend.sum(y) < keras.backend.sum(x))
 
 
 def test_subsample_negative_labels():
