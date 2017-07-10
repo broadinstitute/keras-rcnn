@@ -3,6 +3,7 @@ import numpy
 import tensorflow
 
 import keras_rcnn.backend
+import keras_rcnn.layers.object_detection._object_proposal
 
 
 def test_label():
@@ -29,19 +30,6 @@ def test_label():
     assert result1.shape == (84,)
 
     assert result2.shape == (84,)
-
-
-def test_propose():
-    anchors = 9
-    features = (14, 14)
-    boxes = numpy.zeros((1, features[0], features[1], 4 * anchors))
-    scores = numpy.random.rand(1, features[0], features[1], anchors)
-    threshold = 0.5
-    maximum = 100
-    boxes = keras.backend.variable(boxes)
-    scores = keras.backend.variable(scores)
-    proposals = keras_rcnn.backend.propose(boxes, scores, maximum)
-    assert keras.backend.eval(proposals).shape == (1, maximum, 4)
 
 
 def test_non_max_suppression():
