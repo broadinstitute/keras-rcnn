@@ -230,6 +230,4 @@ def test_overlapping():
 def test_shift():
     y = keras_rcnn.backend.shift((14, 14), 16)
 
-    y = keras.backend.eval(y)
-
-    assert y.shape == (1764, 4)
+    assert keras.backend.int_shape(y) == (1764, 4)
