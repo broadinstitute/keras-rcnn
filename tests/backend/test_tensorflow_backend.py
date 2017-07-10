@@ -98,18 +98,20 @@ def test_subsample_positive_labels():
 
 
 def test_subsample_negative_labels():
-    n = numpy.zeros((10,))
-    vn = tensorflow.convert_to_tensor(n,
-                                      dtype=tensorflow.float32)  # keras.backend.variable(n)
-    expected = keras.backend.eval(
-        keras_rcnn.backend.subsample_negative_labels(vn))
-    numpy.testing.assert_array_equal(n, expected)
-    n2 = numpy.zeros((1000,))
-    vn2 = tensorflow.convert_to_tensor(n2,
-                                       dtype=tensorflow.float32)  # keras.backend.variable(n2)
-    expected2 = keras.backend.eval(
-        keras_rcnn.backend.subsample_negative_labels(vn2))
-    assert numpy.sum(expected2) < numpy.sum(n2)
+    x = keras.backend.zeros((10,))
+
+    y = keras_rcnn.backend.subsample_negative_labels(x)
+
+    numpy.testing.assert_array_equal(
+        keras.backend.eval(x),
+        keras.backend.eval(y)
+    )
+
+    x = keras.backend.zeros((1000,))
+
+    y = keras_rcnn.backend.subsample_negative_labels(x)
+
+    assert keras.backend.eval(keras.backend.sum(y) < keras.backend.sum(x))
 
 
 def test_balance():
