@@ -1,6 +1,8 @@
 import keras.backend
 import numpy
 
+import keras_rcnn.backend
+
 
 def anchor(base_size=16, ratios=None, scales=None):
     """
@@ -113,3 +115,31 @@ def _whctrs(anchor):
     x_ctr = anchor[:, 0] + 0.5 * (w - 1)
     y_ctr = anchor[:, 1] + 0.5 * (h - 1)
     return w, h, x_ctr, y_ctr
+
+
+def shift(shape, stride):
+    shift_x = keras.backend.arange(0, shape[0]) * stride
+    shift_y = keras.backend.arange(0, shape[1]) * stride
+
+    shift_x, shift_y = keras_rcnn.backend.meshgrid(shift_x, shift_y)
+
+    shifts = keras.backend.stack([
+        keras.backend.reshape(shift_x, [-1]),
+        keras.backend.reshape(shift_y, [-1]),
+        keras.backend.reshape(shift_x, [-1]),
+        keras.backend.reshape(shift_y, [-1])
+    ], axis=0)
+
+    shifts = keras.backend.transpose(shifts)
+
+    anchors = keras_rcnn.backend.anchor()
+
+    number_of_anchors = keras.backend.shape(anchors)[0]
+
+    k = keras.backend.shape(shifts)[0]  # number of base points = feat_h * feat_w
+
+    shifted_anchors = keras.backend.reshape(anchors, [1, number_of_anchors, 4]) + keras.backend.cast(keras.backend.reshape(shifts, [k, 1, 4]), keras.backend.floatx())
+
+    shifted_anchors = keras.backend.reshape(shifted_anchors, [k * number_of_anchors, 4])
+
+    return shifted_anchors

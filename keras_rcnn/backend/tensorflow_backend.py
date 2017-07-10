@@ -9,7 +9,7 @@ RPN_FG_FRACTION = 0.5
 RPN_BATCHSIZE = 256
 
 
-def scatter_add_tensor(ref, indices, updates, name=None):
+def _scatter_add_tensor(ref, indices, updates, name=None):
     """
     Adds sparse updates to a variable reference.
 
@@ -30,13 +30,23 @@ def scatter_add_tensor(ref, indices, updates, name=None):
     """
     with tensorflow.name_scope(name, 'scatter_add_tensor', [ref, indices, updates]) as scope:
         ref = tensorflow.convert_to_tensor(ref, name='ref')
+
         indices = tensorflow.convert_to_tensor(indices, name='indices')
+
         updates = tensorflow.convert_to_tensor(updates, name='updates')
+
         ref_shape = tensorflow.shape(ref, out_type=indices.dtype, name='ref_shape')
+
         scattered_updates = tensorflow.scatter_nd(indices, updates, ref_shape, name='scattered_updates')
+
         with tensorflow.control_dependencies([tensorflow.assert_equal(ref_shape, tensorflow.shape(scattered_updates, out_type=indices.dtype))]):
             output = tensorflow.add(ref, scattered_updates, name=scope)
+
         return output
+
+
+def meshgrid(*args, **kwargs):
+    return tensorflow.meshgrid(*args, **kwargs)
 
 
 def bbox_transform_inv(shifted, boxes):
@@ -221,7 +231,7 @@ def subsample_positive_labels(labels):
     def more_positive():
         elems = tensorflow.multinomial(tensorflow.log(tensorflow.ones((1, fg_inds))), size)
         indices = tensorflow.reshape(elems, (-1, 1))
-        return scatter_add_tensor(labels, indices, tensorflow.ones((size,)) * -1)
+        return _scatter_add_tensor(labels, indices, tensorflow.ones((size,)) * -1)
 
     def less_positive():
         return labels
@@ -251,7 +261,7 @@ def subsample_negative_labels(labels):
 
         updates = tensorflow.ones((size,)) * -1
 
-        return scatter_add_tensor(ref, indices, updates)
+        return _scatter_add_tensor(ref, indices, updates)
 
     def less_negative():
         return labels
@@ -317,27 +327,28 @@ def shift(shape, stride):
     shift_x = keras.backend.arange(0, shape[0]) * stride
     shift_y = keras.backend.arange(0, shape[1]) * stride
 
-    shift_x, shift_y = tensorflow.meshgrid(shift_x, shift_y)
+    shift_x, shift_y = meshgrid(shift_x, shift_y)
 
-    shifts = tensorflow.stack((tensorflow.reshape(shift_x, [-1]),
-                               tensorflow.reshape(shift_y, [-1]),
-                               tensorflow.reshape(shift_x, [-1]),
-                               tensorflow.reshape(shift_y, [-1])), axis=0)
-    shifts = tensorflow.transpose(shifts)
+    shifts = keras.backend.stack([
+        keras.backend.reshape(shift_x, [-1]),
+        keras.backend.reshape(shift_y, [-1]),
+        keras.backend.reshape(shift_x, [-1]),
+        keras.backend.reshape(shift_y, [-1])
+    ], axis=0)
+
+    shifts = keras.backend.transpose(shifts)
+
     anchors = keras_rcnn.backend.anchor()
 
-    # Create all bbox
-    number_of_anchors = tensorflow.shape(anchors)[0]
+    number_of_anchors = keras.backend.shape(anchors)[0]
 
-    k = tensorflow.shape(shifts)[0]  # number of base points = feat_h * feat_w
+    k = keras.backend.shape(shifts)[0]  # number of base points = feat_h * feat_w
 
-    bbox = tensorflow.reshape(anchors,
-                              [1, number_of_anchors, 4]) + tensorflow.cast(
-        tensorflow.reshape(shifts, [k, 1, 4]), dtype=tensorflow.float32)
+    shifted_anchors = keras.backend.reshape(anchors, [1, number_of_anchors, 4]) + keras.backend.cast(keras.backend.reshape(shifts, [k, 1, 4]), keras.backend.floatx())
 
-    bbox = tensorflow.reshape(bbox, [k * number_of_anchors, 4])
+    shifted_anchors = keras.backend.reshape(shifted_anchors, [k * number_of_anchors, 4])
 
-    return bbox
+    return shifted_anchors
 
 
 def inside_image(y_pred, img_info):

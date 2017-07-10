@@ -102,3 +102,11 @@ def test_whctrs():
     results = numpy.array([keras.backend.eval(results0), keras.backend.eval(results1), keras.backend.eval(results2), keras.backend.eval(results3)])
     expected = numpy.expand_dims([99, 98, 51, 51.5], 1)
     numpy.testing.assert_array_equal(results, expected)
+
+
+def test_shift():
+    y = keras_rcnn.backend.shift((14, 14), 16)
+
+    assert keras.backend.int_shape(y) == (1764, 4)
+
+    assert y.dtype == keras.backend.floatx()

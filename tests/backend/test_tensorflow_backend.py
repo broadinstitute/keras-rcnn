@@ -236,9 +236,3 @@ def test_overlapping():
     assert max_overlaps.shape == (84,)
 
     assert gt_argmax_overlaps_inds.shape == (91,)
-
-
-def test_shift():
-    y = keras_rcnn.backend.shift((14, 14), 16)
-
-    assert keras.backend.int_shape(y) == (1764, 4)
