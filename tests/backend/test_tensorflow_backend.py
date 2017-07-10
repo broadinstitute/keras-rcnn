@@ -1,7 +1,8 @@
-import numpy
 import keras.backend
-import keras_rcnn.backend
+import numpy
 import tensorflow
+
+import keras_rcnn.backend
 
 
 def test_label():
@@ -161,16 +162,6 @@ def test_inside_image():
     all_inside_anchors = keras.backend.eval(all_inside_anchors)
 
     assert all_inside_anchors.shape == (84, 4)
-
-
-def test_crop_and_resize():
-    image = keras.backend.variable(numpy.ones((1, 28, 28, 3)))
-    boxes = keras.backend.variable(
-        numpy.array([[[0.1, 0.1, 0.2, 0.2], [0.5, 0.5, 0.8, 0.8]]]))
-    size = [7, 7]
-    slices = keras_rcnn.backend.crop_and_resize(image, boxes, size)
-    assert keras.backend.eval(slices).shape == (2, 7, 7, 3)
-    assert bbox_labels.shape == (84,)
 
 
 def test_overlap():

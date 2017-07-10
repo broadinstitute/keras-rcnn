@@ -1,7 +1,10 @@
-import keras_rcnn.backend
+import keras.backend
 import numpy
-from keras_rcnn.backend.common import _mkanchors, _scale_enum, _ratio_enum, _whctrs
 import numpy.testing
+
+import keras_rcnn.backend
+import keras_rcnn.backend.common
+
 
 def test_anchor():
     x = numpy.array(
@@ -18,6 +21,7 @@ def test_anchor():
     y = keras_rcnn.backend.anchor()
     y = keras.backend.eval(y)
     numpy.testing.assert_array_almost_equal(x, y)
+
 
 def test_clip():
     boxes = numpy.array([[0,0,0,0], [1, 2, 3, 4], [-4, 2, 1000, 6000], [3, -10, 223, 224]])
@@ -47,39 +51,41 @@ def test_mkanchors():
     y_ctr = keras.backend.variable([2], 'float32')
     ws = keras.backend.variable(ws, 'float32')
     hs = keras.backend.variable(hs, 'float32')
-    results = _mkanchors(ws, hs, x_ctr, y_ctr)
+    results = keras_rcnn.backend.common._mkanchors(ws, hs, x_ctr, y_ctr)
     results = keras.backend.eval(results)
     expected = numpy.array([[1, 0.5, 1, 3.5], [0.5, 0, 1.5, 4 ] , [0, -0.5, 2, 4.5] ])
     numpy.testing.assert_array_equal(results, expected)
+
 
 def test_ratio_enum():
     anchor = numpy.expand_dims(numpy.array([0, 0, 0, 0]), 0)
     ratios = numpy.array([1, 2, 3])
     anchor = keras.backend.variable(anchor)
     ratios = keras.backend.variable(ratios)
-    results = _ratio_enum(anchor, ratios)
+    results = keras_rcnn.backend.common._ratio_enum(anchor, ratios)
     results = keras.backend.eval(results)
     expected = numpy.array([[ 0. , 0. , 0. , 0. ], [ 0. , -0.5, 0. , 0.5], [ 0. , -1. , 0. , 1. ]])
     numpy.testing.assert_array_equal(results, expected)
     anchor = numpy.expand_dims(numpy.array([2, 3, 100, 100]), 0)
     anchor = keras.backend.variable(anchor)
-    results = _ratio_enum(anchor, ratios)
+    results = keras_rcnn.backend.common._ratio_enum(anchor, ratios)
     results = keras.backend.eval(results)
     expected = numpy.array([[ 2.5, 3. , 99.5, 100. ], [ 16.5, -18. , 85.5, 121. ], [ 23. , -33.5, 79. , 136.5]])
     numpy.testing.assert_array_equal(results, expected)
+
 
 def test_scale_enum():
     anchor = numpy.expand_dims(numpy.array([0, 0, 0, 0]), 0)
     scales = numpy.array([1, 2, 3])
     anchor = keras.backend.variable(anchor)
     scales = keras.backend.variable(scales)
-    results = _scale_enum(anchor, scales)
+    results = keras_rcnn.backend.common._scale_enum(anchor, scales)
     results = keras.backend.eval(results)
     expected = numpy.array([[0, 0, 0, 0], [-0.5, -0.5, 0.5, 0.5], [-1. , -1. , 1. , 1. ]])
     numpy.testing.assert_array_equal(results, expected)
     anchor = keras.backend.cast(numpy.expand_dims(numpy.array([2, 3, 100, 100]), 0), 'float32')
     anchor = keras.backend.variable(anchor)
-    results = _scale_enum(anchor, scales)
+    results = keras_rcnn.backend.common._scale_enum(anchor, scales)
     results = keras.backend.eval(results)
     expected = numpy.array([[ 2. , 3. , 100. , 100. ], [ -47.5, -46. , 149.5, 149. ], [ -97. , -95. , 199. , 198. ]])
     numpy.testing.assert_array_equal(results, expected)
@@ -87,13 +93,12 @@ def test_scale_enum():
 
 def test_whctrs():
     anchor = keras.backend.cast(keras.backend.expand_dims([0,0,0,0], 0), 'float32')
-    results0, results1, results2, results3 = _whctrs(anchor)
+    results0, results1, results2, results3 = keras_rcnn.backend.common._whctrs(anchor)
     results = numpy.array([keras.backend.eval(results0), keras.backend.eval(results1), keras.backend.eval(results2), keras.backend.eval(results3)])
     expected = numpy.expand_dims([1,1,0,0], 1)
     numpy.testing.assert_array_equal(results, expected)
     anchor = keras.backend.cast(keras.backend.expand_dims([2, 3, 100, 100], 0), 'float32')
-    results0, results1, results2, results3 = _whctrs(anchor)
+    results0, results1, results2, results3 = keras_rcnn.backend.common._whctrs(anchor)
     results = numpy.array([keras.backend.eval(results0), keras.backend.eval(results1), keras.backend.eval(results2), keras.backend.eval(results3)])
     expected = numpy.expand_dims([99, 98, 51, 51.5], 1)
     numpy.testing.assert_array_equal(results, expected)
-
