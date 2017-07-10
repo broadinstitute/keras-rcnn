@@ -8,6 +8,7 @@ RPN_POSITIVE_OVERLAP = 0.7
 RPN_FG_FRACTION = 0.5
 RPN_BATCHSIZE = 256
 
+
 def scatter_add_tensor(ref, indices, updates, name=None):
     """
     Adds sparse updates to a variable reference.
