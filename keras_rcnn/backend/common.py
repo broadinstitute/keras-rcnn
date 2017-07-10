@@ -7,16 +7,16 @@ def anchor(base_size=16, ratios=None, scales=None):
     Generates a regular grid of multi-aspect and multi-scale anchor boxes.
     """
     if ratios is None:
-        ratios = keras.backend.variable(numpy.array([0.5, 1, 2]))
+        ratios = keras.backend.cast([0.5, 1, 2], 'float32')
 
     if scales is None:
-        scales = keras.backend.variable(numpy.array([8, 16, 32]))
-
-    base_anchor = keras.backend.variable(numpy.array([1, 1, base_size, base_size]) - 1)
+        scales = keras.backend.cast([8, 16, 32], 'float32')
+    base_anchor = keras.backend.cast([1, 1, base_size, base_size],
+                                     'float32') - 1
+    base_anchor = keras.backend.expand_dims(base_anchor, 0)
 
     ratio_anchors = _ratio_enum(base_anchor, ratios)
-
-    anchors = keras.backend.concatenate([_scale_enum(ratio_anchors[i, :], scales) for i in range(ratio_anchors.shape[0])], axis = 0)
+    anchors = _scale_enum(ratio_anchors, scales)
 
     return anchors
 
@@ -37,22 +37,29 @@ def bbox_transform(ex_rois, gt_rois):
     targets_dw = keras.backend.log(gt_widths / ex_widths)
     targets_dh = keras.backend.log(gt_heights / ex_heights)
 
-    targets = keras.backend.stack((targets_dx, targets_dy, targets_dw, targets_dh))
+    targets = keras.backend.stack(
+        (targets_dx, targets_dy, targets_dw, targets_dh))
 
     targets = keras.backend.transpose(targets)
 
-    return targets
+    return keras.backend.cast(targets, 'float32')
 
 
 def clip(boxes, shape):
+    boxes = keras.backend.cast(boxes, dtype='int32')
+    shape = keras.backend.cast(shape, dtype='int32')
     proposals = [
-        keras.backend.maximum(keras.backend.minimum(boxes[:, 0::4], shape[1] - 1), 0),
-        keras.backend.maximum(keras.backend.minimum(boxes[:, 1::4], shape[1] - 1), 0),
-        keras.backend.maximum(keras.backend.minimum(boxes[:, 2::4], shape[1] - 1), 0),
-        keras.backend.maximum(keras.backend.minimum(boxes[:, 3::4], shape[0] - 1), 0)
+        keras.backend.maximum(
+            keras.backend.minimum(boxes[:, 0::4], shape[1] - 1), 0),
+        keras.backend.maximum(
+            keras.backend.minimum(boxes[:, 1::4], shape[0] - 1), 0),
+        keras.backend.maximum(
+            keras.backend.minimum(boxes[:, 2::4], shape[1] - 1), 0),
+        keras.backend.maximum(
+            keras.backend.minimum(boxes[:, 3::4], shape[0] - 1), 0)
     ]
 
-    return keras.backend.concatenate(proposals)
+    return keras.backend.concatenate(proposals, axis=1)
 
 
 def _mkanchors(ws, hs, x_ctr, y_ctr):
@@ -61,13 +68,12 @@ def _mkanchors(ws, hs, x_ctr, y_ctr):
     (x_ctr, y_ctr), output a set of anchors (windows).
     """
 
-    ws = keras.backend.expand_dims(ws, axis=1)
-    hs = keras.backend.expand_dims(hs, axis=1)
+    col1 = keras.backend.reshape(x_ctr - 0.5 * (ws - 1), (-1, 1))
+    col2 = keras.backend.reshape(y_ctr - 0.5 * (hs - 1), (-1, 1))
+    col3 = keras.backend.reshape(x_ctr + 0.5 * (ws - 1), (-1, 1))
+    col4 = keras.backend.reshape(y_ctr + 0.5 * (hs - 1), (-1, 1))
+    anchors = keras.backend.concatenate((col1, col2, col3, col4), axis=1)
 
-    anchors = keras.backend.concatenate((x_ctr - 0.5 * (ws - 1),
-                                         y_ctr - 0.5 * (hs - 1),
-                                         x_ctr + 0.5 * (ws - 1),
-                                         y_ctr + 0.5 * (hs - 1)), axis=1)
     return anchors
 
 
@@ -75,7 +81,8 @@ def _ratio_enum(anchor, ratios):
     """
     Enumerate a set of anchors for each aspect ratio wrt an anchor.
     """
-
+    # import pdb
+    # pdb.set_trace()
     w, h, x_ctr, y_ctr = _whctrs(anchor)
     size = w * h
     size_ratios = size / ratios
@@ -91,8 +98,8 @@ def _scale_enum(anchor, scales):
     """
 
     w, h, x_ctr, y_ctr = _whctrs(anchor)
-    ws = w * scales
-    hs = h * scales
+    ws = keras.backend.expand_dims(w, 1) * scales
+    hs = keras.backend.expand_dims(h, 1) * scales
     anchors = _mkanchors(ws, hs, x_ctr, y_ctr)
     return anchors
 
@@ -101,9 +108,8 @@ def _whctrs(anchor):
     """
     Return width, height, x center, and y center for an anchor (window).
     """
-
-    w = anchor[2] - anchor[0] + 1
-    h = anchor[3] - anchor[1] + 1
-    x_ctr = anchor[0] + 0.5 * (w - 1)
-    y_ctr = anchor[1] + 0.5 * (h - 1)
+    w = anchor[:, 2] - anchor[:, 0] + 1
+    h = anchor[:, 3] - anchor[:, 1] + 1
+    x_ctr = anchor[:, 0] + 0.5 * (w - 1)
+    y_ctr = anchor[:, 1] + 0.5 * (h - 1)
     return w, h, x_ctr, y_ctr
