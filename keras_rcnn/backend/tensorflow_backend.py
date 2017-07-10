@@ -323,34 +323,6 @@ def label(y_true, y_pred, inds_inside):
     return argmax_overlaps_inds, balance(labels)
 
 
-def shift(shape, stride):
-    shift_x = keras.backend.arange(0, shape[0]) * stride
-    shift_y = keras.backend.arange(0, shape[1]) * stride
-
-    shift_x, shift_y = meshgrid(shift_x, shift_y)
-
-    shifts = keras.backend.stack([
-        keras.backend.reshape(shift_x, [-1]),
-        keras.backend.reshape(shift_y, [-1]),
-        keras.backend.reshape(shift_x, [-1]),
-        keras.backend.reshape(shift_y, [-1])
-    ], axis=0)
-
-    shifts = keras.backend.transpose(shifts)
-
-    anchors = keras_rcnn.backend.anchor()
-
-    number_of_anchors = keras.backend.shape(anchors)[0]
-
-    k = keras.backend.shape(shifts)[0]  # number of base points = feat_h * feat_w
-
-    shifted_anchors = keras.backend.reshape(anchors, [1, number_of_anchors, 4]) + keras.backend.cast(keras.backend.reshape(shifts, [k, 1, 4]), keras.backend.floatx())
-
-    shifted_anchors = keras.backend.reshape(shifted_anchors, [k * number_of_anchors, 4])
-
-    return shifted_anchors
-
-
 def inside_image(y_pred, img_info):
     """
     Calc indicies of anchors which are located completely inside of the image
