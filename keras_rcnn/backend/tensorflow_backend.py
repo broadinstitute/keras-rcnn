@@ -1,54 +1,143 @@
 import keras.backend
 import tensorflow
-
 import keras_rcnn.backend
 
-RPN_NEGATIVE_OVERLAP = 0.3
-RPN_POSITIVE_OVERLAP = 0.7
 RPN_FG_FRACTION = 0.5
 RPN_BATCHSIZE = 256
 
 
+def shuffle(x):
+    """
+    Modify a sequence by shuffling its contents. This function only shuffles
+    the array along the first axis of a multi-dimensional array. The order of
+    sub-arrays is changed but their contents remains the same.
+    """
+    return tensorflow.random_shuffle(x)
+
+
+def gather_nd(params, indices):
+    return tensorflow.gather_nd(params, indices)
+
+
+def matmul(
+        a,
+        b,
+        transpose_a=False,
+        transpose_b=False,
+        adjoint_a=False,
+        adjoint_b=False,
+        a_is_sparse=False,
+        b_is_sparse=False
+):
+    return tensorflow.matmul(
+        a,
+        b,
+        transpose_a=transpose_a,
+        transpose_b=transpose_b,
+        adjoint_a=adjoint_a,
+        adjoint_b=adjoint_b,
+        a_is_sparse=a_is_sparse,
+        b_is_sparse=b_is_sparse
+    )
+
+
+# TODO: remove globals
+def argsort(a, axis=-1):
+    _, indices = tensorflow.nn.top_k(a, keras.backend.shape(a)[-1])
+
+    return indices
+
+
+def scatter_add_tensor(ref, indices, updates, name=None):
+    """
+    Adds sparse updates to a variable reference.
+
+    This operation outputs ref after the update is done. This makes it easier to chain operations that need to use the
+    reset value.
+
+    Duplicate indices: if multiple indices reference the same location, their contributions add.
+
+    Requires updates.shape = indices.shape + ref.shape[1:].
+    :param ref: A Tensor. Must be one of the following types: float32, float64, int64, int32, uint8, uint16,
+        int16, int8, complex64, complex128, qint8, quint8, qint32, half.
+    :param indices: A Tensor. Must be one of the following types: int32, int64. A tensor of indices into the first
+        dimension of ref.
+    :param updates: A Tensor. Must have the same dtype as ref. A tensor of updated values to add to ref
+    :param name: A name for the operation (optional).
+    :return: Same as ref. Returned as a convenience for operations that want to use the updated values after the update
+        is done.
+    """
+    with tensorflow.name_scope(name, 'scatter_add_tensor',
+                               [ref, indices, updates]) as scope:
+        ref = tensorflow.convert_to_tensor(ref, name='ref')
+
+        indices = tensorflow.convert_to_tensor(indices, name='indices')
+
+        updates = tensorflow.convert_to_tensor(updates, name='updates')
+
+        ref_shape = tensorflow.shape(ref, out_type=indices.dtype,
+                                     name='ref_shape')
+
+        scattered_updates = tensorflow.scatter_nd(indices, updates, ref_shape,
+                                                  name='scattered_updates')
+
+        with tensorflow.control_dependencies([tensorflow.assert_equal(
+                ref_shape,
+                tensorflow.shape(scattered_updates, out_type=indices.dtype))]):
+            output = tensorflow.add(ref, scattered_updates, name=scope)
+
+        return output
+
+
+def meshgrid(*args, **kwargs):
+    return tensorflow.meshgrid(*args, **kwargs)
+
+
+newaxis = tensorflow.newaxis
+
+
+def where(condition, x=None, y=None):
+    return tensorflow.where(condition, x, y)
+
+
 def bbox_transform_inv(shifted, boxes):
-    if boxes.shape[0] == 0:
-        return keras.backend.zeros((0, boxes.shape[1]), dtype=boxes.dtype)
+    def shape_zero():
+        x = keras.backend.int_shape(boxes)[-1]
 
-    a = shifted[:, 2] - shifted[:, 0] + 1.0
-    b = shifted[:, 3] - shifted[:, 1] + 1.0
+        return keras.backend.zeros_like(x, dtype=keras.backend.floatx())
 
-    ctr_x = shifted[:, 0] + 0.5 * a
-    ctr_y = shifted[:, 1] + 0.5 * b
+    def shape_non_zero():
+        a = shifted[:, 2] - shifted[:, 0] + 1.0
+        b = shifted[:, 3] - shifted[:, 1] + 1.0
 
-    dx = boxes[:, 0::4]
-    dy = boxes[:, 1::4]
-    dw = boxes[:, 2::4]
-    dh = boxes[:, 3::4]
+        ctr_x = shifted[:, 0] + 0.5 * a
+        ctr_y = shifted[:, 1] + 0.5 * b
 
-    pred_ctr_x = dx * a[:, tensorflow.newaxis] + ctr_x[:, tensorflow.newaxis]
-    pred_ctr_y = dy * b[:, tensorflow.newaxis] + ctr_y[:, tensorflow.newaxis]
+        dx = boxes[:, 0::4]
+        dy = boxes[:, 1::4]
+        dw = boxes[:, 2::4]
+        dh = boxes[:, 3::4]
 
-    pred_w = keras.backend.exp(dw) * a[:, tensorflow.newaxis]
-    pred_h = keras.backend.exp(dh) * b[:, tensorflow.newaxis]
+        pred_ctr_x = dx * a[:, keras_rcnn.backend.newaxis] + ctr_x[:,
+                                                             keras_rcnn.backend.newaxis]
+        pred_ctr_y = dy * b[:, keras_rcnn.backend.newaxis] + ctr_y[:,
+                                                             keras_rcnn.backend.newaxis]
 
-    pred_boxes = [
-        pred_ctr_x - 0.5 * pred_w,
-        pred_ctr_y - 0.5 * pred_h,
-        pred_ctr_x + 0.5 * pred_w,
-        pred_ctr_y + 0.5 * pred_h
-    ]
+        pred_w = keras.backend.exp(dw) * a[:, keras_rcnn.backend.newaxis]
+        pred_h = keras.backend.exp(dh) * b[:, keras_rcnn.backend.newaxis]
 
-    return keras.backend.concatenate(pred_boxes)
+        prediction = [
+            pred_ctr_x - 0.5 * pred_w, pred_ctr_y - 0.5 * pred_h,
+            pred_ctr_x + 0.5 * pred_w, pred_ctr_y + 0.5 * pred_h
+        ]
 
+        return keras.backend.concatenate(prediction)
 
-def filter_boxes(proposals, minimum):
-    ws = proposals[:, 2] - proposals[:, 0] + 1
-    hs = proposals[:, 3] - proposals[:, 1] + 1
+    zero_boxes = keras.backend.equal(keras.backend.shape(boxes)[0], 0)
 
-    indicies = tensorflow.where((ws >= minimum) & (hs >= minimum))
+    pred_boxes = tensorflow.cond(zero_boxes, shape_zero, shape_non_zero)
 
-    indicies = keras.backend.flatten(indicies)
-
-    return keras.backend.cast(indicies, tensorflow.int32)
+    return pred_boxes
 
 
 def non_maximum_suppression(boxes, scores, maximum, threshold=0.5):
@@ -58,37 +147,6 @@ def non_maximum_suppression(boxes, scores, maximum, threshold=0.5):
         max_output_size=maximum,
         scores=scores
     )
-
-
-def propose(boxes, scores, maximum):
-    shape = keras.backend.int_shape(boxes)[1:3]
-
-    shifted = keras_rcnn.backend.shift(shape, 16)
-
-    proposals = keras.backend.reshape(boxes, (-1, 4))
-
-    proposals = keras_rcnn.backend.bbox_transform_inv(shifted, proposals)
-
-    proposals = keras_rcnn.backend.clip(proposals, shape)
-
-    indicies = keras_rcnn.backend.filter_boxes(proposals, 1)
-
-    proposals = keras.backend.gather(proposals, indicies)
-
-    scores = scores[:, :, :, :9]
-    scores = keras.backend.reshape(scores, (-1, 1))
-    scores = keras.backend.gather(scores, indicies)
-    scores = keras.backend.flatten(scores)
-
-    proposals = keras.backend.cast(proposals, tensorflow.float32)
-
-    scores = keras.backend.cast(scores, tensorflow.float32)
-
-    indicies = keras_rcnn.backend.non_maximum_suppression(proposals, scores, maximum, 0.7)
-
-    proposals = keras.backend.gather(proposals, indicies)
-
-    return keras.backend.expand_dims(proposals, 0)
 
 
 def resize_images(images, shape):
@@ -105,7 +163,7 @@ def crop_and_resize(image, boxes, size):
     # Returns
     4D Tensor (number of regions, slice_height, slice_width, channels)
     """
-    box_ind = keras.backend.zeros_like(boxes, tensorflow.int32)
+    box_ind = keras.backend.zeros_like(boxes, "int32")
     box_ind = box_ind[..., 0]
     box_ind = keras.backend.reshape(box_ind, [-1])
 
@@ -114,78 +172,31 @@ def crop_and_resize(image, boxes, size):
     return tensorflow.image.crop_and_resize(image, boxes, box_ind, size)
 
 
-def overlap(a, b):
-    """
-    Parameters
-    ----------
-    a: (N, 4) ndarray of float
-    b: (K, 4) ndarray of float
-    Returns
-    -------
-    overlaps: (N, K) ndarray of overlap between boxes and query_boxes
-    """
-    n = tensorflow.shape(a)[0]
-
-    k = tensorflow.shape(b)[0]
-
-    i = tensorflow.constant(0)
-
-    initial_overlaps = tensorflow.Variable([])
-
-    def cond(i, l):
-        return i < n
-
-    def body(i, l):
-        area = ((b[:, 2] - b[:, 0] + 1) * (b[:, 3] - b[:, 1] + 1))
-
-        iw = tensorflow.maximum((tensorflow.minimum(a[i, 2], b[:, 2]) - tensorflow.maximum(a[i, 0], b[:, 0]) + 1), 0.0)
-
-        ih = tensorflow.maximum((tensorflow.minimum(a[i, 3], b[:, 3]) - tensorflow.maximum(a[i, 1], b[:, 1]) + 1), 0.0)
-
-        ua = (a[i, 2] - a[i, 0] + 1) * (a[i, 3] - a[i, 1] + 1) + area - iw * ih
-
-        iou = iw * ih / ua
-
-        l = tensorflow.concat([l, iou], 0)
-
-        return i+1, l
-
-    index, final_overlaps = tensorflow.while_loop(
-        cond,
-        body,
-        [i, initial_overlaps],
-        shape_invariants=[i.get_shape(), tensorflow.TensorShape([None])]
-    )
-
-    final_overlaps = tensorflow.reshape(final_overlaps, (n, k))
-
-    return final_overlaps
-
-
-def overlapping(y_true, y_pred, inds_inside):
+def overlapping(anchors, gt_boxes, inds_inside):
     """
     overlaps between the anchors and the gt boxes
-    :param y_pred: anchors
-    :param y_true:
+    :param anchors: Generated anchors
+    :param gt_boxes: Ground truth bounding boxes
     :param inds_inside:
     :return:
     """
-    overlaps = overlap(y_pred, y_true[:, :4])
 
-    argmax_overlaps_inds = keras.backend.argmax(overlaps, axis=1)
+    assert keras.backend.ndim(anchors) == 2
+    assert keras.backend.ndim(gt_boxes) == 2
+    reference = keras_rcnn.backend.overlap(anchors, gt_boxes)
 
-    gt_argmax_overlaps_inds = keras.backend.argmax(overlaps, axis=0)
+    gt_argmax_overlaps_inds = keras.backend.argmax(reference, axis=0)
 
-    indices = keras.backend.stack(
-        [
-            tensorflow.range(keras.backend.shape(inds_inside)[0]),
-            keras.backend.cast(argmax_overlaps_inds, tensorflow.int32)
-        ]
-    )
+    argmax_overlaps_inds = keras.backend.argmax(reference, axis=1)
+
+    indices = keras.backend.stack([
+        tensorflow.range(keras.backend.shape(inds_inside)[0]),
+        keras.backend.cast(argmax_overlaps_inds, "int32")
+    ], axis=0)
 
     indices = keras.backend.transpose(indices)
 
-    max_overlaps = tensorflow.gather_nd(overlaps, indices)
+    max_overlaps = tensorflow.gather_nd(reference, indices)
 
     return argmax_overlaps_inds, max_overlaps, gt_argmax_overlaps_inds
 
@@ -196,6 +207,7 @@ def balance(labels):
     :param labels: array of labels (1 is positive, 0 is negative, -1 is dont care)
     :return: array of labels
     """
+
     # subsample positive labels if we have too many
     labels = subsample_positive_labels(labels)
 
@@ -209,108 +221,254 @@ def subsample_positive_labels(labels):
     """
     subsample positive labels if we have too many
     :param labels: array of labels (1 is positive, 0 is negative, -1 is dont care)
+
     :return:
     """
-    num_fg = RPN_FG_FRACTION * RPN_BATCHSIZE
 
-    fg_inds = tensorflow.where(tensorflow.equal(labels, 1))
+    num_fg = int(RPN_FG_FRACTION * RPN_BATCHSIZE)
 
-    fg_inds = tensorflow.shape(fg_inds)[0]
+    fg_inds = keras_rcnn.backend.where(keras.backend.equal(labels, 1))
+    num_fg_inds = keras.backend.shape(fg_inds)[0]
 
-    size = tensorflow.cast(fg_inds, tensorflow.int32) - tensorflow.cast(num_fg, tensorflow.int32)
+    size = num_fg_inds - num_fg
 
     def more_positive():
-        print(tensorflow.multinomial(tensorflow.log(tensorflow.ones((fg_inds, 1)) * 10.), size))
+        # TODO: try to replace tensorflow
+        indices = tensorflow.random_shuffle(
+            keras.backend.reshape(fg_inds, (-1,)))[:size]
 
-        elems = tensorflow.gather(tensorflow.range(fg_inds), tensorflow.multinomial(tensorflow.log(tensorflow.ones((fg_inds, 1)) * 10.), size))
-        
-        return tensorflow.scatter_update(tensorflow.Variable(labels, validate_shape=False), elems, -1)
+        updates = tensorflow.ones((size,)) * -1
+
+        inverse_labels = keras.backend.gather(labels, indices) * -1
+
+        indices = keras.backend.reshape(indices, (-1, 1))
+
+        return scatter_add_tensor(labels, indices, inverse_labels + updates)
 
     def less_positive():
         return labels
 
-    return tensorflow.cond(tensorflow.less_equal(size, 0), lambda: less_positive(), lambda: more_positive())
+    predicate = keras.backend.less_equal(size, 0)
+
+    return tensorflow.cond(predicate, lambda: less_positive(),
+                           lambda: more_positive())
 
 
 def subsample_negative_labels(labels):
     """
     subsample negative labels if we have too many
     :param labels: array of labels (1 is positive, 0 is negative, -1 is dont care)
+
     :return:
     """
-    num_bg = RPN_BATCHSIZE - tensorflow.reduce_sum(tensorflow.gather(labels, tensorflow.where(tensorflow.equal(labels, 1))))
-    
-    bg_inds = tensorflow.where(tensorflow.equal(labels, 0))
-    
-    bg_inds = keras.backend.shape(bg_inds)[0]
-    
-    size = keras.backend.cast(bg_inds, tensorflow.int32) - keras.backend.cast(num_bg, tensorflow.int32)
+    num_bg = RPN_BATCHSIZE - keras.backend.shape(
+        keras_rcnn.backend.where(keras.backend.equal(labels, 1)))[0]
+    bg_inds = keras_rcnn.backend.where(keras.backend.equal(labels, 0))
+    num_bg_inds = keras.backend.shape(bg_inds)[0]
+
+    size = num_bg_inds - num_bg
 
     def more_negative():
-        indices = tensorflow.multinomial(keras.backend.log(keras.backend.ones((bg_inds, 1)) * 10.), size)
+        indices = keras_rcnn.backend.shuffle(
+            keras.backend.reshape(bg_inds, (-1,)))[:size]
 
-        elems = keras.backend.gather(tensorflow.range(bg_inds), indices)
-        
-        return tensorflow.scatter_update(tensorflow.Variable(labels, validate_shape=False), elems, -1)
+        updates = tensorflow.ones((size,)) * -1
+
+        inverse_labels = keras.backend.gather(labels, indices) * -1
+
+        indices = keras.backend.reshape(indices, (-1, 1))
+
+        return scatter_add_tensor(labels, indices, inverse_labels + updates)
 
     def less_negative():
         return labels
 
-    return tensorflow.cond(keras.backend.less_equal(size, 0), lambda: less_negative(), lambda: more_negative())
+    predicate = keras.backend.less_equal(size, 0)
+
+    return tensorflow.cond(predicate, lambda: less_negative(),
+                           lambda: more_negative())
 
 
-def shift(shape, stride):
-    shift_r = keras.backend.arange(0, shape[0]) * stride
-    shift_c = keras.backend.arange(0, shape[1]) * stride
-
-    shift_r, shift_c = tensorflow.meshgrid(shift_r, shift_c)
-
-    shifted_anchors = keras.backend.stack(
-        (
-            keras.backend.reshape(shift_r, [-1]),
-            keras.backend.reshape(shift_c, [-1]),
-            keras.backend.reshape(shift_r, [-1]),
-            keras.backend.reshape(shift_c, [-1])
-        )
-    )
-
-    shifted_anchors = keras.backend.transpose(shifted_anchors)
-
-    anchors = keras_rcnn.backend.anchor()
-
-    number_of_anchors = keras.backend.shape(anchors)[0]
-
-    # number of base points, k = feat_h * feat_w
-    k = keras.backend.shape(shifted_anchors)[0]
-
-    boxes = keras.backend.reshape(anchors, [1, number_of_anchors, 4])
-    boxes = keras.backend.cast(boxes, keras.backend.floatx())
-
-    shifted_anchors = keras.backend.reshape(shifted_anchors, [k, 1, 4])
-    shifted_anchors = keras.backend.cast(shifted_anchors, keras.backend.floatx())
-
-    boxes += shifted_anchors
-
-    boxes = keras.backend.reshape(boxes, [k * number_of_anchors, 4])
-
-    return boxes
-
-
-def inside_image(y_pred, shape):
+def label(y_true, y_pred, inds_inside, RPN_NEGATIVE_OVERLAP=0.3,
+          RPN_POSITIVE_OVERLAP=0.7, clobber_positives=False):
     """
-    Calc indicies of anchors which are located completely inside of the image
-    whose size is specified by img_info ((height, width, scale)-shaped array).
+    Create bbox labels.
+    label: 1 is positive, 0 is negative, -1 is do not care
+
+    :param inds_inside: indices of anchors inside image
     :param y_pred: anchors
-    :param shape:
-    :return:
+    :param y_true: ground truth objects
+
+    :return: indices of gt boxes with the greatest overlap, balanced labels
     """
-    inds_inside = tensorflow.where(
-        (y_pred[:, 0] >= 0) &
-        (y_pred[:, 1] >= 0) &
-        (y_pred[:, 2] < shape[1]) &  # width
-        (y_pred[:, 3] < shape[0])  # height
-    )
+    ones = keras.backend.ones_like(inds_inside, dtype=keras.backend.floatx())
+    labels = ones * -1
+    zeros = keras.backend.zeros_like(inds_inside, dtype=keras.backend.floatx())
 
-    inds_inside = keras.backend.cast(inds_inside, tensorflow.int32)
+    argmax_overlaps_inds, max_overlaps, gt_argmax_overlaps_inds = overlapping(
+        y_pred, y_true, inds_inside)
 
-    return inds_inside[:, 0], keras.backend.reshape(keras.backend.gather(y_pred, inds_inside), [keras.backend.shape(inds_inside)[0], 4])
+    # assign bg labels first so that positive labels can clobber them
+    if not clobber_positives:
+        labels = keras_rcnn.backend.where(
+            keras.backend.less(max_overlaps, RPN_NEGATIVE_OVERLAP), zeros,
+            labels)
+
+    # fg label: for each gt, anchor with highest overlap
+
+    # TODO: generalize unique beyond 1D
+    unique_indices, unique_indices_indices = tensorflow.unique(
+        gt_argmax_overlaps_inds, out_idx='int32')
+    inverse_labels = keras.backend.gather(-1 * labels, unique_indices)
+    unique_indices = keras.backend.expand_dims(unique_indices, 1)
+    updates = keras.backend.ones_like(keras.backend.reshape(unique_indices, (-1,)), dtype=keras.backend.floatx())
+    labels = keras_rcnn.backend.scatter_add_tensor(labels, unique_indices,
+                                                   inverse_labels + updates)
+
+    # fg label: above threshold IOU
+    labels = keras_rcnn.backend.where(
+        keras.backend.greater_equal(max_overlaps, RPN_POSITIVE_OVERLAP), ones,
+        labels)
+
+    if clobber_positives:
+        # assign bg labels last so that negative labels can clobber positives
+        labels = keras_rcnn.backend.where(
+            keras.backend.less(max_overlaps, RPN_NEGATIVE_OVERLAP), zeros,
+            labels)
+
+    return argmax_overlaps_inds, balance(labels)
+
+
+def unmap(data, count, inds_inside, fill=0):
+    """ Unmap a subset of item (data) back to the original set of items (of
+    size count) """
+
+    if keras.backend.ndim(data) == 1:
+        ret = keras.backend.ones((count,), dtype=keras.backend.floatx()) * fill
+        inds_nd = keras.backend.expand_dims(inds_inside)
+    else:
+        ret = keras.backend.ones((count,) + keras.backend.int_shape(data)[1:],
+                                 dtype=keras.backend.floatx()) * fill
+        data = keras.backend.transpose(data)
+        data = keras.backend.reshape(data, (-1,))
+
+        inds_ii = keras.backend.tile(inds_inside, [4])
+        inds_ii = keras.backend.expand_dims(inds_ii)
+        ones = keras.backend.expand_dims(keras.backend.ones_like(inds_inside),
+                                         1)
+        inds_coords = keras.backend.concatenate(
+            [ones * 0, ones, ones * 2, ones * 3], 0)
+        inds_nd = keras.backend.concatenate([inds_ii, inds_coords], 1)
+    inverse_ret = tensorflow.squeeze(tensorflow.gather_nd(-1 * ret, inds_nd))
+    ret = keras_rcnn.backend.scatter_add_tensor(ret, inds_nd,
+                                                inverse_ret + data)
+    return ret
+
+
+def get_bbox_regression_labels(labels, bbox_target_data):
+    """Bounding-box regression targets (bbox_target_data) are stored in a
+    form N x (tx, ty, tw, th), labels N x num_classes
+    This function expands those targets into the 4-of-4*K representation used
+    by the network (i.e. only one class has non-zero targets).
+    Returns:
+        bbox_target (ndarray): N x 4K blob of regression targets
+    """
+    num_classes = keras.backend.shape(labels)[-1]
+    clss = keras.backend.reshape(keras.backend.argmax(labels, axis=-1), (-1,))
+    N = keras.backend.shape(bbox_target_data)[0]
+
+    bbox_targets = tensorflow.zeros((N, 4 * num_classes), dtype=keras.backend.floatx())
+    inds = keras.backend.reshape(keras_rcnn.backend.where(clss > 0), (-1,))
+
+    cls = keras.backend.gather(clss, inds)
+    start = 4 * cls
+    ii = keras.backend.expand_dims(inds)
+    ii = keras.backend.tile(ii, [4, 1])
+
+    aa = keras.backend.expand_dims(
+        keras.backend.concatenate([start, start + 1, start + 2, start + 3], 0))
+    aa = keras.backend.cast(aa, dtype='int64')
+    indices = keras.backend.concatenate([ii, aa], 1)
+    updates = keras.backend.gather(bbox_target_data, inds)
+    updates = keras.backend.transpose(updates)
+    updates = keras.backend.reshape(updates, (-1,))
+    # bbox_targets are 0
+    bbox_targets = keras_rcnn.backend.scatter_add_tensor(bbox_targets, indices,
+                                                         updates)
+
+    return bbox_targets
+
+
+
+def sample_rois(all_rois, gt_boxes, gt_labels, fg_rois_per_image, rois_per_image, fg_thresh, bg_thresh_hi, bg_thresh_lo):
+    """Generate a random sample of RoIs comprising foreground and background examples.
+    gt_boxes is (1, N, 4) with 4 coordinates and 1 class label
+    gt_labels is in one hot form
+    """
+
+    # overlaps: (rois x gt_boxes)
+    overlaps = keras_rcnn.backend.overlap(all_rois[:, 1:5], gt_boxes)
+    gt_assignment = keras.backend.argmax(overlaps, 1)
+    max_overlaps = keras.backend.max(overlaps, 1)
+    labels = keras.backend.gather(gt_labels, gt_assignment)
+
+    def no_sample(indices):
+        return keras.backend.reshape(indices, (-1,))
+
+    def sample(indices, size):
+        return tensorflow.random_shuffle(keras.backend.reshape(indices, (-1,)))[:size]
+
+    # Select foreground RoIs as those with >= FG_THRESH overlap
+    fg_inds = keras_rcnn.backend.where(max_overlaps >= fg_thresh)
+    # Guard against the case when an image has fewer than fg_rois_per_image foreground RoIs
+    fg_rois_per_this_image = keras.backend.minimum(fg_rois_per_image,
+                                                   keras.backend.shape(
+                                                       fg_inds)[0])
+    # Sample foreground regions without replacement
+    fg_inds = tensorflow.cond(keras.backend.shape(fg_inds)[0] > 0,
+                              no_sample(fg_inds),
+                              sample(fg_inds, fg_rois_per_this_image))
+
+    # Select background RoIs as those within [BG_THRESH_LO, BG_THRESH_HI)
+    bg_inds = keras_rcnn.backend.where(
+        (max_overlaps < bg_thresh_hi) & (max_overlaps >= bg_thresh_lo))
+    # Compute number of background RoIs to take from this image (guarding against there being fewer than desired)
+    rois_per_image = keras.backend.cast(rois_per_image, 'int32')
+    bg_rois_per_this_image = rois_per_image - fg_rois_per_this_image
+
+    bg_rois_per_this_image = keras.backend.mininum(bg_rois_per_this_image,
+                                                   keras.backend.shape(
+                                                       bg_inds)[0])
+    # Sample background regions without replacement
+    bg_inds = tensorflow.cond(keras.backend.shape(bg_inds)[0] > 0,
+                              no_sample(bg_inds),
+                              sample(bg_inds, bg_rois_per_this_image))
+
+    # The indices that we're selecting (both fg and bg)
+    keep_inds = keras.backend.concatenate([fg_inds, bg_inds])
+    # Select sampled values from various arrays:
+    labels = keras.backend.gather(labels, keep_inds)
+    # Clamp labels for the background RoIs to 0
+    update_indices = keras.backend.arange(fg_rois_per_this_image, keras.backend.shape(labels)[0])
+    update_indices_0 = keras.backend.reshape(update_indices, (-1, 1))
+    update_indices_1 = keras_rcnn.backend.where(keras.backend.equal(keras.backend.gather(labels, update_indices), 1))[:, 1]
+    update_indices_1 = keras.backend.reshape(keras.backend.cast(update_indices_1, 'int32'), (-1, 1))
+    # By first removing the label
+    update_indices = keras.backend.concatenate([update_indices_0, update_indices_1], axis=1)
+    inverse_labels = tensorflow.gather_nd(labels, update_indices) * -1
+    labels = keras_rcnn.backend.scatter_add_tensor(labels, update_indices,
+                                                   inverse_labels)
+    # And then making the label = background
+    update_indices = keras.backend.concatenate([update_indices_0, keras.backend.zeros_like(update_indices_0)], axis=1)
+    inverse_labels = tensorflow.gather_nd(labels, update_indices) * -1
+    labels = keras_rcnn.backend.scatter_add_tensor(labels, update_indices,
+                                                   inverse_labels + keras.backend.ones_like(inverse_labels))
+
+    rois = keras.backend.gather(all_rois, keep_inds)
+
+    # Compute bounding-box regression targets for an image.
+
+    targets = keras_rcnn.backend.bbox_transform(rois, keras.backend.gather(gt_boxes, keras.backend.gather(gt_assignment, keep_inds)))
+    bbox_targets = get_bbox_regression_labels(labels, targets)
+
+    return labels, rois, bbox_targets
