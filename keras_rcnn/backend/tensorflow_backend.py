@@ -8,6 +8,35 @@ RPN_POSITIVE_OVERLAP = 0.7
 RPN_FG_FRACTION = 0.5
 RPN_BATCHSIZE = 256
 
+def scatter_add_tensor(ref, indices, updates, name=None):
+    """
+    Adds sparse updates to a variable reference.
+
+    This operation outputs ref after the update is done. This makes it easier to chain operations that need to use the
+    reset value.
+
+    Duplicate indices are handled correctly: if multiple indices reference the same location, their contributions add.
+
+    Requires updates.shape = indices.shape + ref.shape[1:].
+    :param ref: A Tensor. Must be one of the following types: float32, float64, int64, int32, uint8, uint16,
+        int16, int8, complex64, complex128, qint8, quint8, qint32, half.
+    :param indices: A Tensor. Must be one of the following types: int32, int64. A tensor of indices into the first
+        dimension of ref.
+    :param updates: A Tensor. Must have the same dtype as ref. A tensor of updated values to add to ref
+    :param name: A name for the operation (optional).
+    :return: Same as ref. Returned as a convenience for operations that want to use the updated values after the update
+        is done.
+    """
+    with tensorflow.name_scope(name, 'scatter_add_tensor', [ref, indices, updates]) as scope:
+        ref = tensorflow.convert_to_tensor(ref, name='ref')
+        indices = tensorflow.convert_to_tensor(indices, name='indices')
+        updates = tensorflow.convert_to_tensor(updates, name='updates')
+        ref_shape = tensorflow.shape(ref, out_type=indices.dtype, name='ref_shape')
+        scattered_updates = tensorflow.scatter_nd(indices, updates, ref_shape, name='scattered_updates')
+        with tensorflow.control_dependencies([tensorflow.assert_equal(ref_shape, tensorflow.shape(scattered_updates, out_type=indices.dtype))]):
+            output = tensorflow.add(ref, scattered_updates, name=scope)
+        return output
+
 
 def bbox_transform_inv(shifted, boxes):
     def shape_zero():
@@ -183,24 +212,20 @@ def subsample_positive_labels(labels):
     """
 
     num_fg = RPN_FG_FRACTION * RPN_BATCHSIZE
-    fg_inds = \
-    keras.backend.shape(tensorflow.where(tensorflow.equal(labels, 1)))[0]
-    size = tensorflow.subtract(tensorflow.cast(fg_inds, tensorflow.int32),
-                               tensorflow.cast(num_fg, tensorflow.int32))
+
+    fg_inds = keras.backend.shape(tensorflow.where(tensorflow.equal(labels, 1)))[0]
+
+    size = tensorflow.subtract(tensorflow.cast(fg_inds, tensorflow.int32), tensorflow.cast(num_fg, tensorflow.int32))
 
     def more_positive():
-        elems = tensorflow.multinomial(tensorflow.log(
-            tensorflow.ones((1, fg_inds), dtype=tensorflow.float32)), size)
+        elems = tensorflow.multinomial(tensorflow.log(tensorflow.ones((1, fg_inds))), size)
         indices = tensorflow.reshape(elems, (-1, 1))
-        return tensorflow.scatter_nd_update(labels, indices,
-                                            tensorflow.ones((size,),
-                                                            dtype=tensorflow.float32) * -1)
+        return scatter_add_tensor(labels, indices, tensorflow.ones((size,)) * -1)
 
     def less_positive():
         return labels
 
-    return tensorflow.cond(tensorflow.less_equal(size, 0),
-                           lambda: less_positive(), lambda: more_positive())
+    return tensorflow.cond(tensorflow.less_equal(size, 0), lambda: less_positive(), lambda: more_positive())
 
 
 def subsample_negative_labels(labels):
@@ -210,27 +235,29 @@ def subsample_negative_labels(labels):
 
     :return:
     """
-    num_bg = RPN_BATCHSIZE - keras.backend.shape(
-        tensorflow.where(tensorflow.equal(labels, 1)))[0]
+    num_bg = RPN_BATCHSIZE - keras.backend.shape(tensorflow.where(keras.backend.equal(labels, 1)))[0]
 
-    bg_inds = \
-    keras.backend.shape(tensorflow.where(tensorflow.equal(labels, 0)))[0]
-    size = tensorflow.subtract(tensorflow.cast(bg_inds, tensorflow.int32),
-                               tensorflow.cast(num_bg, tensorflow.int32))
+    bg_inds = keras.backend.shape(tensorflow.where(keras.backend.equal(labels, 0)))[0]
+
+    size = bg_inds - num_bg
 
     def more_negative():
-        elems = tensorflow.multinomial(tensorflow.log(
-            tensorflow.ones((1, bg_inds), dtype=tensorflow.float32)), size)
-        indices = tensorflow.reshape(elems, (-1, 1))
-        return tensorflow.scatter_nd_update(labels, indices,
-                                            tensorflow.ones((size,),
-                                                            dtype=tensorflow.float32) * -1)
+        elems = tensorflow.multinomial(keras.backend.log(tensorflow.ones((1, bg_inds))), size)
+
+        ref = labels
+
+        indices = keras.backend.reshape(elems, (-1, 1))
+
+        updates = tensorflow.ones((size,)) * -1
+
+        return scatter_add_tensor(ref, indices, updates)
 
     def less_negative():
         return labels
 
-    return tensorflow.cond(tensorflow.less_equal(size, 0),
-                           lambda: less_negative(), lambda: more_negative())
+    predicate = keras.backend.less_equal(size, 0)
+
+    return tensorflow.cond(predicate, lambda: less_negative(), lambda: more_negative())
 
 
 def label(y_true, y_pred, inds_inside):
