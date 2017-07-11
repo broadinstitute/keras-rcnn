@@ -57,6 +57,46 @@ def test_mkanchors():
     numpy.testing.assert_array_equal(results, expected)
 
 
+def test_overlap():
+    x = numpy.asarray([
+        [0, 10, 0, 10],
+        [0, 20, 0, 20],
+        [0, 30, 0, 30],
+        [0, 40, 0, 40],
+        [0, 50, 0, 50],
+        [0, 60, 0, 60],
+        [0, 70, 0, 70],
+        [0, 80, 0, 80],
+        [0, 90, 0, 90]
+    ])
+    x = keras.backend.variable(x)
+    y = numpy.asarray([
+        [0, 20, 0, 20],
+        [0, 40, 0, 40],
+        [0, 60, 0, 60],
+        [0, 80, 0, 80]
+    ])
+    y = keras.backend.variable(y)
+
+    overlapping = keras_rcnn.backend.common.overlap(x, y)
+
+    overlapping = keras.backend.eval(overlapping)
+
+    expected = numpy.array([
+        [0.0, 0.0, 0.0, 0.0],
+        [1.0, 0.0, 0.0, 0.0],
+        [0.0, 0.0, 0.0, 0.0],
+        [0.0, 1.0, 0.0, 0.0],
+        [0.0, 0.0, 0.0, 0.0],
+        [0.0, 0.0, 1.0, 0.0],
+        [0.0, 0.0, 0.0, 0.0],
+        [0.0, 0.0, 0.0, 1.0],
+        [0.0, 0.0, 0.0, 0.0]
+    ])
+
+    numpy.testing.assert_array_equal(overlapping, expected)
+
+
 def test_ratio_enum():
     anchor = numpy.expand_dims(numpy.array([0, 0, 0, 0]), 0)
     ratios = numpy.array([1, 2, 3])
@@ -110,3 +150,36 @@ def test_shift():
     assert keras.backend.int_shape(y) == (1764, 4)
 
     assert y.dtype == keras.backend.floatx()
+
+
+def test_inside_image():
+    stride = 16
+    features = (14, 14)
+
+    all_anchors = keras_rcnn.backend.shift(features, stride)
+
+    img_info = (224, 224, 1)
+
+    inds_inside, all_inside_anchors = keras_rcnn.backend.inside_image(all_anchors, img_info)
+
+    inds_inside = keras.backend.eval(inds_inside)
+
+    assert inds_inside.shape == (84,)
+
+    all_inside_anchors = keras.backend.eval(all_inside_anchors)
+
+    assert all_inside_anchors.shape == (84, 4)
+
+
+def test_filter_boxes():
+    proposals = numpy.array(
+        [[0, 2, 3, 10],
+         [-1, -5, 4, 8],
+         [0, 0, 1, 1]]
+    )
+
+    minimum = 3
+
+    results = keras_rcnn.backend.filter_boxes(proposals, minimum)
+
+    numpy.testing.assert_array_equal(keras.backend.eval(results), numpy.array([0, 1]))

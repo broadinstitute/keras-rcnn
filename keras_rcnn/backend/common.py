@@ -143,3 +143,62 @@ def shift(shape, stride):
     shifted_anchors = keras.backend.reshape(shifted_anchors, [k * number_of_anchors, 4])
 
     return shifted_anchors
+
+
+def overlap(a, b):
+    """
+    Parameters
+    ----------
+    a: (N, 4) ndarray of float
+    b: (K, 4) ndarray of float
+    Returns
+    -------
+    overlaps: (N, K) ndarray of overlap between boxes and query_boxes
+    """
+    area = (b[:, 2] - b[:, 0] + 1) * (b[:, 3] - b[:, 1] + 1)
+
+    iw = keras.backend.minimum(keras.backend.expand_dims(a[:, 2], 1), b[:, 2]) - keras.backend.maximum(keras.backend.expand_dims(a[:, 0], 1), b[:, 0]) + 1
+    ih = keras.backend.minimum(keras.backend.expand_dims(a[:, 3], 1), b[:, 3]) - keras.backend.maximum(keras.backend.expand_dims(a[:, 1], 1), b[:, 1]) + 1
+
+    iw = keras.backend.maximum(iw, 0)
+    ih = keras.backend.maximum(ih, 0)
+
+    ua = keras.backend.expand_dims((a[:, 2] - a[:, 0] + 1) * (a[:, 3] - a[:, 1] + 1), 1) + area - iw * ih
+
+    ua = keras.backend.maximum(ua, 0.0001)
+
+    return iw * ih / ua
+
+
+def filter_boxes(proposals, minimum):
+    ws = proposals[:, 2] - proposals[:, 0] + 1
+    hs = proposals[:, 3] - proposals[:, 1] + 1
+
+    indicies = keras_rcnn.backend.where((ws >= minimum) & (hs >= minimum))
+
+    indicies = keras.backend.flatten(indicies)
+
+    return keras.backend.cast(indicies, "int32")
+
+
+def inside_image(y_pred, img_info):
+    """
+    Calc indicies of anchors which are located completely inside of the image
+    whose size is specified by img_info ((height, width, scale)-shaped array).
+
+    :param y_pred: anchors
+    :param img_info:
+    :return:
+    """
+    indicies = keras_rcnn.backend.where(
+        (y_pred[:, 0] >= 0) &
+        (y_pred[:, 1] >= 0) &
+        (y_pred[:, 2] < img_info[1]) &  # width
+        (y_pred[:, 3] < img_info[0])  # height
+    )
+
+    indicies = keras.backend.cast(indicies, "int32")
+
+    gathered = keras.backend.gather(y_pred, indicies)
+
+    return indicies[:, 0], keras.backend.reshape(gathered, [-1, 4])
