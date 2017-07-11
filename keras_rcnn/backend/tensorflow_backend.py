@@ -8,7 +8,7 @@ RPN_FG_FRACTION = 0.5
 RPN_BATCHSIZE = 256
 
 
-def _scatter_add_tensor(ref, indices, updates, name=None):
+def scatter_add_tensor(ref, indices, updates, name=None):
     """
     Adds sparse updates to a variable reference.
 
@@ -184,7 +184,7 @@ def subsample_positive_labels(labels):
 
         indices = tensorflow.reshape(elems, (-1, 1))
 
-        return _scatter_add_tensor(labels, indices, tensorflow.ones((size,)) * -1)
+        return scatter_add_tensor(labels, indices, tensorflow.ones((size,)) * -1)
 
     def less_positive():
         return labels
@@ -216,7 +216,7 @@ def subsample_negative_labels(labels):
 
         updates = tensorflow.ones((size,)) * -1
 
-        return _scatter_add_tensor(ref, indices, updates)
+        return scatter_add_tensor(ref, indices, updates)
 
     def less_negative():
         return labels
