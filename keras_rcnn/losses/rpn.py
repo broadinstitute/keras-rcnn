@@ -65,17 +65,21 @@ def proposal(anchors, image_shape, stride, *args, **kwargs):
 
         gt_r1_mask = keras.backend.cast(gt_r1_mask, keras.backend.floatx())
 
-        gt_classification_mask = keras.backend.equal(keras.backend.abs(gt_classification), 1.0)
+        gt_c1_mask = keras.backend.equal(keras.backend.abs(gt_classification), 1.0)
 
-        gt_classification_mask = keras.backend.cast(gt_classification_mask, keras.backend.floatx())
+        gt_c1_mask = keras.backend.cast(gt_c1_mask, keras.backend.floatx())
+
+        gt_c2_mask = keras.backend.equal(keras.backend.abs(gt_classification), 1.0)
+
+        gt_c2_mask = keras.backend.cast(gt_c2_mask, keras.backend.floatx())
 
         y_true_classification_indicies = keras.backend.concatenate([z, i, j, a], 1)
 
-        y_true_classification = keras_rcnn.backend.scatter_add_tensor(y_true_classification, y_true_classification_indicies, gt_classification_mask)
+        y_true_classification = keras_rcnn.backend.scatter_add_tensor(y_true_classification, y_true_classification_indicies, gt_c1_mask)
 
         y_true_classification_indicies = keras.backend.concatenate([z, i, j, anchors + a], 1)
 
-        y_true_classification = keras_rcnn.backend.scatter_add_tensor(y_true_classification, y_true_classification_indicies, gt_classification)
+        y_true_classification = keras_rcnn.backend.scatter_add_tensor(y_true_classification, y_true_classification_indicies, gt_c2_mask)
 
         y_true_regression_indicies = keras.backend.concatenate([zz, ii, jj, aa], 1)
 
@@ -95,9 +99,7 @@ def proposal(anchors, image_shape, stride, *args, **kwargs):
 
         regression = _regression(anchors=anchors)(y_true_regression, y_pred_regression)
 
-        loss = classification + regression
-
-        return loss
+        return classification, regression
 
     return f
 

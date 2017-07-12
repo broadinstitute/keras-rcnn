@@ -12,7 +12,7 @@ def test_resnet50_rcnn():
     inputs = keras.layers.Input((224, 224, 3))
 
     model = keras_rcnn.models.ResNet50RCNN(inputs, 21, 300)
-    
+
     model.compile(loss=["mse", "mse", "mse"], optimizer="adam")
 
 
@@ -63,20 +63,19 @@ def test_rpn():
 
     y_pred = keras.layers.concatenate([classification, regression])
 
-    model = keras.models.Model(image, features)
 
-    loss = keras_rcnn.losses.rpn.proposal(9, (224, 224), 16)
+    rpn_loss = keras_rcnn.losses.rpn.proposal(9, (224, 224), 16)
 
-    def example(x):
+    def example(x, loss):
         y_true, y_pred = x
-
-        return loss(y_true, y_pred)
+        loss_c, loss_r = loss(y_true, y_pred)
+        return loss_c + loss_r
 
         # use the following for testing:
         # return y_true
 
 
-    loss = keras.layers.Lambda(example)([y_true, y_pred])
+    loss = keras.layers.Lambda(example, arguments={'loss': rpn_loss},)([y_true, y_pred])
 
     model = keras.models.Model([image, y_true], loss)
 
@@ -84,7 +83,15 @@ def test_rpn():
 
     model.compile("adam", loss=[None], loss_weights=[None])
 
-    a = numpy.random.random((1, 224, 224, 3))
-    b = numpy.random.random((1, 10, 4))
+    a = numpy.zeros((1, 224, 224, 3))
 
-    model.fit([a, b], [None])
+    y_true = numpy.array([
+        [1, 1, 100, 100],
+        [0, 0, 40, 50],
+        [50, 99, 100, 203],
+        [111, 5, 131, 34],
+        [4, 60, 30, 90]])
+
+    y_true = numpy.expand_dims(y_true, 0)
+
+    model.fit([a, y_true], [None])

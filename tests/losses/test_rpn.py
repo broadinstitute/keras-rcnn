@@ -70,13 +70,9 @@ def test_proposal():
     image_shape = (224, 224)
     stride = 16
 
-    rs1 = numpy.random.RandomState(1)
-    y_pred_classification = rs1.choice([0, 1],
-                                       (1, features[0], features[1], anchors))
+    y_pred_classification = numpy.zeros((1, features[0], features[1], anchors))
 
-    rs2 = numpy.random.RandomState(1)
-
-    y_pred_regression = rs2.randn(1, features[0], features[1], anchors * 4)
+    y_pred_regression = numpy.zeros((1, features[0], features[1], anchors * 4))
 
     y_pred = numpy.concatenate([y_pred_regression, y_pred_classification], -1)
 
@@ -92,8 +88,9 @@ def test_proposal():
     y_true = keras.backend.variable(y_true)
     y_pred = keras.backend.variable(y_pred)
 
-    loss = keras_rcnn.losses.rpn.proposal(anchors, image_shape, stride)(y_true, y_pred)
-
+    loss1, loss2 = keras_rcnn.losses.rpn.proposal(anchors, image_shape, stride)(y_true, y_pred)
+    loss = loss1 + loss2
     loss_value = keras.backend.eval(loss)
-    assert numpy.around(loss_value - 7.74451, 4) == 0
+
+    assert numpy.around(loss_value - 16.2735, 3) == 0
     # assert keras.backend.int_shape(loss) == (1, image_shape[0], image_shape[1], 5 * anchors)
