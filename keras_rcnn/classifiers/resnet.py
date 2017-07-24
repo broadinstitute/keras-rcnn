@@ -1,6 +1,6 @@
 import keras.backend
 import keras.layers
-import keras_resnet.block.temporal
+import keras_resnet.blocks
 
 
 def residual(classes, mask=False):
@@ -16,7 +16,7 @@ def residual(classes, mask=False):
         # conv5 block as in Deep Residual Networks with first conv operates
         # on a 7x7 RoI with stride 1 (instead of 14x14 / stride 2)
         for i in range(3):
-            y = keras_resnet.block.temporal.bottleneck(512, (1, 1), first=True)(y)
+            y = keras_resnet.blocks.time_distributed_bottleneck_2d(512, (1, 1), first=True)(y)
 
         y = keras.layers.TimeDistributed(keras.layers.BatchNormalization(axis=channel_axis))(y)
         y = keras.layers.TimeDistributed(keras.layers.Activation("relu"))(y)
