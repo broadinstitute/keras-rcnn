@@ -16,34 +16,28 @@ rpn_min_overlap = 0.3
 rpn_max_overlap = 0.7
 
 
-def union(au, bu):
-    x = min(au[0], bu[0])
-    y = min(au[1], bu[1])
-    w = max(au[2], bu[2]) - x
-    h = max(au[3], bu[3]) - y
-    return x, y, w, h
-
-
 def intersection(ai, bi):
     x = max(ai[0], bi[0])
     y = max(ai[1], bi[1])
     w = min(ai[2], bi[2]) - x
     h = min(ai[3], bi[3]) - y
+    area_i = w * h
     if w < 0 or h < 0:
-        return 0, 0, 0, 0
-    return x, y, w, h
+        return 0
+    return area_i
 
+def union(au, bu, area_intersection):
+    area_a = (au[2] - au[0]) * (au[3] - au[1])
+    area_b = (bu[2] - bu[0]) * (bu[3] - bu[1])
+    area_union = area_a + area_b - area_intersection
+    return area_union
 
 def iou(a, b):
     # a and b should be (x1,y1,x2,y2)
     if a[0] >= a[2] or a[1] >= a[3] or b[0] >= b[2] or b[1] >= b[3]:
         return 0.0
-
-    i = intersection(a, b)
-    u = union(a, b)
-
-    area_i = i[2] * i[3]
-    area_u = u[2] * u[3]
+    area_i = intersection(a, b)
+    area_u = union(a, b, area_i)
     return float(area_i) / float(area_u)
 
 
