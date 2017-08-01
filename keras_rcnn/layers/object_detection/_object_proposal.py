@@ -7,7 +7,7 @@ import keras_rcnn.backend
 
 class ObjectProposal(keras.engine.topology.Layer):
     def __init__(self, maximum_proposals=300, **kwargs):
-        self.output_dim = (None, maximum_proposals, 4)
+        self.output_shape = (None, maximum_proposals, 4)
 
         self.maximum_proposals = maximum_proposals
 
@@ -20,7 +20,7 @@ class ObjectProposal(keras.engine.topology.Layer):
         return self.propose(inputs[0], inputs[1], self.maximum_proposals)
 
     def compute_output_shape(self, input_shape):
-        return self.output_dim
+        return self.output_shape
 
     @staticmethod
     def propose(boxes, scores, maximum):
