@@ -31,13 +31,14 @@ class RCNN(keras.models.Model):
         rpn_prediction = keras.layers.concatenate([rpn_classification, rpn_regression])
 
         proposals = keras_rcnn.layers.object_detection.ObjectProposal(rois)([im_info, rpn_regression, rpn_classification])
+        anchors = keras_rcnn.layers.object_detection.ProposalTarget()([rpn_classification, gt_boxes, im_info])
 
         # Apply the classifiers on the proposed regions
         slices = keras_rcnn.layers.ROI((7, 7))([image, proposals])
 
         [score, boxes] = heads(slices)
 
-        super(RCNN, self).__init__(inputs, [rpn_prediction, score, boxes])
+        super(RCNN, self).__init__(inputs, [rpn_prediction, score, boxes, anchors])
 
 
 class ResNet50RCNN(RCNN):

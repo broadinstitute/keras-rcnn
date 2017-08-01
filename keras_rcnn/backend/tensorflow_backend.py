@@ -7,7 +7,6 @@ RPN_POSITIVE_OVERLAP = 0.7
 RPN_FG_FRACTION = 0.5
 RPN_BATCHSIZE = 256
 
-
 def scatter_add_tensor(ref, indices, updates, name=None):
     """
     Adds sparse updates to a variable reference.
@@ -123,15 +122,15 @@ def crop_and_resize(image, boxes, size):
     return tensorflow.image.crop_and_resize(image, boxes, box_ind, size)
 
 
-def overlapping(y_true, y_pred, inds_inside):
+def overlapping(anchors, gt_boxes, inds_inside):
     """
     overlaps between the anchors and the gt boxes
-    :param y_pred: anchors
-    :param y_true:
+    :param anchors: Generated anchors
+    :param gt_boxes: Ground truth bounding boxes
     :param inds_inside:
     :return:
     """
-    reference = keras_rcnn.backend.overlap(y_pred, y_true[:, :4])
+    reference = keras_rcnn.backend.overlap(anchors, gt_boxes[:, :4])
 
     argmax_overlaps_inds = keras.backend.argmax(reference, axis=1)
 

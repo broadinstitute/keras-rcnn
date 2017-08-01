@@ -181,24 +181,24 @@ def filter_boxes(proposals, minimum):
     return keras.backend.cast(indices, "int32")
 
 
-def inside_image(y_pred, img_info):
+def inside_image(boxes, im_info, allowed_border=0):
     """
-    Calc indices of anchors which are located completely inside of the image
+    Calc indices of boxes which are located completely inside of the image
     whose size is specified by img_info ((height, width, scale)-shaped array).
 
-    :param y_pred: anchors
+    :param boxes: (None, 4) tensor containing boxes in original image (x1, y1, x2, y2)
     :param img_info:
     :return:
     """
     indices = keras_rcnn.backend.where(
-        (y_pred[:, 0] >= 0) &
-        (y_pred[:, 1] >= 0) &
-        (y_pred[:, 2] < img_info[1]) &  # width
-        (y_pred[:, 3] < img_info[0])  # height
+        (boxes[:, 0] >= -allowed_border) &
+        (boxes[:, 1] >= -allowed_border) &
+        (boxes[:, 2] < allowed_border + im_info[1]) & # width
+        (boxes[:, 3] < allowed_border + im_info[0])   # height
     )
 
     indices = keras.backend.cast(indices, "int32")
 
-    gathered = keras.backend.gather(y_pred, indices)
+    gathered = keras.backend.gather(boxes, indices)
 
     return indices[:, 0], keras.backend.reshape(gathered, [-1, 4])
