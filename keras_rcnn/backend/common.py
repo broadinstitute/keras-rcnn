@@ -9,12 +9,11 @@ def anchor(base_size=16, ratios=None, scales=None):
     Generates a regular grid of multi-aspect and multi-scale anchor boxes.
     """
     if ratios is None:
-        ratios = keras.backend.cast([0.5, 1, 2], 'float32')
+        ratios = keras.backend.floatx([0.5, 1, 2])
 
     if scales is None:
-        scales = keras.backend.cast([8, 16, 32], 'float32')
-    base_anchor = keras.backend.cast([1, 1, base_size, base_size],
-                                     'float32') - 1
+        scales = keras.backend.floatx([8, 16, 32])
+    base_anchor = keras.backend.floatx([1, 1, base_size, base_size]) - 1
     base_anchor = keras.backend.expand_dims(base_anchor, 0)
 
     ratio_anchors = _ratio_enum(base_anchor, ratios)
