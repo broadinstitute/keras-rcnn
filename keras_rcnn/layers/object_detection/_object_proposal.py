@@ -8,6 +8,7 @@ import keras_rcnn.backend
 class ObjectProposal(keras.engine.topology.Layer):
     def __init__(self, maximum_proposals=300, **kwargs):
         self.output_dim = (None, maximum_proposals, 4)
+        # TODO : Parametrize this
         self.min_size   = 16 # minimum width/height of proposals in original image size
 
         self.maximum_proposals = maximum_proposals
@@ -19,12 +20,7 @@ class ObjectProposal(keras.engine.topology.Layer):
 
     def call(self, inputs, **kwargs):
         im_info, boxes, scores = inputs
-        return self.propose(im_info, boxes, scores, self.maximum_proposals)
 
-    def compute_output_shape(self, input_shape):
-        return self.output_dim
-
-    def propose(self, im_info, boxes, scores, maximum):
         # TODO: Fix usage of batch index
         shape = im_info[0, :2]
         scale = im_info[0, 2]
@@ -53,8 +49,11 @@ class ObjectProposal(keras.engine.topology.Layer):
         # 6. apply nms (e.g. threshold = 0.7)
         # 7. take after_nms_topN (e.g. 300)
         # 8. return the top proposals (-> RoIs top)
-        indices = keras_rcnn.backend.non_maximum_suppression(proposals, scores, maximum, 0.7)
+        indices = keras_rcnn.backend.non_maximum_suppression(proposals, scores, self.maximum_proposals, 0.7)
 
         proposals = keras.backend.gather(proposals, indices)
 
         return keras.backend.expand_dims(proposals, 0)
+
+    def compute_output_shape(self, input_shape):
+        return self.output_dim
