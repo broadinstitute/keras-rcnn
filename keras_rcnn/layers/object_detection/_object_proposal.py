@@ -7,7 +7,6 @@ import keras_rcnn.backend
 
 class ObjectProposal(keras.engine.topology.Layer):
     def __init__(self, maximum_proposals=300, **kwargs):
-        self.output_dim = (None, maximum_proposals, 4)
         # TODO : Parametrize this
         self.min_size   = 16 # minimum width/height of proposals in original image size
 
@@ -56,4 +55,4 @@ class ObjectProposal(keras.engine.topology.Layer):
         return keras.backend.expand_dims(proposals, 0)
 
     def compute_output_shape(self, input_shape):
-        return self.output_dim
+        return (None, self.maximum_proposals, 4)
