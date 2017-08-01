@@ -40,7 +40,7 @@ class ObjectProposal(keras.engine.topology.Layer):
         indices = keras_rcnn.backend.filter_boxes(proposals, 1)
 
         proposals = keras.backend.gather(proposals, indices)
-        scores = scores[:, :, :, :9]
+        scores = scores[:, :, :, scores.shape[-1] // 2:]
         scores = keras.backend.reshape(scores, (-1, 1))
         scores = keras.backend.gather(scores, indices)
         scores = keras.backend.flatten(scores)
