@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import keras
-import keras_resnet
+import keras_resnet.models
 
 import keras_rcnn.layers
 import keras_rcnn.classifiers
@@ -12,7 +12,7 @@ class RCNN(keras.models.Model):
     Faster R-CNN model by S Ren et, al. (2015).
 
     :param inputs: input tensor (e.g. an instance of `keras.layers.Input`)
-    :param encoder: (Convolutional) feature extractor, e.g., `keras_resnet.ResNet50`
+    :param encoder: (Convolutional) feature extractor, e.g., `keras_resnet.models.ResNet50`
     :param heads: R-CNN classifiers for object detection and/or segmentation on the proposed regions
     :param rois: integer, number of regions of interest per image
 
@@ -55,7 +55,7 @@ class ResNet50RCNN(RCNN):
 
     def __init__(self, inputs, classes, rois=300):
         # ResNet50 as encoder
-        encoder = keras_resnet.ResNet50
+        encoder = keras_resnet.models.ResNet50
 
         # ResHead with score and boxes
         heads = keras_rcnn.classifiers.residual(classes)
