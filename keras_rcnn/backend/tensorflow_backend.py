@@ -137,12 +137,12 @@ def overlapping(y_true, y_pred, inds_inside):
 
     gt_argmax_overlaps_inds = keras.backend.argmax(reference, axis=0)
 
-    indicies = keras.backend.stack([
+    indices = keras.backend.stack([
         tensorflow.range(keras.backend.shape(inds_inside)[0]),
         keras.backend.cast(argmax_overlaps_inds, "int32")
     ], axis=0)
 
-    indices = keras.backend.transpose(indicies)
+    indices = keras.backend.transpose(indices)
 
     max_overlaps = tensorflow.gather_nd(reference, indices)
 
@@ -247,11 +247,11 @@ def label(y_true, y_pred, inds_inside):
     labels = keras.backend.update(tensorflow.Variable(labels, validate_shape=False), keras_rcnn.backend.where(comparison, keras.backend.zeros_like(max_overlaps, dtype=keras.backend.floatx()), labels))
 
     # fg label: for each gt, anchor with highest overlap
-    indicies = tensorflow.expand_dims(gt_argmax_overlaps_inds, axis=1)
+    indices = tensorflow.expand_dims(gt_argmax_overlaps_inds, axis=1)
 
     updates = keras.backend.ones_like(gt_argmax_overlaps_inds, dtype=keras.backend.floatx())
 
-    labels = tensorflow.scatter_nd_update(labels, indicies, updates)
+    labels = tensorflow.scatter_nd_update(labels, indices, updates)
 
     # fg label: above threshold IOU
     comparison = keras.backend.greater_equal(max_overlaps, keras.backend.constant(RPN_POSITIVE_OVERLAP))

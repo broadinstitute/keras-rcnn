@@ -34,19 +34,19 @@ class ObjectProposal(keras.engine.topology.Layer):
 
         proposals = keras_rcnn.backend.clip(proposals, shape)
 
-        indicies = keras_rcnn.backend.filter_boxes(proposals, 1)
+        indices = keras_rcnn.backend.filter_boxes(proposals, 1)
 
-        proposals = keras.backend.gather(proposals, indicies)
+        proposals = keras.backend.gather(proposals, indices)
         scores = scores[:, :, :, :9]
         scores = keras.backend.reshape(scores, (-1, 1))
-        scores = keras.backend.gather(scores, indicies)
+        scores = keras.backend.gather(scores, indices)
         scores = keras.backend.flatten(scores)
 
         proposals = keras.backend.cast(proposals, keras.backend.floatx())
         scores = keras.backend.cast(scores, keras.backend.floatx())
 
-        indicies = keras_rcnn.backend.non_maximum_suppression(proposals, scores, maximum, 0.7)
+        indices = keras_rcnn.backend.non_maximum_suppression(proposals, scores, maximum, 0.7)
 
-        proposals = keras.backend.gather(proposals, indicies)
+        proposals = keras.backend.gather(proposals, indices)
 
         return keras.backend.expand_dims(proposals, 0)
