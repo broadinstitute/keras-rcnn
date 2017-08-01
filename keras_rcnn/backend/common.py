@@ -122,12 +122,14 @@ def shift(shape, stride):
     shift_y = keras.backend.arange(0, shape[1]) * stride
 
     shift_x, shift_y = keras_rcnn.backend.meshgrid(shift_x, shift_y)
+    shift_x = keras.backend.reshape(shift_x, [-1])
+    shift_y = keras.backend.reshape(shift_y, [-1])
 
     shifts = keras.backend.stack([
-        keras.backend.reshape(shift_x, [-1]),
-        keras.backend.reshape(shift_y, [-1]),
-        keras.backend.reshape(shift_x, [-1]),
-        keras.backend.reshape(shift_y, [-1])
+        shift_x,
+        shift_y,
+        shift_x,
+        shift_y
     ], axis=0)
 
     shifts = keras.backend.transpose(shifts)
