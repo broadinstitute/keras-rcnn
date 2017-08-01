@@ -20,6 +20,7 @@ class RCNN(keras.models.Model):
     """
 
     def __init__(self, inputs, features, heads, rois):
+        image, gt_boxes = inputs
         num_anchors = 9 # TODO: Parametrize this
 
         # Propose regions given the features
@@ -29,10 +30,10 @@ class RCNN(keras.models.Model):
 
         rpn_prediction = keras.layers.concatenate([rpn_classification, rpn_regression])
 
-        proposals = keras_rcnn.layers.object_detection.ObjectProposal(rois)([rpn_regression, rpn_classification])
+        proposals = keras_rcnn.layers.object_detection.ObjectProposal(rois)([image, rpn_regression, rpn_classification])
 
         # Apply the classifiers on the proposed regions
-        slices = keras_rcnn.layers.ROI((7, 7))([inputs, proposals])
+        slices = keras_rcnn.layers.ROI((7, 7))([image, proposals])
 
         [score, boxes] = heads(slices)
 
@@ -53,7 +54,8 @@ class ResNet50RCNN(RCNN):
 
     def __init__(self, inputs, classes, rois=300, blocks=[3, 4, 6]):
         # ResNet50 as encoder
-        features = keras_resnet.models.ResNet50(inputs, blocks=blocks, include_top=False).output
+        image, _ = inputs
+        features = keras_resnet.models.ResNet50(image, blocks=blocks, include_top=False).output
 
         # ResHead with score and boxes
         heads = keras_rcnn.classifiers.residual(classes)

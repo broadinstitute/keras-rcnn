@@ -17,14 +17,17 @@ class ObjectProposal(keras.engine.topology.Layer):
         super(ObjectProposal, self).build(input_shape)
 
     def call(self, inputs, **kwargs):
-        return self.propose(inputs[0], inputs[1], self.maximum_proposals)
+        image, boxes, scores = inputs
+        return self.propose(image, boxes, scores, self.maximum_proposals)
 
     def compute_output_shape(self, input_shape):
         return self.output_dim
 
-    @staticmethod
-    def propose(boxes, scores, maximum):
-        shape = keras.backend.shape(boxes)[1:3]
+    def propose(self, image, boxes, scores, maximum):
+        if keras.backend.image_data_format() == "channels_last":
+            shape = keras.backend.shape(image)[1:3]
+        elif keras.backend.image_data_format() == "channels_first":
+            shape = keras.backend.shape(image)[2:4]
 
         shifted = keras_rcnn.backend.shift(shape, 16)
 
