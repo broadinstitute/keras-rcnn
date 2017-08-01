@@ -171,31 +171,31 @@ def filter_boxes(proposals, minimum):
     ws = proposals[:, 2] - proposals[:, 0] + 1
     hs = proposals[:, 3] - proposals[:, 1] + 1
 
-    indicies = keras_rcnn.backend.where((ws >= minimum) & (hs >= minimum))
+    indices = keras_rcnn.backend.where((ws >= minimum) & (hs >= minimum))
 
-    indicies = keras.backend.flatten(indicies)
+    indices = keras.backend.flatten(indices)
 
-    return keras.backend.cast(indicies, "int32")
+    return keras.backend.cast(indices, "int32")
 
 
 def inside_image(y_pred, img_info):
     """
-    Calc indicies of anchors which are located completely inside of the image
+    Calc indices of anchors which are located completely inside of the image
     whose size is specified by img_info ((height, width, scale)-shaped array).
 
     :param y_pred: anchors
     :param img_info:
     :return:
     """
-    indicies = keras_rcnn.backend.where(
+    indices = keras_rcnn.backend.where(
         (y_pred[:, 0] >= 0) &
         (y_pred[:, 1] >= 0) &
         (y_pred[:, 2] < img_info[1]) &  # width
         (y_pred[:, 3] < img_info[0])  # height
     )
 
-    indicies = keras.backend.cast(indicies, "int32")
+    indices = keras.backend.cast(indices, "int32")
 
-    gathered = keras.backend.gather(y_pred, indicies)
+    gathered = keras.backend.gather(y_pred, indices)
 
-    return indicies[:, 0], keras.backend.reshape(gathered, [-1, 4])
+    return indices[:, 0], keras.backend.reshape(gathered, [-1, 4])
