@@ -48,8 +48,6 @@ def bbox_transform(ex_rois, gt_rois):
 
 
 def clip(boxes, shape):
-    boxes = keras.backend.cast(boxes, dtype='int32')
-    shape = keras.backend.cast(shape, dtype='int32')
     proposals = [
         keras.backend.maximum(
             keras.backend.minimum(boxes[:, 0::4], shape[1] - 1), 0),
