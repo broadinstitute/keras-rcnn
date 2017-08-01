@@ -8,7 +8,8 @@ import keras_rcnn.backend
 class ObjectProposal(keras.engine.topology.Layer):
     def __init__(self, maximum_proposals=300, **kwargs):
         # TODO : Parametrize this
-        self.min_size   = 16 # minimum width/height of proposals in original image size
+        self.min_size    = 16 # minimum width/height of proposals in original image size
+        self.feat_stride = 16
 
         self.maximum_proposals = maximum_proposals
 
@@ -25,7 +26,7 @@ class ObjectProposal(keras.engine.topology.Layer):
         scale = im_info[0, 2]
 
         # 1. generate proposals from bbox deltas and shifted anchors
-        shifted = keras_rcnn.backend.shift(shape, 16)
+        shifted = keras_rcnn.backend.shift(shape, self.feat_stride)
         proposals = keras.backend.reshape(boxes, (-1, 4))
         proposals = keras_rcnn.backend.bbox_transform_inv(shifted, proposals)
 
