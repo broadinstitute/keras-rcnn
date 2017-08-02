@@ -38,7 +38,7 @@ class ProposalTarget(keras.engine.topology.Layer):
 
         # Convert fixed anchors in (x, y, w, h) to (dx, dy, dw, dh)
         bbox_reg_targets = keras_rcnn.backend.bbox_transform(anchors, gt_boxes)
-        
+
         return anchors
 
     def compute_output_shape(self, input_shape):
