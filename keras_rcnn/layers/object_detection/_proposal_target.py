@@ -18,7 +18,7 @@ class ProposalTarget(keras.engine.topology.Layer):
         super(ProposalTarget, self).build(input_shape)
 
     def call(self, inputs, **kwargs):
-        scores, gt_boxes, im_info = inputs
+        gt_boxes, im_info = inputs
 
         # TODO: Fix usage of batch index
         shape = im_info[0, :2]
@@ -41,4 +41,4 @@ class ProposalTarget(keras.engine.topology.Layer):
         return labels, bbox_reg_targets
 
     def compute_output_shape(self, input_shape):
-        return (None, 4)
+        return (None,), (None, 4)
