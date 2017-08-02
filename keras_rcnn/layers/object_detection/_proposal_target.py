@@ -33,13 +33,12 @@ class ProposalTarget(keras.engine.topology.Layer):
         # 2. obtain indices of gt boxes with the greatest overlap, balanced labels
         argmax_overlaps_indices, labels = keras_rcnn.backend.label(anchors, gt_boxes, indices, self.negative_overlap, self.clobber_positives)
 
-        # map up to original set of anchors
         gt_boxes = keras.backend.gather(gt_boxes, argmax_overlaps_indices)
 
         # Convert fixed anchors in (x, y, w, h) to (dx, dy, dw, dh)
         bbox_reg_targets = keras_rcnn.backend.bbox_transform(anchors, gt_boxes)
 
-        return anchors
+        return labels, bbox_reg_targets
 
     def compute_output_shape(self, input_shape):
         return (None, 4)
