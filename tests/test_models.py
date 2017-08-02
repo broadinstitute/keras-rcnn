@@ -9,11 +9,13 @@ import keras_rcnn.models
 
 
 def test_resnet50_rcnn():
-    inputs = keras.layers.Input((224, 224, 3))
+    image    = keras.layers.Input(shape=(224, 224, 3), name='image')
+    im_info  = keras.layers.Input(shape=(3,), name='im_info')
+    gt_boxes = keras.layers.Input(shape=(None, 5,), name='gt_boxes')
 
-    model = keras_rcnn.models.ResNet50RCNN(inputs, 21, 300)
+    model = keras_rcnn.models.ResNet50RCNN([image, im_info, gt_boxes], 21, 300)
 
-    model.compile(loss=["mse", "mse", "mse"], optimizer="adam")
+    model.compile(loss=None, optimizer="adam")
 
 
 def test_rpn():
@@ -23,7 +25,7 @@ def test_rpn():
         "padding": "same"
     }
 
-    image = keras.layers.Input((224, 224, 3))
+    image = keras.layers.Input(shape=(224, 224, 3), name='image')
 
     y_true = keras.layers.Input((None, 4), name="y_true")
 

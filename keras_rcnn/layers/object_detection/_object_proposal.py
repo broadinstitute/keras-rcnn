@@ -6,10 +6,11 @@ import keras_rcnn.backend
 
 
 class ObjectProposal(keras.engine.topology.Layer):
-    def __init__(self, maximum_proposals=300, **kwargs):
-        self.output_shape = (None, maximum_proposals, 4)
-
+    def __init__(self, maximum_proposals=300, min_size=16, feat_stride=16, **kwargs):
+        # TODO : Parametrize this
         self.maximum_proposals = maximum_proposals
+        self.min_size          = min_size # minimum width/height of proposals in original image size
+        self.feat_stride       = feat_stride
 
         super(ObjectProposal, self).__init__(**kwargs)
 
@@ -17,36 +18,41 @@ class ObjectProposal(keras.engine.topology.Layer):
         super(ObjectProposal, self).build(input_shape)
 
     def call(self, inputs, **kwargs):
-        return self.propose(inputs[0], inputs[1], self.maximum_proposals)
+        im_info, boxes, scores = inputs
 
-    def compute_output_shape(self, input_shape):
-        return self.output_shape
+        # TODO: Fix usage of batch index
+        shape = im_info[0, :2]
+        scale = im_info[0, 2]
 
-    @staticmethod
-    def propose(boxes, scores, maximum):
-        shape = keras.backend.shape(boxes)[1:3]
-
-        shifted = keras_rcnn.backend.shift(shape, 16)
-
+        # 1. generate proposals from bbox deltas and shifted anchors
+        shifted = keras_rcnn.backend.shift(shape, self.feat_stride)
         proposals = keras.backend.reshape(boxes, (-1, 4))
-
         proposals = keras_rcnn.backend.bbox_transform_inv(shifted, proposals)
 
+        # 2. clip predicted boxes to image
         proposals = keras_rcnn.backend.clip(proposals, shape)
 
-        indicies = keras_rcnn.backend.filter_boxes(proposals, 1)
-
-        proposals = keras.backend.gather(proposals, indicies)
-        scores = scores[:, :, :, :9]
+        # 3. remove predicted boxes with either height or width < threshold
+        # (NOTE: convert min_size to input image scale stored in im_info[2])
+        indices = keras_rcnn.backend.filter_boxes(proposals, self.min_size * scale)
+        proposals = keras.backend.gather(proposals, indices)
+        scores = scores[..., (scores.shape[-1] // 2):]
         scores = keras.backend.reshape(scores, (-1, 1))
-        scores = keras.backend.gather(scores, indicies)
+        scores = keras.backend.gather(scores, indices)
         scores = keras.backend.flatten(scores)
 
-        proposals = keras.backend.cast(proposals, keras.backend.floatx())
-        scores = keras.backend.cast(scores, keras.backend.floatx())
+        # 4. sort all (proposal, score) pairs by score from highest to lowest
+        # 5. take top pre_nms_topN (e.g. 6000)
+        # TODO : Needs to be implemented?
 
-        indicies = keras_rcnn.backend.non_maximum_suppression(proposals, scores, maximum, 0.7)
+        # 6. apply nms (e.g. threshold = 0.7)
+        # 7. take after_nms_topN (e.g. 300)
+        # 8. return the top proposals (-> RoIs top)
+        indices = keras_rcnn.backend.non_maximum_suppression(proposals, scores, self.maximum_proposals, 0.7)
 
-        proposals = keras.backend.gather(proposals, indicies)
+        proposals = keras.backend.gather(proposals, indices)
 
         return keras.backend.expand_dims(proposals, 0)
+
+    def compute_output_shape(self, input_shape):
+        return (None, self.maximum_proposals, 4)
