@@ -7,7 +7,6 @@ RPN_POSITIVE_OVERLAP = 0.7
 RPN_FG_FRACTION = 0.5
 RPN_BATCHSIZE = 256
 
-
 def scatter_add_tensor(ref, indices, updates, name=None):
     """
     Adds sparse updates to a variable reference.
@@ -123,26 +122,26 @@ def crop_and_resize(image, boxes, size):
     return tensorflow.image.crop_and_resize(image, boxes, box_ind, size)
 
 
-def overlapping(y_true, y_pred, inds_inside):
+def overlapping(anchors, gt_boxes, inds_inside):
     """
     overlaps between the anchors and the gt boxes
-    :param y_pred: anchors
-    :param y_true:
+    :param anchors: Generated anchors
+    :param gt_boxes: Ground truth bounding boxes
     :param inds_inside:
     :return:
     """
-    reference = keras_rcnn.backend.overlap(y_pred, y_true[:, :4])
+    reference = keras_rcnn.backend.overlap(anchors, gt_boxes[:, :4])
 
     argmax_overlaps_inds = keras.backend.argmax(reference, axis=1)
 
     gt_argmax_overlaps_inds = keras.backend.argmax(reference, axis=0)
 
-    indicies = keras.backend.stack([
+    indices = keras.backend.stack([
         tensorflow.range(keras.backend.shape(inds_inside)[0]),
         keras.backend.cast(argmax_overlaps_inds, "int32")
     ], axis=0)
 
-    indices = keras.backend.transpose(indicies)
+    indices = keras.backend.transpose(indices)
 
     max_overlaps = tensorflow.gather_nd(reference, indices)
 
@@ -247,11 +246,11 @@ def label(y_true, y_pred, inds_inside):
     labels = keras.backend.update(tensorflow.Variable(labels, validate_shape=False), keras_rcnn.backend.where(comparison, keras.backend.zeros_like(max_overlaps, dtype=keras.backend.floatx()), labels))
 
     # fg label: for each gt, anchor with highest overlap
-    indicies = tensorflow.expand_dims(gt_argmax_overlaps_inds, axis=1)
+    indices = tensorflow.expand_dims(gt_argmax_overlaps_inds, axis=1)
 
     updates = keras.backend.ones_like(gt_argmax_overlaps_inds, dtype=keras.backend.floatx())
 
-    labels = tensorflow.scatter_nd_update(labels, indicies, updates)
+    labels = tensorflow.scatter_nd_update(labels, indices, updates)
 
     # fg label: above threshold IOU
     comparison = keras.backend.greater_equal(max_overlaps, keras.backend.constant(RPN_POSITIVE_OVERLAP))
