@@ -30,30 +30,15 @@ class ProposalTarget(keras.engine.topology.Layer):
         # only keep anchors inside the image
         indices, anchors = keras_rcnn.backend.inside_image(all_anchors, im_info, self.allowed_border)
 
-        # label: 1 is positive, 0 is negative, -1 is dont care
-        ones   = keras.backend.ones_like(indices, dtype=keras.backend.floatx())
-        zeros  = keras.backend.zeros_like(indices, dtype=keras.backend.floatx())
-        labels = ones * -1
+        # 2. obtain indices of gt boxes with the greatest overlap, balanced labels
+        argmax_overlaps_indices, labels = keras_rcnn.backend.label(anchors, gt_boxes, indices, self.negative_overlap, self.clobber_positives)
 
-        argmax_overlaps_inds, max_overlaps, gt_argmax_overlaps_inds = keras_rcnn.backend.overlapping(anchors, gt_boxes, indices)
-
-        if not self.clobber_positives:
-            labels = keras_rcnn.backend.where(keras.backend.less(max_overlaps, self.negative_overlap), zeros, labels)
-
-        # fg label: for each gt, anchor with highest overlap
-        #TODO Find Keras equivalent of this
-        #labels[gt_argmax_overlaps_inds] = 1
-
-        # fg label: above threshold IOU
-        labels = keras_rcnn.backend.where(keras.backend.greater_equal(max_overlaps, self.positive_overlap), ones, labels)
-
-        if self.clobber_positives:
-            labels = keras_rcnn.backend.where(keras.backend.less(max_overlaps, self.negative_overlap), zeros, labels)
-
-        # subsample positive labels if we have too many
-        # subsample negative labels if we have too many
         # map up to original set of anchors
+        gt_boxes = keras.backend.gather(gt_boxes, argmax_overlaps_indices)
 
+        # Convert fixed anchors in (x, y, w, h) to (dx, dy, dw, dh)
+        bbox_reg_targets = keras_rcnn.backend.bbox_transform(anchors, gt_boxes)
+        
         return anchors
 
     def compute_output_shape(self, input_shape):

@@ -2,8 +2,6 @@ import keras.backend
 import tensorflow
 import keras_rcnn.backend
 
-RPN_NEGATIVE_OVERLAP = 0.3
-RPN_POSITIVE_OVERLAP = 0.7
 RPN_FG_FRACTION = 0.5
 RPN_BATCHSIZE = 256
 
@@ -225,42 +223,39 @@ def subsample_negative_labels(labels):
     return tensorflow.cond(predicate, lambda: less_negative(), lambda: more_negative())
 
 
-def label(y_true, y_pred, inds_inside):
+def label(y_true, y_pred, inds_inside, RPN_NEGATIVE_OVERLAP=0.3, RPN_POSITIVE_OVERLAP=0.7, clobber_positives=True):
     """
     Create bbox labels.
-    label: 1 is positive, 0 is negative, -1 is dont care
+    label: 1 is positive, 0 is negative, -1 is do not care
 
-    :param inds_inside:
+    :param inds_inside: indices of anchors inside image
     :param y_pred: anchors
-    :param y_true:
+    :param y_true: ground truth objects
 
-    :return:
+    :return: indices of gt boxes with the greatest overlap, balanced labels
     """
-    labels = keras.backend.ones_like(inds_inside, dtype=keras.backend.floatx()) * -1
+    ones = keras.backend.ones_like(inds_inside, dtype=keras.backend.floatx())
+    labels = ones * -1
+    zeros = keras.backend.zeros_like(inds_inside, dtype=keras.backend.floatx())
 
     argmax_overlaps_inds, max_overlaps, gt_argmax_overlaps_inds = overlapping(y_true, y_pred, inds_inside)
 
     # assign bg labels first so that positive labels can clobber them
-    comparison = keras.backend.less(max_overlaps, keras.backend.constant(RPN_NEGATIVE_OVERLAP))
-
-    labels = keras.backend.update(tensorflow.Variable(labels, validate_shape=False), keras_rcnn.backend.where(comparison, keras.backend.zeros_like(max_overlaps, dtype=keras.backend.floatx()), labels))
+    if not clobber_positives:
+        labels = keras_rcnn.backend.where(keras.backend.less(max_overlaps, RPN_NEGATIVE_OVERLAP), zeros, labels)
 
     # fg label: for each gt, anchor with highest overlap
-    indices = tensorflow.expand_dims(gt_argmax_overlaps_inds, axis=1)
+    indices = keras.backend.expand_dims(gt_argmax_overlaps_inds, axis=1)
 
     updates = keras.backend.ones_like(gt_argmax_overlaps_inds, dtype=keras.backend.floatx())
-
-    labels = tensorflow.scatter_nd_update(labels, indices, updates)
+    labels = keras_rcnn.backend.scatter_add_tensor(labels, indices, updates)
 
     # fg label: above threshold IOU
-    comparison = keras.backend.greater_equal(max_overlaps, keras.backend.constant(RPN_POSITIVE_OVERLAP))
+    labels = keras_rcnn.backend.where(keras.backend.greater_equal(max_overlaps, RPN_POSITIVE_OVERLAP), ones, labels)
 
-    labels = keras.backend.update(labels, keras_rcnn.backend.where(comparison, keras.backend.ones_like(max_overlaps, dtype=keras.backend.floatx()), labels))
-
-    # assign bg labels last so that negative labels can clobber positives
-    comparison = keras.backend.less(max_overlaps, keras.backend.constant(RPN_NEGATIVE_OVERLAP))
-
-    labels = keras.backend.update(labels, keras_rcnn.backend.where(comparison, keras.backend.zeros_like(max_overlaps, dtype=keras.backend.floatx()), labels))
+    if clobber_positives:
+        # assign bg labels last so that negative labels can clobber positives
+        labels = keras_rcnn.backend.where(keras.backend.less(max_overlaps, RPN_NEGATIVE_OVERLAP), zeros, labels)
 
     return argmax_overlaps_inds, balance(labels)
 
