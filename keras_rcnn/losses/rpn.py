@@ -73,23 +73,23 @@ def proposal(anchors, image_shape, stride, *args, **kwargs):
 
         gt_c2_mask = keras.backend.cast(gt_c2_mask, keras.backend.floatx())
 
-        y_true_classification_indicies = keras.backend.concatenate([z, i, j, a], 1)
+        y_true_classification_indices = keras.backend.concatenate([z, i, j, a], 1)
 
-        y_true_classification = keras_rcnn.backend.scatter_add_tensor(y_true_classification, y_true_classification_indicies, gt_c1_mask)
+        y_true_classification = keras_rcnn.backend.scatter_add_tensor(y_true_classification, y_true_classification_indices, gt_c1_mask)
 
-        y_true_classification_indicies = keras.backend.concatenate([z, i, j, anchors + a], 1)
+        y_true_classification_indices = keras.backend.concatenate([z, i, j, anchors + a], 1)
 
-        y_true_classification = keras_rcnn.backend.scatter_add_tensor(y_true_classification, y_true_classification_indicies, gt_c2_mask)
+        y_true_classification = keras_rcnn.backend.scatter_add_tensor(y_true_classification, y_true_classification_indices, gt_c2_mask)
 
-        y_true_regression_indicies = keras.backend.concatenate([zz, ii, jj, aa], 1)
+        y_true_regression_indices = keras.backend.concatenate([zz, ii, jj, aa], 1)
 
-        y_true_regression = keras_rcnn.backend.scatter_add_tensor(y_true_regression, y_true_regression_indicies, gt_r1_mask)
+        y_true_regression = keras_rcnn.backend.scatter_add_tensor(y_true_regression, y_true_regression_indices, gt_r1_mask)
 
-        y_true_regression_indicies = keras.backend.concatenate([zz, ii, jj, anchors * 4 + aa], 1)
+        y_true_regression_indices = keras.backend.concatenate([zz, ii, jj, anchors * 4 + aa], 1)
 
         y_true_regression_updates = keras.backend.reshape(gt_regression, (-1,))
 
-        y_true_regression = keras_rcnn.backend.scatter_add_tensor(y_true_regression, y_true_regression_indicies, y_true_regression_updates)
+        y_true_regression = keras_rcnn.backend.scatter_add_tensor(y_true_regression, y_true_regression_indices, y_true_regression_updates)
 
         y_true_classification = keras.backend.reshape(y_true_classification, (1, features[0], features[1], anchors * 2))
 
