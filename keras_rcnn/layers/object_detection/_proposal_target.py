@@ -6,11 +6,11 @@ import keras_rcnn.backend
 
 
 class ProposalTarget(keras.engine.topology.Layer):
-    def __init__(self, **kwargs):
-        self.allowed_border = 0
-        self.clobber_positives = False
-        self.negative_overlap = 0.3
-        self.positive_overlap = 0.7
+    def __init__(self, allowed_border=0, clobber_positives=False, negative_overlap=0.3, positive_overlap=0.7, **kwargs):
+        self.allowed_border    = allowed_border
+        self.clobber_positives = clobber_positives
+        self.negative_overlap  = negative_overlap
+        self.positive_overlap  = positive_overlap
 
         super(ProposalTarget, self).__init__(**kwargs)
 

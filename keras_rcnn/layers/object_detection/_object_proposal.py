@@ -6,12 +6,11 @@ import keras_rcnn.backend
 
 
 class ObjectProposal(keras.engine.topology.Layer):
-    def __init__(self, maximum_proposals=300, **kwargs):
+    def __init__(self, maximum_proposals=300, min_size=16, feat_stride=16, **kwargs):
         # TODO : Parametrize this
-        self.min_size    = 16 # minimum width/height of proposals in original image size
-        self.feat_stride = 16
-
         self.maximum_proposals = maximum_proposals
+        self.min_size          = min_size # minimum width/height of proposals in original image size
+        self.feat_stride       = feat_stride
 
         super(ObjectProposal, self).__init__(**kwargs)
 
