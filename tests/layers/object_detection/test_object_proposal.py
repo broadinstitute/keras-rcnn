@@ -1,14 +1,16 @@
 import keras.backend
+import numpy
+
+import keras_rcnn.layers
 
 
 class TestObjectProposal:
-    def test_compute_output_shape(self, object_proposal_layer):
-        assert object_proposal_layer.compute_output_shape((14, 14)) == (None, 300, 4)
+    def test_call(self):
+        image_shape_and_scale = keras.backend.variable([[224, 224, 1.5]])
 
-    def test_propose_objects(self, object_proposal_layer):
-        a = keras.backend.zeros((1, 14, 14, 9 * 4))
-        b = keras.backend.zeros((1, 14, 14, 9 * 1))
+        objectness_scores = keras.backend.variable(numpy.random.random((1, 14, 14, 9 * 2)))
+        reference_bounding_boxes = keras.backend.variable(numpy.random.random((1, 14, 14, 9 * 4)))
 
-        proposals = object_proposal_layer.propose(a, b, 100)
+        object_proposal = keras_rcnn.layers.ObjectProposal()
 
-        assert keras.backend.eval(proposals).shape == (1, 100, 4)
+        object_proposal.call([image_shape_and_scale, reference_bounding_boxes, objectness_scores])

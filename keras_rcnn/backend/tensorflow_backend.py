@@ -7,6 +7,12 @@ RPN_POSITIVE_OVERLAP = 0.7
 RPN_FG_FRACTION = 0.5
 RPN_BATCHSIZE = 256
 
+
+def argsort(a, axis=-1):
+    _, indices = tensorflow.nn.top_k(a, keras.backend.shape(a)[-1])
+
+    return indices
+
 def scatter_add_tensor(ref, indices, updates, name=None):
     """
     Adds sparse updates to a variable reference.
@@ -56,7 +62,9 @@ def where(condition, x=None, y=None):
 
 def bbox_transform_inv(shifted, boxes):
     def shape_zero():
-        return keras.backend.zeros_like(keras.backend.shape(boxes)[1], dtype=boxes.dtype)
+        x = keras.backend.int_shape(boxes)[-1]
+
+        return keras.backend.zeros_like(x, dtype=keras.backend.floatx())
 
     def shape_non_zero():
         a = shifted[:, 2] - shifted[:, 0] + 1.0
