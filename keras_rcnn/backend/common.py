@@ -23,17 +23,6 @@ def anchor(base_size=16, ratios=None, scales=None):
 
 
 def bbox_transform(ex_rois, gt_rois):
-    #TODO: documentation
-    """
-    Parameters
-    ----------
-    ex_rois
-    gt_rois
-
-    Returns
-    -------
-
-    """
     ex_widths = ex_rois[:, 2] - ex_rois[:, 0] + 1.0
     ex_heights = ex_rois[:, 3] - ex_rois[:, 1] + 1.0
     ex_ctr_x = ex_rois[:, 0] + 0.5 * ex_widths
@@ -128,17 +117,8 @@ def _whctrs(anchor):
 
 
 def shift(shape, stride):
-    #TODO: documentation
     """
-
-    Parameters
-    ----------
-    shape
-    stride
-
-    Returns
-    -------
-
+    Produce shifted anchors based on shape of the map and stride size
     """
     shift_x = keras.backend.arange(0, shape[0]) * stride
     shift_y = keras.backend.arange(0, shape[1]) * stride
