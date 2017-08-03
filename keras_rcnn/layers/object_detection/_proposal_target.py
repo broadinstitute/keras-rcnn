@@ -6,6 +6,20 @@ import keras_rcnn.backend
 
 
 class ProposalTarget(keras.engine.topology.Layer):
+    """Proposal anchor targets and corresponding labels (label: 1 is positive, 0 is negative, -1 is do not care) for ground truth boxes
+
+    # Arguments
+        allowed_border: allow boxes to be outside the image by allowed_border pixels
+        clobber_positives: if an anchor statisfied by positive and negative conditions given to negative label
+        negative_overlap: IoU threshold below which labels should be given negative label
+        positive_overlap: IoU threshold above which labels should be given positive label
+
+    # Input shape
+        (# of samples, 4), (width of feature map, height of feature map, scale)
+
+    # Output shape
+        (# of samples, ), (# of samples, 4)
+    """
     def __init__(self, allowed_border=0, clobber_positives=False, negative_overlap=0.3, positive_overlap=0.7, **kwargs):
         self.allowed_border    = allowed_border
         self.clobber_positives = clobber_positives
@@ -31,7 +45,7 @@ class ProposalTarget(keras.engine.topology.Layer):
         indices, anchors = keras_rcnn.backend.inside_image(all_anchors, im_info, self.allowed_border)
 
         # 2. obtain indices of gt boxes with the greatest overlap, balanced labels
-        argmax_overlaps_indices, labels = keras_rcnn.backend.label(anchors, gt_boxes, indices, self.negative_overlap, self.clobber_positives)
+        argmax_overlaps_indices, labels = keras_rcnn.backend.label(anchors, gt_boxes, indices, self.negative_overlap, self.positive_overlap, self.clobber_positives)
 
         gt_boxes = keras.backend.gather(gt_boxes, argmax_overlaps_indices)
 

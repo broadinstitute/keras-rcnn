@@ -23,6 +23,17 @@ def anchor(base_size=16, ratios=None, scales=None):
 
 
 def bbox_transform(ex_rois, gt_rois):
+    #TODO: documentation
+    """
+    Parameters
+    ----------
+    ex_rois
+    gt_rois
+
+    Returns
+    -------
+
+    """
     ex_widths = ex_rois[:, 2] - ex_rois[:, 0] + 1.0
     ex_heights = ex_rois[:, 3] - ex_rois[:, 1] + 1.0
     ex_ctr_x = ex_rois[:, 0] + 0.5 * ex_widths
@@ -47,6 +58,10 @@ def bbox_transform(ex_rois, gt_rois):
 
 
 def clip(boxes, shape):
+    """
+    Clips box coordinates to be within the width and height as defined in shape
+
+    """
     proposals = [
         keras.backend.maximum(
             keras.backend.minimum(boxes[:, 0::4], shape[1] - 1), 0),
@@ -113,6 +128,18 @@ def _whctrs(anchor):
 
 
 def shift(shape, stride):
+    #TODO: documentation
+    """
+
+    Parameters
+    ----------
+    shape
+    stride
+
+    Returns
+    -------
+
+    """
     shift_x = keras.backend.arange(0, shape[0]) * stride
     shift_y = keras.backend.arange(0, shape[1]) * stride
 
@@ -168,6 +195,10 @@ def overlap(a, b):
 
 
 def filter_boxes(proposals, minimum):
+    """
+    Filters proposed RoIs so that all have width and height at least as big as minimum
+
+    """
     ws = proposals[:, 2] - proposals[:, 0] + 1
     hs = proposals[:, 3] - proposals[:, 1] + 1
 
@@ -184,8 +215,10 @@ def inside_image(boxes, im_info, allowed_border=0):
     whose size is specified by img_info ((height, width, scale)-shaped array).
 
     :param boxes: (None, 4) tensor containing boxes in original image (x1, y1, x2, y2)
-    :param img_info:
-    :return:
+    :param img_info: (height, width, scale)
+    :param allowed_border: allow boxes to be outside the image by allowed_border pixels
+    :return: (None, 4) indices of boxes completely in original image,
+        (None, 4) tensor of boxes completely inside image
     """
     indices = keras_rcnn.backend.where(
         (boxes[:, 0] >= -allowed_border) &
