@@ -8,6 +8,19 @@ RPN_PRE_NMS_TOP_N = 12000
 
 
 class ObjectProposal(keras.engine.topology.Layer):
+    """Propose object-containing regions for an image from anchors
+
+    # Arguments
+        maximum_proposals: maximum number of regions allowed
+        min_size: minimum width/height of proposals in original image size
+        stride: stride size
+
+    # Input shape
+        (width of image, height of image, scale), (None, 4), (None)
+
+    # Output shape
+        (# images, # proposals, 4)
+    """
     def __init__(self, maximum_proposals=300, min_size=16, stride=16, **kwargs):
         self.maximum_proposals = maximum_proposals
 

@@ -6,7 +6,7 @@ import keras_rcnn.backend
 
 
 class ProposalTarget(keras.engine.topology.Layer):
-    """Proposal anchor targets and corresponding labels (label: 1 is positive, 0 is negative, -1 is do not care) for ground truth boxes
+    """Calculate proposal anchor targets and corresponding labels (label: 1 is positive, 0 is negative, -1 is do not care) for ground truth boxes
 
     # Arguments
         allowed_border: allow boxes to be outside the image by allowed_border pixels

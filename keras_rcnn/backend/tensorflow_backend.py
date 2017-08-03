@@ -5,7 +5,7 @@ import keras_rcnn.backend
 RPN_FG_FRACTION = 0.5
 RPN_BATCHSIZE = 256
 
-
+#TODO: remove globals
 def argsort(a, axis=-1):
     _, indices = tensorflow.nn.top_k(a, keras.backend.shape(a)[-1])
 
