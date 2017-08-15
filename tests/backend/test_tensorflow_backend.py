@@ -92,14 +92,6 @@ def test_bbox_transform_inv():
     assert keras.backend.eval(pred_boxes).shape == (1764, 4)
 
 
-def test_resize_images():
-    im = numpy.zeros((1200, 1600, 3))
-    shape = (256, 256)
-    im = keras.backend.variable(im)
-    resize = keras_rcnn.backend.resize_images(im, shape)
-    assert keras.backend.eval(resize).shape == (256, 256, 3)
-
-
 def test_subsample_positive_labels():
     x = keras.backend.ones((10,))
 

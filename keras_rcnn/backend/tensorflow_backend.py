@@ -149,10 +149,6 @@ def non_maximum_suppression(boxes, scores, maximum, threshold=0.5):
     )
 
 
-def resize_images(images, shape):
-    return tensorflow.image.resize_images(images, shape)
-
-
 def crop_and_resize(image, boxes, size):
     """Crop the image given boxes and resize with bilinear interplotation.
     # Parameters
