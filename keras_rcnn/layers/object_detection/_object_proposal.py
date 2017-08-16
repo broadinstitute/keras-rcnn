@@ -44,7 +44,8 @@ class ObjectProposal(keras.engine.topology.Layer):
         # the second set are the fg probs, which we want
         # scores = scores[:, :, :, 9:]
 
-        rr, cc = keras.backend.int_shape(scores)[1:-1]
+        rr = keras.backend.shape(scores)[1]
+        cc = keras.backend.shape(scores)[2]
 
         # TODO: Fix usage of batch index
         batch_index = 0
