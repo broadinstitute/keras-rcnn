@@ -5,7 +5,7 @@ import numpy
 
 def test_call_classification():
     anchors = 9
-    layer = keras_rcnn.layers.ClassificationLoss(anchors=anchors)
+    layer = keras_rcnn.layers.RPNClassificationLoss(anchors=anchors)
     y_true = keras.backend.variable(100 * numpy.random.random((1, 91, 4)))
     scores = keras.backend.variable(0.5 * numpy.ones((1, 14, 14, anchors * 2)))
     image = keras.layers.Input((224, 224, 3))
@@ -23,7 +23,7 @@ def test_call_regression():
     anchors = 9
     image = keras.layers.Input((224, 224, 3))
     metadata = keras.backend.int_shape(image)[1:]
-    layer = keras_rcnn.layers.RegressionLoss(anchors=anchors)
+    layer = keras_rcnn.layers.RPNRegressionLoss(anchors=anchors)
     rr, cc = 14, 14
     stride = 16
     all_anchors = keras_rcnn.backend.shift((rr, cc), stride)

@@ -62,9 +62,9 @@ class TestAnchorTarget:
 
         labels, bbox_reg_targets = keras_rcnn.layers.AnchorTarget()([scores, bounding_boxes, image])
 
-        classification = keras_rcnn.layers.ClassificationLoss(9)([scores, labels])
+        classification = keras_rcnn.layers.RPNClassificationLoss(9)([scores, labels])
 
-        regression = keras_rcnn.layers.RegressionLoss(9)([deltas, bbox_reg_targets, labels])
+        regression = keras_rcnn.layers.RPNRegressionLoss(9)([deltas, bbox_reg_targets, labels])
 
         model = keras.models.Model([image, bounding_boxes], [classification, regression])
 

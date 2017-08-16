@@ -3,11 +3,11 @@ import keras.layers
 import keras_rcnn.backend
 
 
-class ClassificationLoss(keras.layers.Layer):
+class RPNClassificationLoss(keras.layers.Layer):
     def __init__(self, anchors, **kwargs):
         self.anchors = anchors
 
-        super(ClassificationLoss, self).__init__(**kwargs)
+        super(RPNClassificationLoss, self).__init__(**kwargs)
 
     def call(self, inputs, **kwargs):
         output, target = inputs
@@ -38,11 +38,11 @@ class ClassificationLoss(keras.layers.Layer):
         return None, None, None, self.anchors * 2
 
 
-class RegressionLoss(keras.layers.Layer):
+class RPNRegressionLoss(keras.layers.Layer):
     def __init__(self, anchors, **kwargs):
         self.anchors = anchors
 
-        super(RegressionLoss, self).__init__(**kwargs)
+        super(RPNRegressionLoss, self).__init__(**kwargs)
 
     def call(self, inputs, **kwargs):
         output, target, labels = inputs

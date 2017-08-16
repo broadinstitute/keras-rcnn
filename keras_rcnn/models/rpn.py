@@ -32,7 +32,7 @@ def rpn(inputs, features, rois):
     rpn_labels, rpn_bbox_reg_targets = keras_rcnn.layers.AnchorTarget(name="anchor_target")([scores, gt_boxes, image])
 
     # Compute RPN losses
-    scores = keras_rcnn.layers.ClassificationLoss(anchors=num_anchors, name="rpn_classification_loss")([scores, rpn_labels])
-    deltas = keras_rcnn.layers.RegressionLoss(anchors=num_anchors, name="rpn_bbox_loss")([deltas, rpn_bbox_reg_targets, rpn_labels])
+    scores = keras_rcnn.layers.RPNClassificationLoss(anchors=num_anchors, name="rpn_classification_loss")([scores, rpn_labels])
+    deltas = keras_rcnn.layers.RPNRegressionLoss(anchors=num_anchors, name="rpn_bbox_loss")([deltas, rpn_bbox_reg_targets, rpn_labels])
 
     return proposals, scores, deltas
