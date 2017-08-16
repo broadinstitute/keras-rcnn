@@ -20,7 +20,7 @@ class RPNClassificationLoss(keras.layers.Layer):
 
     @staticmethod
     def compute_loss(output, target):
-        output = keras.backend.reshape(output, [-1, 2])
+        output = keras.backend.reshape(output, [1, -1, 2])
 
         condition = keras.backend.not_equal(target, -1)
 

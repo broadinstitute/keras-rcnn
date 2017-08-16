@@ -14,7 +14,7 @@ class AnchorTarget(keras.layers.Layer):
         positive_overlap: IoU threshold above which labels should be given positive label
 
     # Input shape
-        (# of batches, width of feature map, height of feature map, 2 * # of anchors), (# of samples, 4), (width of feature map, height of feature map, channels)
+        (# of batches, width of feature map, height of feature map, 2 * # of anchors), (# of samples, 4), (3)
 
     # Output shape
         (# of samples, ), (# of samples, 4)
@@ -34,9 +34,9 @@ class AnchorTarget(keras.layers.Layer):
         super(AnchorTarget, self).build(input_shape)
 
     def call(self, inputs, **kwargs):
-        scores, gt_boxes, image = inputs
+        scores, gt_boxes, metadata = inputs
 
-        metadata = keras.backend.int_shape(image)[1:]
+        metadata = metadata[0,:] # keras.backend.int_shape(image)[1:]
 
         gt_boxes = gt_boxes[0]
 
@@ -64,12 +64,14 @@ class AnchorTarget(keras.layers.Layer):
         # map up to original set of anchors
         labels = keras_rcnn.backend.unmap(labels, total_anchors, inds_inside, fill=-1)
         bbox_reg_targets = keras_rcnn.backend.unmap(bbox_reg_targets, total_anchors, inds_inside, fill=0)
+        labels = keras.backend.expand_dims(labels, axis=0)
+        bbox_reg_targets = keras.backend.expand_dims(bbox_reg_targets, axis=0)
 
         # TODO: implement inside and outside weights
         return [labels, bbox_reg_targets]
 
     def compute_output_shape(self, input_shape):
-        return [(None, ), (None, 4)]
+        return [(1, None), (1, None, 4)]
 
     def compute_mask(self, inputs, mask=None):
         # unfortunately this is required
