@@ -107,7 +107,7 @@ class DictionaryIterator(Iterator):
 
         metadata = numpy.expand_dims(metadata, 0)
 
-        return [image, boxes, labels, metadata]
+        return [image, boxes, labels, metadata], [boxes, labels]
 
 
 class ObjectDetectionGenerator:
