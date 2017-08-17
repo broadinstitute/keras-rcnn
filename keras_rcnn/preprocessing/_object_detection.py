@@ -3,6 +3,8 @@ import threading
 import numpy
 import numpy.random
 import skimage.io
+import keras.utils
+import sklearn.preprocessing
 
 
 class Iterator:
@@ -50,8 +52,7 @@ class Iterator:
 
             self.total_batches_seen += 1
 
-            yield index_array[
-                  current_index:current_index + current_batch_size], current_index, current_batch_size
+            yield index_array[current_index:current_index + current_batch_size], current_index, current_batch_size
 
     def __iter__(self):
         return self
@@ -67,7 +68,11 @@ class DictionaryIterator(Iterator):
     def __init__(self, dictionary, generator, shuffle=False, seed=None):
         self.dictionary = dictionary
 
+        self.encoder = sklearn.preprocessing.LabelEncoder()
+
         self.generator = generator
+
+        self.encoder.fit(generator.classes)
 
         Iterator.__init__(self, len(dictionary), 1, shuffle, seed)
 
@@ -82,24 +87,32 @@ class DictionaryIterator(Iterator):
 
         image = skimage.io.imread(pathname)
 
-        image = skimage.transform.resize(image, (224, 224), mode="reflect")
-
         image = numpy.expand_dims(image, 0)
 
         ds = self.dictionary[index]["boxes"]
 
-        boxes = numpy.asarray(
-            [[d[k] for k in ['y1','x1','y2','x2']] for d in ds])
-        klass = numpy.asarray([d['class'] for d in ds])
+        boxes = numpy.asarray([[d[k] for k in ['y1', 'x1', 'y2', 'x2']] for d in ds])
+
+        labels = numpy.asarray([d['class'] for d in ds])
+
+        labels = self.encoder.transform(labels)
+
+        labels = keras.utils.to_categorical(labels)
+
+        metadata = list(image.shape[1:-1]) + [1]
 
         boxes = numpy.expand_dims(boxes, 0)
 
-        return [image, boxes]
+        labels = numpy.expand_dims(labels, 0)
+
+        metadata = numpy.expand_dims(metadata, 0)
+
+        return [image, boxes, labels, metadata]
 
 
 class ObjectDetectionGenerator:
-    def __init__(self):
-        pass
+    def __init__(self, classes):
+        self.classes = classes
 
     def flow(self, dictionary, shuffle=True, seed=None):
         return DictionaryIterator(dictionary, self, shuffle=shuffle, seed=seed)
