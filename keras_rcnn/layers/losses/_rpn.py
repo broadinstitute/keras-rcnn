@@ -56,7 +56,7 @@ class RPNRegressionLoss(keras.layers.Layer):
     @staticmethod
     def compute_loss(output, target, labels):
         # Robust L1 Loss
-        output = keras.backend.reshape(output, [-1, 4])
+        output = keras.backend.reshape(output, [1, -1, 4])
 
         condition = keras.backend.not_equal(labels, -1)
 
