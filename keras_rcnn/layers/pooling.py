@@ -3,7 +3,7 @@ import keras.engine.topology
 import keras_rcnn.backend
 
 
-class ROI(keras.engine.topology.Layer):
+class RegionOfInterest(keras.engine.topology.Layer):
     """
     ROI pooling layer proposed in Mask R-CNN (Kaiming He et. al.).
 
@@ -12,21 +12,25 @@ class ROI(keras.engine.topology.Layer):
     :return: slices: 5D Tensor (number of regions, slice_height,
     slice_width, channels)
     """
-    def __init__(self, size, stride=1, **kwargs):
+    def __init__(self, shape=(7, 7), stride=1, **kwargs):
         self.channels = None
 
-        self.size = size
+        self.shape = shape
 
         self.stride = stride
 
-        super(ROI, self).__init__(**kwargs)
+        super(RegionOfInterest, self).__init__(**kwargs)
 
     def build(self, input_shape):
         self.channels = input_shape[0][3]
 
-        super(ROI, self).build(input_shape)
+        super(RegionOfInterest, self).build(input_shape)
 
     def call(self, x, **kwargs):
+        """
+
+        :rtype: `(samples, proposals, width, height, channels)`
+        """
         image, boxes = x[0], x[1]
 
         # convert regions from (x, y, w, h) to (x1, y1, x2, y2)
@@ -57,9 +61,9 @@ class ROI(keras.engine.topology.Layer):
 
         boxes = keras.backend.concatenate([y1, x1, y2, x2], axis=-1)
 
-        slices = keras_rcnn.backend.crop_and_resize(image, boxes, self.size)
+        slices = keras_rcnn.backend.crop_and_resize(image, boxes, self.shape)
 
         return keras.backend.expand_dims(slices, axis=0)
 
     def compute_output_shape(self, input_shape):
-        return 1, None, self.size[0], self.size[1], self.channels
+        return (None, input_shape[1][1], self.shape[0], self.shape[1], self.channels)
