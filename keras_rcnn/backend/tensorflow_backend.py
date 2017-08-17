@@ -9,6 +9,13 @@ RPN_FG_FRACTION = 0.5
 RPN_BATCHSIZE = 256
 
 
+# TODO: emulate NumPy semantics
+def argsort(a):
+    _, indices = tensorflow.nn.top_k(a, keras.backend.shape(a)[-1])
+
+    return indices
+
+
 def bbox_transform_inv(shifted, boxes):
     if boxes.shape[0] == 0:
         return keras.backend.zeros((0, boxes.shape[1]), dtype=boxes.dtype)
@@ -223,7 +230,7 @@ def subsample_positive_labels(labels):
         print(tensorflow.multinomial(tensorflow.log(tensorflow.ones((fg_inds, 1)) * 10.), size))
 
         elems = tensorflow.gather(tensorflow.range(fg_inds), tensorflow.multinomial(tensorflow.log(tensorflow.ones((fg_inds, 1)) * 10.), size))
-        
+
         return tensorflow.scatter_update(tensorflow.Variable(labels, validate_shape=False), elems, -1)
 
     def less_positive():
@@ -239,18 +246,18 @@ def subsample_negative_labels(labels):
     :return:
     """
     num_bg = RPN_BATCHSIZE - tensorflow.reduce_sum(tensorflow.gather(labels, tensorflow.where(tensorflow.equal(labels, 1))))
-    
+
     bg_inds = tensorflow.where(tensorflow.equal(labels, 0))
-    
+
     bg_inds = keras.backend.shape(bg_inds)[0]
-    
+
     size = keras.backend.cast(bg_inds, tensorflow.int32) - keras.backend.cast(num_bg, tensorflow.int32)
 
     def more_negative():
         indices = tensorflow.multinomial(keras.backend.log(keras.backend.ones((bg_inds, 1)) * 10.), size)
 
         elems = keras.backend.gather(tensorflow.range(bg_inds), indices)
-        
+
         return tensorflow.scatter_update(tensorflow.Variable(labels, validate_shape=False), elems, -1)
 
     def less_negative():
