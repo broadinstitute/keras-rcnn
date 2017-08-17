@@ -9,6 +9,13 @@ RPN_FG_FRACTION = 0.5
 RPN_BATCHSIZE = 256
 
 
+# TODO: emulate NumPy semantics
+def argsort(a):
+    _, indices = tensorflow.nn.top_k(a, keras.backend.shape(a)[-1])
+
+    return indices
+
+
 def bbox_transform_inv(shifted, boxes):
     if boxes.shape[0] == 0:
         return keras.backend.zeros((0, boxes.shape[1]), dtype=boxes.dtype)
@@ -84,7 +91,8 @@ def propose(boxes, scores, maximum):
 
     scores = keras.backend.cast(scores, tensorflow.float32)
 
-    indicies = keras_rcnn.backend.non_maximum_suppression(proposals, scores, maximum, 0.7)
+    indicies = keras_rcnn.backend.non_maximum_suppression(proposals, scores,
+                                                          maximum, 0.7)
 
     proposals = keras.backend.gather(proposals, indicies)
 
@@ -138,9 +146,13 @@ def overlap(a, b):
     def body(i, l):
         area = ((b[:, 2] - b[:, 0] + 1) * (b[:, 3] - b[:, 1] + 1))
 
-        iw = tensorflow.maximum((tensorflow.minimum(a[i, 2], b[:, 2]) - tensorflow.maximum(a[i, 0], b[:, 0]) + 1), 0.0)
+        iw = tensorflow.maximum((tensorflow.minimum(a[i, 2], b[:,
+                                                             2]) - tensorflow.maximum(
+            a[i, 0], b[:, 0]) + 1), 0.0)
 
-        ih = tensorflow.maximum((tensorflow.minimum(a[i, 3], b[:, 3]) - tensorflow.maximum(a[i, 1], b[:, 1]) + 1), 0.0)
+        ih = tensorflow.maximum((tensorflow.minimum(a[i, 3], b[:,
+                                                             3]) - tensorflow.maximum(
+            a[i, 1], b[:, 1]) + 1), 0.0)
 
         ua = (a[i, 2] - a[i, 0] + 1) * (a[i, 3] - a[i, 1] + 1) + area - iw * ih
 
@@ -148,7 +160,7 @@ def overlap(a, b):
 
         l = tensorflow.concat([l, iou], 0)
 
-        return i+1, l
+        return i + 1, l
 
     index, final_overlaps = tensorflow.while_loop(
         cond,
@@ -217,19 +229,26 @@ def subsample_positive_labels(labels):
 
     fg_inds = tensorflow.shape(fg_inds)[0]
 
-    size = tensorflow.cast(fg_inds, tensorflow.int32) - tensorflow.cast(num_fg, tensorflow.int32)
+    size = tensorflow.cast(fg_inds, tensorflow.int32) - tensorflow.cast(num_fg,
+                                                                        tensorflow.int32)
 
     def more_positive():
-        print(tensorflow.multinomial(tensorflow.log(tensorflow.ones((fg_inds, 1)) * 10.), size))
+        print(tensorflow.multinomial(
+            tensorflow.log(tensorflow.ones((fg_inds, 1)) * 10.), size))
 
-        elems = tensorflow.gather(tensorflow.range(fg_inds), tensorflow.multinomial(tensorflow.log(tensorflow.ones((fg_inds, 1)) * 10.), size))
-        
-        return tensorflow.scatter_update(tensorflow.Variable(labels, validate_shape=False), elems, -1)
+        elems = tensorflow.gather(tensorflow.range(fg_inds),
+                                  tensorflow.multinomial(tensorflow.log(
+                                      tensorflow.ones((fg_inds, 1)) * 10.),
+                                                         size))
+
+        return tensorflow.scatter_update(
+            tensorflow.Variable(labels, validate_shape=False), elems, -1)
 
     def less_positive():
         return labels
 
-    return tensorflow.cond(tensorflow.less_equal(size, 0), lambda: less_positive(), lambda: more_positive())
+    return tensorflow.cond(tensorflow.less_equal(size, 0),
+                           lambda: less_positive(), lambda: more_positive())
 
 
 def subsample_negative_labels(labels):
@@ -238,25 +257,33 @@ def subsample_negative_labels(labels):
     :param labels: array of labels (1 is positive, 0 is negative, -1 is dont care)
     :return:
     """
-    num_bg = RPN_BATCHSIZE - tensorflow.reduce_sum(tensorflow.gather(labels, tensorflow.where(tensorflow.equal(labels, 1))))
-    
+    num_bg = RPN_BATCHSIZE - tensorflow.reduce_sum(tensorflow.gather(labels,
+                                                                     tensorflow.where(
+                                                                         tensorflow.equal(
+                                                                             labels,
+                                                                             1))))
+
     bg_inds = tensorflow.where(tensorflow.equal(labels, 0))
-    
+
     bg_inds = keras.backend.shape(bg_inds)[0]
-    
-    size = keras.backend.cast(bg_inds, tensorflow.int32) - keras.backend.cast(num_bg, tensorflow.int32)
+
+    size = keras.backend.cast(bg_inds, tensorflow.int32) - keras.backend.cast(
+        num_bg, tensorflow.int32)
 
     def more_negative():
-        indices = tensorflow.multinomial(keras.backend.log(keras.backend.ones((bg_inds, 1)) * 10.), size)
+        indices = tensorflow.multinomial(
+            keras.backend.log(keras.backend.ones((bg_inds, 1)) * 10.), size)
 
         elems = keras.backend.gather(tensorflow.range(bg_inds), indices)
-        
-        return tensorflow.scatter_update(tensorflow.Variable(labels, validate_shape=False), elems, -1)
+
+        return tensorflow.scatter_update(
+            tensorflow.Variable(labels, validate_shape=False), elems, -1)
 
     def less_negative():
         return labels
 
-    return tensorflow.cond(keras.backend.less_equal(size, 0), lambda: less_negative(), lambda: more_negative())
+    return tensorflow.cond(keras.backend.less_equal(size, 0),
+                           lambda: less_negative(), lambda: more_negative())
 
 
 def shift(shape, stride):
@@ -287,7 +314,8 @@ def shift(shape, stride):
     boxes = keras.backend.cast(boxes, keras.backend.floatx())
 
     shifted_anchors = keras.backend.reshape(shifted_anchors, [k, 1, 4])
-    shifted_anchors = keras.backend.cast(shifted_anchors, keras.backend.floatx())
+    shifted_anchors = keras.backend.cast(shifted_anchors,
+                                         keras.backend.floatx())
 
     boxes += shifted_anchors
 
@@ -313,4 +341,6 @@ def inside_image(y_pred, shape):
 
     inds_inside = keras.backend.cast(inds_inside, tensorflow.int32)
 
-    return inds_inside[:, 0], keras.backend.reshape(keras.backend.gather(y_pred, inds_inside), [keras.backend.shape(inds_inside)[0], 4])
+    return inds_inside[:, 0], keras.backend.reshape(
+        keras.backend.gather(y_pred, inds_inside),
+        [keras.backend.shape(inds_inside)[0], 4])

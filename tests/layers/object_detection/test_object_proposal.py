@@ -1,62 +1,19 @@
-import keras.layers
-import keras.models
+import keras.backend
 import numpy
 
 import keras_rcnn.layers
 
 
 class TestObjectProposal:
-    def test_build(self):
-        assert True
-
     def test_call(self):
-        options = {
-            "activation": "relu",
-            "kernel_size": (3, 3),
-            "padding": "same"
-        }
+        metadata = keras.backend.variable([[224, 224, 1.5]])
 
-        shape = (224, 224, 3)
+        deltas = numpy.random.random((1, 14, 14, 9 * 4))
+        scores = numpy.random.random((1, 14, 14, 9 * 2))
 
-        x = keras.layers.Input(shape)
+        deltas = keras.backend.variable(deltas)
+        scores = keras.backend.variable(scores)
 
-        y = keras.layers.Conv2D(64, **options)(x)
-        y = keras.layers.Conv2D(64, **options)(y)
+        object_proposal = keras_rcnn.layers.ObjectProposal()
 
-        y = keras.layers.MaxPooling2D(strides=(2, 2))(y)
-
-        y = keras.layers.Conv2D(128, **options)(y)
-        y = keras.layers.Conv2D(128, **options)(y)
-
-        y = keras.layers.MaxPooling2D(strides=(2, 2))(y)
-
-        y = keras.layers.Conv2D(256, **options)(y)
-        y = keras.layers.Conv2D(256, **options)(y)
-
-        y = keras.layers.MaxPooling2D(strides=(2, 2))(y)
-
-        y = keras.layers.Conv2D(512, **options)(y)
-        y = keras.layers.Conv2D(512, **options)(y)
-
-        y = keras.layers.MaxPooling2D(strides=(2, 2))(y)
-
-        y = keras.layers.Conv2D(512, **options)(y)
-        y = keras.layers.Conv2D(512, **options)(y)
-
-        a = keras.layers.Conv2D(9 * 4, (1, 1))(y)
-        b = keras.layers.Conv2D(9 * 2, (1, 1), activation="sigmoid")(y)
-
-        y = keras_rcnn.layers.ObjectProposal()([a, b])
-
-        model = keras.models.Model(x, y)
-
-        model.compile("sgd", "mse")
-
-        image = numpy.random.rand(1, *shape)
-
-        prediction = model.predict(image)
-
-        assert prediction.shape == (1, 300, 4)
-
-    def test_compute_output_shape(self, object_proposal_layer):
-        assert object_proposal_layer.compute_output_shape((14, 14)) == (None, None, 4)
+        object_proposal.call([metadata, deltas, scores])
