@@ -94,3 +94,10 @@ def crop_and_resize(image, boxes, size):
     boxes = keras.backend.reshape(boxes, [-1, 4])
 
     return tensorflow.image.crop_and_resize(image, boxes, box_ind, size)
+
+
+def squeeze(a, axis=None):
+    """
+    Remove single-dimensional entries from the shape of an array.
+    """
+    return tensorflow.squeeze(a, axis)

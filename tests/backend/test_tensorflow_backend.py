@@ -2,7 +2,7 @@ import keras.backend
 import numpy
 import tensorflow
 
-import keras_rcnn.backend
+import keras_rcnn.backend.tensorflow_backend
 import keras_rcnn.backend.common
 
 
@@ -35,3 +35,19 @@ def test_crop_and_resize():
     slices = keras_rcnn.backend.crop_and_resize(image, boxes, size)
 
     assert keras.backend.eval(slices).shape == (2, 7, 7, 3)
+
+
+def test_squeeze():
+    x = [[[0], [1], [2]]]
+
+    x = keras.backend.variable(x)
+
+    assert keras.backend.int_shape(x) == (1, 3, 1)
+
+    y = keras_rcnn.backend.tensorflow_backend.squeeze(x)
+
+    assert keras.backend.int_shape(y) == (3,)
+
+    y = keras_rcnn.backend.tensorflow_backend.squeeze(x, axis=0)
+
+    assert keras.backend.int_shape(y) == (3, 1)

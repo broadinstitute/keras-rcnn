@@ -256,7 +256,7 @@ def unmap(data, count, inds_inside, fill=0):
 
         inds_nd = keras.backend.concatenate([inds_ii, inds_coords], 1)
 
-    inverse_ret = tensorflow.squeeze(tensorflow.gather_nd(-1 * ret, inds_nd))
+    inverse_ret = keras_rcnn.backend.squeeze(tensorflow.gather_nd(-1 * ret, inds_nd))
 
     ret = keras_rcnn.backend.scatter_add_tensor(ret, inds_nd, inverse_ret + data)
 
