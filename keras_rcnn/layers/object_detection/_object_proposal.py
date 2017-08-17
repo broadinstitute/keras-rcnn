@@ -3,9 +3,6 @@ import keras.engine
 
 import keras_rcnn.backend
 
-# FIXME: remove global
-RPN_PRE_NMS_TOP_N = 12000
-
 
 class ObjectProposal(keras.engine.topology.Layer):
     """Propose object-containing regions from anchors
@@ -77,9 +74,12 @@ class ObjectProposal(keras.engine.topology.Layer):
         # 4. sort all (proposal, score) pairs by score from highest to lowest
         indices = keras_rcnn.backend.argsort(scores)
 
+        # TODO: is this a sensible value? parameterize?
+        rpn_pre_nms_top_n = 12000
+
         # 5. take top pre_nms_topN (e.g. 6000)
-        if RPN_PRE_NMS_TOP_N > 0:
-            indices = indices[:RPN_PRE_NMS_TOP_N]
+        if rpn_pre_nms_top_n > 0:
+            indices = indices[:rpn_pre_nms_top_n]
 
         proposals = keras.backend.gather(proposals, indices)
         scores = keras.backend.gather(scores, indices)
@@ -88,7 +88,6 @@ class ObjectProposal(keras.engine.topology.Layer):
         indices = keras_rcnn.backend.non_maximum_suppression(proposals, scores, self.maximum_proposals, 0.7)
 
         proposals = keras.backend.gather(proposals, indices)
-        scores = keras.backend.gather(scores, indices)
 
         # 8. return the top proposals (-> RoIs top)
         return keras.backend.expand_dims(proposals, 0)

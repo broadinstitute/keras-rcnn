@@ -41,8 +41,8 @@ def matmul(
     )
 
 
-# TODO: remove globals
-def argsort(a, axis=-1):
+# TODO: emulate NumPy semantics
+def argsort(a):
     _, indices = tensorflow.nn.top_k(a, keras.backend.shape(a)[-1])
 
     return indices

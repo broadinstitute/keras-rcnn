@@ -1,5 +1,6 @@
 import theano.tensor
 
 
-def argsort(a, axis=1):
-    return theano.tensor.argsort(a, axis)
+# TODO: emulate NumPy semantics
+def argsort(a):
+    return theano.tensor.argsort(a)
