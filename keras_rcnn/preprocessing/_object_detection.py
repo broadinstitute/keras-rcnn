@@ -101,11 +101,11 @@ class DictionaryIterator(Iterator):
 
         metadata = list(image.shape[1:-1]) + [1]
 
-        boxes = numpy.expand_dims(boxes, 0)
+        # boxes = numpy.expand_dims(boxes, 0)
 
-        labels = numpy.expand_dims(labels, 0)
+        # labels = numpy.expand_dims(labels, 0)
 
-        metadata = numpy.expand_dims(metadata, 0)
+        # metadata = numpy.expand_dims(metadata, 0)
 
         return [image, boxes, labels, metadata], [boxes, labels]
 
