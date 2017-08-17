@@ -1,5 +1,6 @@
 import keras.backend
 import keras.engine
+import tensorflow
 
 import keras_rcnn.backend
 
@@ -56,7 +57,7 @@ class ObjectProposal(keras.engine.topology.Layer):
         deltas = keras.backend.reshape(deltas, (-1, 4))
         scores = keras.backend.reshape(scores, (-1, 1))
 
-        deltas = keras_rcnn.backend.bbox_transform_inv(anchors, deltas)
+        deltas = bbox_transform_inv(anchors, deltas)
 
         # 2. clip predicted boxes to image
         proposals = keras_rcnn.backend.clip(deltas, image_shape)
@@ -94,3 +95,41 @@ class ObjectProposal(keras.engine.topology.Layer):
 
     def compute_output_shape(self, input_shape):
         return None, self.maximum_proposals, 4
+
+
+def bbox_transform_inv(shifted, boxes):
+    def shape_zero():
+        x = keras.backend.int_shape(boxes)[-1]
+
+        return keras.backend.zeros_like(x, dtype=keras.backend.floatx())
+
+    def shape_non_zero():
+        a = shifted[:, 2] - shifted[:, 0] + 1.0
+        b = shifted[:, 3] - shifted[:, 1] + 1.0
+
+        ctr_x = shifted[:, 0] + 0.5 * a
+        ctr_y = shifted[:, 1] + 0.5 * b
+
+        dx = boxes[:, 0::4]
+        dy = boxes[:, 1::4]
+        dw = boxes[:, 2::4]
+        dh = boxes[:, 3::4]
+
+        pred_ctr_x = dx * a[:, keras_rcnn.backend.newaxis] + ctr_x[:, keras_rcnn.backend.newaxis]
+        pred_ctr_y = dy * b[:, keras_rcnn.backend.newaxis] + ctr_y[:, keras_rcnn.backend.newaxis]
+
+        pred_w = keras.backend.exp(dw) * a[:, keras_rcnn.backend.newaxis]
+        pred_h = keras.backend.exp(dh) * b[:, keras_rcnn.backend.newaxis]
+
+        prediction = [
+            pred_ctr_x - 0.5 * pred_w, pred_ctr_y - 0.5 * pred_h,
+            pred_ctr_x + 0.5 * pred_w, pred_ctr_y + 0.5 * pred_h
+        ]
+
+        return keras.backend.concatenate(prediction)
+
+    zero_boxes = keras.backend.equal(keras.backend.shape(boxes)[0], 0)
+
+    pred_boxes = tensorflow.cond(zero_boxes, shape_zero, shape_non_zero)
+
+    return pred_boxes

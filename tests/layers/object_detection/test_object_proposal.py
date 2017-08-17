@@ -1,6 +1,7 @@
 import keras.backend
 import numpy
 
+import keras_rcnn.backend
 import keras_rcnn.layers
 
 
@@ -17,3 +18,13 @@ class TestObjectProposal:
         object_proposal = keras_rcnn.layers.ObjectProposal()
 
         object_proposal.call([metadata, deltas, scores])
+
+
+def test_bbox_transform_inv():
+    anchors = 9
+    features = (14, 14)
+    shifted = keras_rcnn.backend.shift(features, 16)
+    boxes = numpy.zeros((features[0] * features[1] * anchors, 4))
+    boxes = keras.backend.variable(boxes)
+    pred_boxes = keras_rcnn.layers.object_detection._object_proposal.bbox_transform_inv(shifted, boxes)
+    assert keras.backend.eval(pred_boxes).shape == (1764, 4)
