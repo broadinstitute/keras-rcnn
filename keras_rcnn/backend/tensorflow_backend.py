@@ -96,6 +96,14 @@ def crop_and_resize(image, boxes, size):
     return tensorflow.image.crop_and_resize(image, boxes, box_ind, size)
 
 
+def smooth_l1_loss(y_true, y_pred):
+    x = keras.backend.abs(y_true - y_pred)
+
+    x = tensorflow.where(x < 1, 0.5 * keras.backend.square(x), x - 0.5)
+
+    return keras.backend.sum(x)
+
+
 def squeeze(a, axis=None):
     """
     Remove single-dimensional entries from the shape of an array.
