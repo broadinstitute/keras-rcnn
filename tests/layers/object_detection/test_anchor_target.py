@@ -6,6 +6,7 @@ import tensorflow
 
 import keras_rcnn.backend
 import keras_rcnn.layers
+import keras_rcnn.layers.object_detection._anchor_target
 
 
 # class TestAnchorTarget:
@@ -17,8 +18,6 @@ import keras_rcnn.layers
 #         proposal_target = keras_rcnn.layers.AnchorTarget()
 #
 #         proposal_target.call([scores, gt_boxes, image])
-import keras_rcnn.layers.object_detection._anchor_target
-
 
 def test_label():
     stride = 16
@@ -181,3 +180,22 @@ def test_unmap():
 
     assert keras.backend.eval(labels).shape == (total_anchors, )
     assert keras.backend.eval(bbox_reg_targets).shape == (total_anchors, 4)
+
+
+def test_inside_image():
+    stride = 16
+    features = (14, 14)
+
+    all_anchors = keras_rcnn.backend.shift(features, stride)
+
+    img_info = (224, 224, 1)
+
+    inds_inside, all_inside_anchors = keras_rcnn.layers.object_detection._anchor_target.inside_image(all_anchors, img_info)
+
+    inds_inside = keras.backend.eval(inds_inside)
+
+    assert inds_inside.shape == (84,)
+
+    all_inside_anchors = keras.backend.eval(all_inside_anchors)
+
+    assert all_inside_anchors.shape == (84, 4)

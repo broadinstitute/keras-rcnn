@@ -284,22 +284,3 @@ def inside_image(boxes, im_info, allowed_border=0):
     gathered = keras.backend.gather(boxes, indices)
 
     return indices[:, 0], keras.backend.reshape(gathered, [-1, 4])
-
-
-def test_inside_image():
-    stride = 16
-    features = (14, 14)
-
-    all_anchors = keras_rcnn.backend.shift(features, stride)
-
-    img_info = (224, 224, 1)
-
-    inds_inside, all_inside_anchors = keras_rcnn.layers.object_detection._anchor_target.inside_image(all_anchors, img_info)
-
-    inds_inside = keras.backend.eval(inds_inside)
-
-    assert inds_inside.shape == (84,)
-
-    all_inside_anchors = keras.backend.eval(all_inside_anchors)
-
-    assert all_inside_anchors.shape == (84, 4)
