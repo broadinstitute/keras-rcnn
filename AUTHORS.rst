@@ -11,3 +11,5 @@ Jane Hung <jyenhung@gmail.com> @jhung0
 Jihong Ju <daniel.jihong.ju@gmail.com> @jujihong
 
 Claire McQuin <mcquincl@gmail.com> @mcquin
+
+Mihai Morariu <mihaimorariu@gmail.com> @mihaimorariu
