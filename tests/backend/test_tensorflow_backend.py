@@ -48,6 +48,10 @@ def test_squeeze():
 
     assert keras.backend.int_shape(y) == (3,)
 
-    y = keras_rcnn.backend.tensorflow_backend.squeeze(x, axis=0)
+    y = keras_rcnn.backend.tensorflow_backend.squeeze(x, 0)
 
     assert keras.backend.int_shape(y) == (3, 1)
+
+    y = keras_rcnn.backend.tensorflow_backend.squeeze(x, 2)
+
+    assert keras.backend.int_shape(y) == (1, 3)

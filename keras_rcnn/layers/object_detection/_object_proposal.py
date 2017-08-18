@@ -1,6 +1,5 @@
 import keras.backend
 import keras.engine
-import tensorflow
 
 import keras_rcnn.backend
 
@@ -130,6 +129,6 @@ def bbox_transform_inv(shifted, boxes):
 
     zero_boxes = keras.backend.equal(keras.backend.shape(boxes)[0], 0)
 
-    pred_boxes = tensorflow.cond(zero_boxes, shape_zero, shape_non_zero)
+    pred_boxes = keras.backend.switch(zero_boxes, shape_zero, shape_non_zero)
 
     return pred_boxes

@@ -127,7 +127,7 @@ def sample_rois(all_rois, gt_boxes, gt_labels, fg_rois_per_image, rois_per_image
         return keras.backend.reshape(indices, (-1,))
 
     def sample(indices, size):
-        return tensorflow.random_shuffle(keras.backend.reshape(indices, (-1,)))[:size]
+        return keras_rcnn.backend.shuffle(keras.backend.reshape(indices, (-1,)))[:size]
 
     # Select foreground RoIs as those with >= FG_THRESH overlap
     fg_inds = keras_rcnn.backend.where(max_overlaps >= fg_thresh)
@@ -137,7 +137,7 @@ def sample_rois(all_rois, gt_boxes, gt_labels, fg_rois_per_image, rois_per_image
     fg_rois_per_this_image = keras.backend.minimum(fg_rois_per_image, keras.backend.shape(fg_inds)[0])
 
     # Sample foreground regions without replacement
-    fg_inds = tensorflow.cond(keras.backend.shape(fg_inds)[0] > 0, lambda: no_sample(fg_inds), lambda: sample(fg_inds, fg_rois_per_this_image))
+    fg_inds = keras.backend.switch(keras.backend.shape(fg_inds)[0] > 0, lambda: no_sample(fg_inds), lambda: sample(fg_inds, fg_rois_per_this_image))
 
     # Select background RoIs as those within [BG_THRESH_LO, BG_THRESH_HI)
     bg_inds = keras_rcnn.backend.where((max_overlaps < bg_thresh_hi) & (max_overlaps >= bg_thresh_lo))
@@ -148,7 +148,7 @@ def sample_rois(all_rois, gt_boxes, gt_labels, fg_rois_per_image, rois_per_image
     bg_rois_per_this_image = keras.backend.minimum(bg_rois_per_this_image, keras.backend.shape(bg_inds)[0])
 
     # Sample background regions without replacement
-    bg_inds = tensorflow.cond(keras.backend.shape(bg_inds)[0] > 0, lambda: no_sample(bg_inds), lambda: sample(bg_inds, bg_rois_per_this_image))
+    bg_inds = keras.backend.switch(keras.backend.shape(bg_inds)[0] > 0, lambda: no_sample(bg_inds), lambda: sample(bg_inds, bg_rois_per_this_image))
 
     # The indices that we're selecting (both fg and bg)
     keep_inds = keras.backend.concatenate([fg_inds, bg_inds])
@@ -164,12 +164,12 @@ def sample_rois(all_rois, gt_boxes, gt_labels, fg_rois_per_image, rois_per_image
 
     # By first removing the label
     update_indices = keras.backend.concatenate([update_indices_0, update_indices_1], axis=1)
-    inverse_labels = tensorflow.gather_nd(labels, update_indices) * -1
+    inverse_labels = keras_rcnn.backend.gather_nd(labels, update_indices) * -1
     labels = keras_rcnn.backend.scatter_add_tensor(labels, update_indices, inverse_labels)
 
     # And then making the label = background
     update_indices = keras.backend.concatenate([update_indices_0, keras.backend.zeros_like(update_indices_0)], axis=1)
-    inverse_labels = tensorflow.gather_nd(labels, update_indices) * -1
+    inverse_labels = keras_rcnn.backend.gather_nd(labels, update_indices) * -1
     labels = keras_rcnn.backend.scatter_add_tensor(labels, update_indices, inverse_labels + keras.backend.ones_like(inverse_labels))
 
     rois = keras.backend.gather(all_rois, keep_inds)

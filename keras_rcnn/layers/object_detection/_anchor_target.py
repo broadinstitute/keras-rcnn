@@ -122,7 +122,7 @@ def label(y_true, y_pred, inds_inside, RPN_NEGATIVE_OVERLAP=0.3, RPN_POSITIVE_OV
     # fg label: for each gt, anchor with highest overlap
 
     # TODO: generalize unique beyond 1D
-    unique_indices, unique_indices_indices = tensorflow.unique(gt_argmax_overlaps_inds, out_idx='int32')
+    unique_indices, unique_indices_indices = keras_rcnn.backend.unique(gt_argmax_overlaps_inds, return_index=True)
     inverse_labels = keras.backend.gather(-1 * labels, unique_indices)
     unique_indices = keras.backend.expand_dims(unique_indices, 1)
     updates = keras.backend.ones_like(keras.backend.reshape(unique_indices, (-1,)), dtype=keras.backend.floatx())
@@ -156,11 +156,13 @@ def overlapping(anchors, gt_boxes, inds_inside):
 
     argmax_overlaps_inds = keras.backend.argmax(reference, axis=1)
 
-    indices = keras.backend.stack([tensorflow.range(keras.backend.shape(inds_inside)[0]), keras.backend.cast(argmax_overlaps_inds, "int32")], axis=0)
+    arranged = keras.backend.arange(0, keras.backend.shape(inds_inside)[0])
+
+    indices = keras.backend.stack([arranged, keras.backend.cast(argmax_overlaps_inds, "int32")], axis=0)
 
     indices = keras.backend.transpose(indices)
 
-    max_overlaps = tensorflow.gather_nd(reference, indices)
+    max_overlaps = keras_rcnn.backend.gather_nd(reference, indices)
 
     return argmax_overlaps_inds, max_overlaps, gt_argmax_overlaps_inds
 
@@ -191,12 +193,9 @@ def subsample_negative_labels(labels):
 
         return keras_rcnn.backend.scatter_add_tensor(labels, indices, inverse_labels + updates)
 
-    def less_negative():
-        return labels
+    condition = keras.backend.less_equal(size, 0)
 
-    predicate = keras.backend.less_equal(size, 0)
-
-    return tensorflow.cond(predicate, lambda: less_negative(), lambda: more_negative())
+    return keras.backend.switch(condition, labels, lambda: more_negative())
 
 
 def subsample_positive_labels(labels):
@@ -216,7 +215,7 @@ def subsample_positive_labels(labels):
 
     def more_positive():
         # TODO: try to replace tensorflow
-        indices = tensorflow.random_shuffle(keras.backend.reshape(fg_inds, (-1,)))[:size]
+        indices = keras_rcnn.backend.shuffle(keras.backend.reshape(fg_inds, (-1,)))[:size]
 
         updates = tensorflow.ones((size,)) * -1
 
@@ -226,12 +225,9 @@ def subsample_positive_labels(labels):
 
         return keras_rcnn.backend.scatter_add_tensor(labels, indices, inverse_labels + updates)
 
-    def less_positive():
-        return labels
+    condition = keras.backend.less_equal(size, 0)
 
-    predicate = keras.backend.less_equal(size, 0)
-
-    return tensorflow.cond(predicate, lambda: less_positive(), lambda: more_positive())
+    return keras.backend.switch(condition, labels, lambda: more_positive())
 
 
 def unmap(data, count, inds_inside, fill=0):
@@ -256,7 +252,7 @@ def unmap(data, count, inds_inside, fill=0):
 
         inds_nd = keras.backend.concatenate([inds_ii, inds_coords], 1)
 
-    inverse_ret = keras_rcnn.backend.squeeze(tensorflow.gather_nd(-1 * ret, inds_nd))
+    inverse_ret = keras_rcnn.backend.squeeze(keras_rcnn.backend.gather_nd(-1 * ret, inds_nd))
 
     ret = keras_rcnn.backend.scatter_add_tensor(ret, inds_nd, inverse_ret + data)
 
