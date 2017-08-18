@@ -1,7 +1,9 @@
 import keras.backend
 import keras.engine
+import numpy
 
 import keras_rcnn.backend
+import keras_rcnn.layers
 
 
 class ObjectProposal(keras.engine.topology.Layer):
@@ -63,7 +65,7 @@ class ObjectProposal(keras.engine.topology.Layer):
 
         # 3. remove predicted boxes with either height or width < threshold
         # (NOTE: convert min_size to input image scale stored in im_info[2])
-        indices = keras_rcnn.backend.filter_boxes(proposals, self.min_size * image_scale)
+        indices = filter_boxes(proposals, self.min_size * image_scale)
         proposals = keras.backend.gather(proposals, indices)
 
         scores = scores[..., (scores.shape[-1] // 2):]
@@ -132,3 +134,32 @@ def bbox_transform_inv(shifted, boxes):
     pred_boxes = keras.backend.switch(zero_boxes, shape_zero, shape_non_zero)
 
     return pred_boxes
+
+
+def filter_boxes(proposals, minimum):
+    """
+    Filters proposed RoIs so that all have width and height at least as big as minimum
+
+    """
+    ws = proposals[:, 2] - proposals[:, 0] + 1
+    hs = proposals[:, 3] - proposals[:, 1] + 1
+
+    indices = keras_rcnn.backend.where((ws >= minimum) & (hs >= minimum))
+
+    indices = keras.backend.flatten(indices)
+
+    return keras.backend.cast(indices, "int32")
+
+
+def test_filter_boxes():
+    proposals = numpy.array(
+        [[0, 2, 3, 10],
+         [-1, -5, 4, 8],
+         [0, 0, 1, 1]]
+    )
+
+    minimum = 3
+
+    results = keras_rcnn.layers.object_detection._object_proposal.filter_boxes(proposals, minimum)
+
+    numpy.testing.assert_array_equal(keras.backend.eval(results), numpy.array([0, 1]))

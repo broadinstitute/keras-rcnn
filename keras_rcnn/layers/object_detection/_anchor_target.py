@@ -3,6 +3,7 @@ import keras.engine
 import tensorflow
 
 import keras_rcnn.backend
+import keras_rcnn.layers
 
 RPN_FG_FRACTION = 0.5
 RPN_BATCHSIZE = 256
@@ -52,7 +53,7 @@ class AnchorTarget(keras.layers.Layer):
         anchors = keras_rcnn.backend.shift((rr, cc), self.stride)
 
         # only keep anchors inside the image
-        inds_inside, anchors = keras_rcnn.backend.inside_image(anchors, metadata, self.allowed_border)
+        inds_inside, anchors = inside_image(anchors, metadata, self.allowed_border)
 
         # 2. obtain indices of gt boxes with the greatest overlap, balanced labels
         argmax_overlaps_indices, labels = label(gt_boxes, anchors, inds_inside, self.negative_overlap, self.positive_overlap, self.clobber_positives)
@@ -257,3 +258,48 @@ def unmap(data, count, inds_inside, fill=0):
     ret = keras_rcnn.backend.scatter_add_tensor(ret, inds_nd, inverse_ret + data)
 
     return ret
+
+
+def inside_image(boxes, im_info, allowed_border=0):
+    """
+    Calc indices of boxes which are located completely inside of the image
+    whose size is specified by img_info ((height, width, scale)-shaped array).
+
+    :param boxes: (None, 4) tensor containing boxes in original image (x1, y1, x2, y2)
+    :param img_info: (height, width, scale)
+    :param allowed_border: allow boxes to be outside the image by allowed_border pixels
+    :return: (None, 4) indices of boxes completely in original image,
+        (None, 4) tensor of boxes completely inside image
+    """
+
+    indices = keras_rcnn.backend.where(
+        (boxes[:, 0] >= -allowed_border) &
+        (boxes[:, 1] >= -allowed_border) &
+        (boxes[:, 2] < allowed_border + im_info[1]) & # width
+        (boxes[:, 3] < allowed_border + im_info[0])   # height
+    )
+
+    indices = keras.backend.cast(indices, "int32")
+
+    gathered = keras.backend.gather(boxes, indices)
+
+    return indices[:, 0], keras.backend.reshape(gathered, [-1, 4])
+
+
+def test_inside_image():
+    stride = 16
+    features = (14, 14)
+
+    all_anchors = keras_rcnn.backend.shift(features, stride)
+
+    img_info = (224, 224, 1)
+
+    inds_inside, all_inside_anchors = keras_rcnn.layers.object_detection._anchor_target.inside_image(all_anchors, img_info)
+
+    inds_inside = keras.backend.eval(inds_inside)
+
+    assert inds_inside.shape == (84,)
+
+    all_inside_anchors = keras.backend.eval(all_inside_anchors)
+
+    assert all_inside_anchors.shape == (84, 4)

@@ -1,5 +1,4 @@
 import keras.backend
-import numpy
 
 import keras_rcnn.backend
 
@@ -175,44 +174,3 @@ def overlap(a, b):
     intersection = iw * ih
 
     return intersection / ua
-
-
-def filter_boxes(proposals, minimum):
-    """
-    Filters proposed RoIs so that all have width and height at least as big as minimum
-
-    """
-    ws = proposals[:, 2] - proposals[:, 0] + 1
-    hs = proposals[:, 3] - proposals[:, 1] + 1
-
-    indices = keras_rcnn.backend.where((ws >= minimum) & (hs >= minimum))
-
-    indices = keras.backend.flatten(indices)
-
-    return keras.backend.cast(indices, "int32")
-
-
-def inside_image(boxes, im_info, allowed_border=0):
-    """
-    Calc indices of boxes which are located completely inside of the image
-    whose size is specified by img_info ((height, width, scale)-shaped array).
-
-    :param boxes: (None, 4) tensor containing boxes in original image (x1, y1, x2, y2)
-    :param img_info: (height, width, scale)
-    :param allowed_border: allow boxes to be outside the image by allowed_border pixels
-    :return: (None, 4) indices of boxes completely in original image,
-        (None, 4) tensor of boxes completely inside image
-    """
-
-    indices = keras_rcnn.backend.where(
-        (boxes[:, 0] >= -allowed_border) &
-        (boxes[:, 1] >= -allowed_border) &
-        (boxes[:, 2] < allowed_border + im_info[1]) & # width
-        (boxes[:, 3] < allowed_border + im_info[0])   # height
-    )
-
-    indices = keras.backend.cast(indices, "int32")
-
-    gathered = keras.backend.gather(boxes, indices)
-
-    return indices[:, 0], keras.backend.reshape(gathered, [-1, 4])

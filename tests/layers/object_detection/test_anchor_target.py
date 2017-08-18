@@ -17,6 +17,7 @@ import keras_rcnn.layers
 #         proposal_target = keras_rcnn.layers.AnchorTarget()
 #
 #         proposal_target.call([scores, gt_boxes, image])
+import keras_rcnn.layers.object_detection._anchor_target
 
 
 def test_label():
@@ -29,7 +30,7 @@ def test_label():
 
     all_bbox = keras_rcnn.backend.shift((feat_h, feat_w), stride)
 
-    inds_inside, all_inside_bbox = keras_rcnn.backend.inside_image(all_bbox, img_info[0])
+    inds_inside, all_inside_bbox = keras_rcnn.layers.object_detection._anchor_target.inside_image(all_bbox, img_info[0])
 
     argmax_overlaps_inds, bbox_labels = keras_rcnn.layers.object_detection._anchor_target.label(gt_boxes, all_inside_bbox, inds_inside)
 
@@ -142,7 +143,7 @@ def test_overlapping():
 
     all_anchors = keras_rcnn.backend.shift(features, stride)
 
-    inds_inside, all_inside_anchors = keras_rcnn.backend.inside_image(
+    inds_inside, all_inside_anchors = keras_rcnn.layers.object_detection._anchor_target.inside_image(
         all_anchors, img_info)
 
     argmax_overlaps_inds, max_overlaps, gt_argmax_overlaps_inds = keras_rcnn.layers.object_detection._anchor_target.overlapping(
@@ -170,7 +171,7 @@ def test_unmap():
 
     all_anchors = keras_rcnn.backend.shift(features, stride)
 
-    inds_inside, all_inside_anchors = keras_rcnn.backend.inside_image(all_anchors, img_info[0])
+    inds_inside, all_inside_anchors = keras_rcnn.layers.object_detection._anchor_target.inside_image(all_anchors, img_info[0])
 
     argmax_overlaps_indices, labels = keras_rcnn.layers.object_detection._anchor_target.label(gt_boxes, all_inside_anchors, inds_inside)
     bbox_reg_targets = keras_rcnn.backend.bbox_transform(all_inside_anchors, keras.backend.gather(gt_boxes, argmax_overlaps_indices))
