@@ -177,7 +177,7 @@ def overlap(a, b):
 
 
 def smooth_l1_loss(y_true, y_pred):
-    delta = 0.5
+    delta = 1
 
     x = keras.backend.abs(y_true - y_pred)
 
