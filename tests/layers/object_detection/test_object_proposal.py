@@ -1,62 +1,44 @@
-import keras.layers
-import keras.models
+import keras.backend
 import numpy
 
+import keras_rcnn.backend
 import keras_rcnn.layers
 
 
 class TestObjectProposal:
-    def test_build(self):
-        assert True
-
     def test_call(self):
-        options = {
-            "activation": "relu",
-            "kernel_size": (3, 3),
-            "padding": "same"
-        }
+        metadata = keras.backend.variable([[224, 224, 1.5]])
 
-        shape = (224, 224, 3)
+        deltas = numpy.random.random((1, 14, 14, 9 * 4))
+        scores = numpy.random.random((1, 14, 14, 9 * 2))
 
-        x = keras.layers.Input(shape)
+        deltas = keras.backend.variable(deltas)
+        scores = keras.backend.variable(scores)
 
-        y = keras.layers.Conv2D(64, **options)(x)
-        y = keras.layers.Conv2D(64, **options)(y)
+        object_proposal = keras_rcnn.layers.ObjectProposal()
 
-        y = keras.layers.MaxPooling2D(strides=(2, 2))(y)
+        object_proposal.call([metadata, deltas, scores])
 
-        y = keras.layers.Conv2D(128, **options)(y)
-        y = keras.layers.Conv2D(128, **options)(y)
 
-        y = keras.layers.MaxPooling2D(strides=(2, 2))(y)
+def test_bbox_transform_inv():
+    anchors = 9
+    features = (14, 14)
+    shifted = keras_rcnn.backend.shift(features, 16)
+    boxes = numpy.zeros((features[0] * features[1] * anchors, 4))
+    boxes = keras.backend.variable(boxes)
+    pred_boxes = keras_rcnn.layers.object_detection._object_proposal.bbox_transform_inv(shifted, boxes)
+    assert keras.backend.eval(pred_boxes).shape == (1764, 4)
 
-        y = keras.layers.Conv2D(256, **options)(y)
-        y = keras.layers.Conv2D(256, **options)(y)
 
-        y = keras.layers.MaxPooling2D(strides=(2, 2))(y)
+def test_filter_boxes():
+    proposals = numpy.array(
+        [[0, 2, 3, 10],
+         [-1, -5, 4, 8],
+         [0, 0, 1, 1]]
+    )
 
-        y = keras.layers.Conv2D(512, **options)(y)
-        y = keras.layers.Conv2D(512, **options)(y)
+    minimum = 3
 
-        y = keras.layers.MaxPooling2D(strides=(2, 2))(y)
+    results = keras_rcnn.layers.object_detection._object_proposal.filter_boxes(proposals, minimum)
 
-        y = keras.layers.Conv2D(512, **options)(y)
-        y = keras.layers.Conv2D(512, **options)(y)
-
-        a = keras.layers.Conv2D(9 * 4, (1, 1))(y)
-        b = keras.layers.Conv2D(9 * 2, (1, 1), activation="sigmoid")(y)
-
-        y = keras_rcnn.layers.ObjectProposal()([a, b])
-
-        model = keras.models.Model(x, y)
-
-        model.compile("sgd", "mse")
-
-        image = numpy.random.rand(1, *shape)
-
-        prediction = model.predict(image)
-
-        assert prediction.shape == (1, 300, 4)
-
-    def test_compute_output_shape(self, object_proposal_layer):
-        assert object_proposal_layer.compute_output_shape((14, 14)) == (None, None, 4)
+    numpy.testing.assert_array_equal(keras.backend.eval(results), numpy.array([0, 1]))

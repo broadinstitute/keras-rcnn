@@ -88,7 +88,7 @@ def img_info():
 
 @pytest.fixture()
 def pooling():
-    return keras_rcnn.layers.ROI([7, 7], 1)
+    return keras_rcnn.layers.RegionOfInterest([7, 7], 1)
 
 
 @pytest.fixture()
