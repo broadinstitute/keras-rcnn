@@ -23,4 +23,4 @@ def test_roi():
     a = keras.backend.placeholder(shape=(None, 224, 224, 3))
     b = keras.backend.placeholder(shape=(1, None, 4))
     y = keras_rcnn.layers.RegionOfInterest([7, 7])([a, b])
-    assert keras.backend.int_shape(y) == (1, None, 7, 7, 3)
+    assert keras.backend.int_shape(y) == (None, None, 7, 7, 3)
