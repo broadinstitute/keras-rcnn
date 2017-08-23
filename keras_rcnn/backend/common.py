@@ -51,18 +51,23 @@ def clip(boxes, shape):
     Clips box coordinates to be within the width and height as defined in shape
 
     """
-    proposals = [
-        keras.backend.maximum(
-            keras.backend.minimum(boxes[:, 0::4], shape[1] - 1), 0),
-        keras.backend.maximum(
-            keras.backend.minimum(boxes[:, 1::4], shape[0] - 1), 0),
-        keras.backend.maximum(
-            keras.backend.minimum(boxes[:, 2::4], shape[1] - 1), 0),
-        keras.backend.maximum(
-            keras.backend.minimum(boxes[:, 3::4], shape[0] - 1), 0)
-    ]
+    indices = keras.backend.tile(keras.backend.arange(0, keras.backend.shape(boxes)[0]), [4])
+    indices = keras.backend.reshape(indices, (-1, 1))
+    indices = keras.backend.tile(indices, [1, keras.backend.shape(boxes)[1] // 4])
+    indices = keras.backend.reshape(indices, (-1, 1))
 
-    return keras.backend.concatenate(proposals, axis=1)
+    indices_coords = keras.backend.tile(keras.backend.arange(0, keras.backend.shape(boxes)[1], step = 4), [keras.backend.shape(boxes)[0]])
+    indices_coords = keras.backend.concatenate([indices_coords, indices_coords + 1, indices_coords + 2, indices_coords + 3], 0)
+    indices = keras.backend.concatenate([indices, keras.backend.expand_dims(indices_coords)], axis=1)
+
+    updates = keras.backend.concatenate([keras.backend.maximum(keras.backend.minimum(boxes[:, 0::4], shape[1] - 1), 0),
+                                     keras.backend.maximum(keras.backend.minimum(boxes[:, 1::4], shape[0] - 1), 0),
+                                     keras.backend.maximum(keras.backend.minimum(boxes[:, 2::4], shape[1] - 1), 0),
+                                     keras.backend.maximum(keras.backend.minimum(boxes[:, 3::4], shape[0] - 1), 0)], axis=0)
+    updates = keras.backend.reshape(updates, (-1,))
+    pred_boxes = keras_rcnn.backend.scatter_add_tensor(keras.backend.zeros_like(boxes), indices, updates)
+
+    return pred_boxes
 
 
 def _mkanchors(ws, hs, x_ctr, y_ctr):

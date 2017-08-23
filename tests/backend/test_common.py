@@ -34,6 +34,19 @@ def test_clip():
     expected = numpy.array([[0,0,0,0], [1,2,3,4], [0,2,223,223], [3, 0, 223, 223]])
     numpy.testing.assert_array_almost_equal(results, expected)
 
+    boxes = numpy.reshape(numpy.arange(200, 200+12*5), (-1, 12))
+    shape = [224, 224]
+    boxes = keras.backend.variable(boxes)
+    results = keras_rcnn.backend.clip(boxes, shape)
+    results = keras.backend.eval(results)
+    expected = numpy.array(
+            [[200, 201, 202, 203, 204, 205, 206, 207, 208, 209, 210, 211],
+            [212, 213, 214, 215, 216, 217, 218, 219, 220, 221, 222, 223],
+            [223, 223, 223, 223, 223, 223, 223, 223, 223, 223, 223, 223],
+            [223, 223, 223, 223, 223, 223, 223, 223, 223, 223, 223, 223],
+            [223, 223, 223, 223, 223, 223, 223, 223, 223, 223, 223, 223]])
+    numpy.testing.assert_array_almost_equal(results, expected, 0)
+
 
 def test_bbox_transform():
     gt_rois = numpy.array([[ -84., -40., 99., 55.], [-176., -88., 191., 103.], [-360., -184., 375., 199.], [ -56., -56., 71., 71.], [-120., -120., 135., 135.], [-248., -248., 263., 263.], [ -36., -80., 51., 95.], [ -80., -168., 95., 183.], [-168., -344., 183., 359.]])
