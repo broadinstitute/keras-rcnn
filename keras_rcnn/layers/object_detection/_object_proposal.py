@@ -122,12 +122,23 @@ def bbox_transform_inv(shifted, boxes):
         pred_w = keras.backend.exp(dw) * a[:, keras_rcnn.backend.newaxis]
         pred_h = keras.backend.exp(dh) * b[:, keras_rcnn.backend.newaxis]
 
-        prediction = [
-            pred_ctr_x - 0.5 * pred_w, pred_ctr_y - 0.5 * pred_h,
-            pred_ctr_x + 0.5 * pred_w, pred_ctr_y + 0.5 * pred_h
-        ]
 
-        return keras.backend.concatenate(prediction)
+        indices = keras.backend.tile(keras.backend.arange(0, keras.backend.shape(boxes)[0]), [4])
+        indices = keras.backend.reshape(indices, (-1, 1))
+        indices = keras.backend.tile(indices, [1, keras.backend.shape(boxes)[-1] // 4])
+        indices = keras.backend.reshape(indices, (-1, 1))
+        indices_coords = keras.backend.tile(keras.backend.arange(0, keras.backend.shape(boxes)[1], step = 4), [keras.backend.shape(boxes)[0]])
+        indices_coords = keras.backend.concatenate([indices_coords, indices_coords + 1, indices_coords + 2, indices_coords + 3], 0)
+        indices = keras.backend.concatenate([indices, keras.backend.expand_dims(indices_coords)], axis=1)
+
+
+        updates = keras.backend.concatenate([keras.backend.reshape(pred_ctr_x - 0.5 * pred_w, (-1,)),
+                                             keras.backend.reshape(pred_ctr_y - 0.5 * pred_h, (-1,)),
+                                             keras.backend.reshape(pred_ctr_x + 0.5 * pred_w, (-1,)),
+                                             keras.backend.reshape(pred_ctr_y + 0.5 * pred_h, (-1,))], axis=0)
+        pred_boxes = keras_rcnn.backend.scatter_add_tensor(keras.backend.zeros_like(boxes), indices, updates)
+        return pred_boxes
+
 
     zero_boxes = keras.backend.equal(keras.backend.shape(boxes)[0], 0)
 
