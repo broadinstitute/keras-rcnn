@@ -125,7 +125,7 @@ def bbox_transform_inv(shifted, boxes):
 
         indices = keras.backend.tile(keras.backend.arange(0, keras.backend.shape(boxes)[0]), [4])
         indices = keras.backend.reshape(indices, (-1, 1))
-        indices = keras.backend.tile(indices, [1, keras.backend.shape(boxes)[-1] // keras.backend.shape(shifted)[-1]])
+        indices = keras.backend.tile(indices, [1, keras.backend.shape(boxes)[-1] // 4])
         indices = keras.backend.reshape(indices, (-1, 1))
         indices_coords = keras.backend.tile(keras.backend.arange(0, keras.backend.shape(boxes)[1], step = 4), [keras.backend.shape(boxes)[0]])
         indices_coords = keras.backend.concatenate([indices_coords, indices_coords + 1, indices_coords + 2, indices_coords + 3], 0)
