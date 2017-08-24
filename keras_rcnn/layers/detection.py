@@ -71,3 +71,6 @@ class Detection(keras.engine.topology.Layer):
 
     def compute_output_shape(self, input_shape):
         return (1, None, 4), (1, None, 3)
+
+    def compute_mask(self, inputs, mask=None):
+        return 2 * [None]
