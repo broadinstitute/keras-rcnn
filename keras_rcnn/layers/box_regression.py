@@ -5,7 +5,7 @@ import keras_rcnn.layers.object_detection._object_proposal
 
 class BoxRegression(keras.engine.topology.Layer):
     """
-    Get final detections + labels by unscaling back to image space, performing box regression, choosing box coordinates, and removing extra detections via NMS
+    Get final detections + labels by unscaling back to image space, applying regression deltas, choosing box coordinates, and removing extra detections via NMS
     """
     def __init__(self, threshold = 0.05, test_nms = 0.5, **kwargs):
         self.threshold = threshold
