@@ -66,11 +66,11 @@ class Detection(keras.engine.topology.Layer):
         pred_boxes = keras.backend.gather(pred_boxes, indices)
 
 
-        return keras.backend.expand_dims(pred_boxes, 0), keras.backend.expand_dims(pred_scores, 0)
+        return [keras.backend.expand_dims(pred_boxes, 0), keras.backend.expand_dims(pred_scores, 0)]
 
 
     def compute_output_shape(self, input_shape):
-        return (1, None, 4), (1, None, 3)
+        return [(1, None, 4), (1, None, 3)]
 
     def compute_mask(self, inputs, mask=None):
         return 2 * [None]
