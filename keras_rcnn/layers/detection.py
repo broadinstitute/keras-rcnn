@@ -34,8 +34,7 @@ class Detection(keras.engine.topology.Layer):
         # unscale back to raw image space
 
         boxes = rois / metadata[0][2]
-        import pdb
-        pdb.set_trace()
+
         # Apply bounding-box regression deltas
         pred_boxes = keras_rcnn.backend.bbox_transform_inv(boxes, pred_deltas)
 
