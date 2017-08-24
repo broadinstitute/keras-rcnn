@@ -21,14 +21,14 @@ class BoxRegression(keras.engine.topology.Layer):
     def call(self, x, **kwargs):
         """
         rois: output of proposal target (1, N, 4)
-        pred_boxes: box predictions (1, N, 4*classes)
+        pred_deltas: predicted deltas (1, N, 4*classes)
         pred_scores: score distributions (1, N, classes)
         metadata: image information (1, 3)
         """
-        rois, pred_boxes, pred_scores, metadata = x[0], x[1], x[2], x[3]
+        rois, pred_deltas, pred_scores, metadata = x[0], x[1], x[2], x[3]
 
         rois = rois[0, :, :]
-        pred_boxes = pred_boxes[0, :, :]
+        pred_deltas = pred_deltas[0, :, :]
         pred_scores = pred_scores[0, :, :]
 
         # unscale back to raw image space
@@ -36,7 +36,7 @@ class BoxRegression(keras.engine.topology.Layer):
         boxes = rois / metadata[0][2]
 
         # Apply bounding-box regression deltas
-        pred_boxes = keras_rcnn.backend.bbox_transform_inv(boxes, pred_boxes)
+        pred_boxes = keras_rcnn.backend.bbox_transform_inv(boxes, pred_deltas)
 
         pred_boxes = keras_rcnn.backend.clip(pred_boxes, metadata[0][:2])
 
