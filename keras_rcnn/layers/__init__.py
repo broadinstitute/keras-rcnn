@@ -4,4 +4,4 @@ from .object_detection import (AnchorTarget, ObjectProposal, ProposalTarget)
 
 from .pooling import RegionOfInterest
 
-from .box_regression import BoxRegression
+from .detection import Detection

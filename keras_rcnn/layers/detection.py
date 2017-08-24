@@ -3,7 +3,7 @@ import keras.backend
 import keras_rcnn.backend
 import keras_rcnn.layers.object_detection._object_proposal
 
-class BoxRegression(keras.engine.topology.Layer):
+class Detection(keras.engine.topology.Layer):
     """
     Get final detections + labels by unscaling back to image space, applying regression deltas, choosing box coordinates, and removing extra detections via NMS
     """
@@ -12,11 +12,11 @@ class BoxRegression(keras.engine.topology.Layer):
 
         self.TEST_NMS = test_nms
 
-        super(BoxRegression, self).__init__(**kwargs)
+        super(Detection, self).__init__(**kwargs)
 
     def build(self, input_shape):
 
-        super(BoxRegression, self).build(input_shape)
+        super(Detection, self).build(input_shape)
 
     def call(self, x, **kwargs):
         """

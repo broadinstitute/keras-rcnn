@@ -5,10 +5,10 @@ import numpy
 import keras_rcnn.layers
 
 
-class TestBoxRegression:
+class TestDetection:
     def test_call(self):
         classes = 3
-        proposal_target = keras_rcnn.layers.BoxRegression()
+        proposal_target = keras_rcnn.layers.Detection()
 
         pred_boxes = numpy.random.random((1, 100, 4 * classes))
         pred_boxes = keras.backend.variable(pred_boxes)
