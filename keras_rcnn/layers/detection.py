@@ -34,7 +34,8 @@ class Detection(keras.engine.topology.Layer):
         # unscale back to raw image space
 
         boxes = rois / metadata[0][2]
-
+        import pdb
+        pdb.set_trace()
         # Apply bounding-box regression deltas
         pred_boxes = keras_rcnn.backend.bbox_transform_inv(boxes, pred_deltas)
 
@@ -61,7 +62,7 @@ class Detection(keras.engine.topology.Layer):
         pred_boxes = keras_rcnn.backend.gather_nd(pred_boxes, keras.backend.concatenate([keras.backend.expand_dims(indices), keras.backend.expand_dims(indices_boxes)], axis=1))
         pred_boxes = keras.backend.reshape(pred_boxes, (-1, 4))
 
-        indices = keras_rcnn.backend.non_maximum_suppression(pred_boxes, pred_scores_classes, keras.backend.shape(pred_boxes)[1], self.TEST_NMS)
+        indices = keras_rcnn.backend.non_maximum_suppression(pred_boxes, pred_scores_classes, keras.backend.shape(pred_boxes)[0], self.TEST_NMS)
         pred_scores = keras.backend.gather(pred_scores, indices)
         pred_boxes = keras.backend.gather(pred_boxes, indices)
 
