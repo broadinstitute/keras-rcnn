@@ -2,7 +2,7 @@ import keras.layers
 import tensorflow
 
 import keras_rcnn.backend
-
+import keras.backend
 
 class RCNNClassificationLoss(keras.layers.Layer):
     def __init__(self, **kwargs):
@@ -57,13 +57,23 @@ class RCNNRegressionLoss(keras.layers.Layer):
         outside_weights = 1.0
         sigma = 1.0
         sigma2 = keras.backend.square(sigma)
+
+        # only consider positive classes
+        output = output[:, :, 4:]
+        target = target[:, :, 4:]
+
+        # mask out output values where class is different from target
+        output = keras.backend.cast(output, keras.backend.floatx())
+        output = keras_rcnn.backend.where(keras.backend.greater(target, 0), output, keras.backend.zeros_like(target, dtype=keras.backend.floatx()))
+
         inside_mul = inside_weights * (output - target)
-        smooth_l1_sign = tensorflow.cast(keras.backend.less(keras.backend.abs(inside_mul), 1.0 / sigma2), tensorflow.float32)
+        smooth_l1_sign = keras.backend.cast(keras.backend.less(keras.backend.abs(inside_mul), 1.0 / sigma2), keras.backend.floatx())
         smooth_l1_option1 = (inside_mul * inside_mul) * (0.5 * sigma2)
         smooth_l1_option2 = keras.backend.abs(inside_mul) - (0.5 / sigma2)
-        smooth_l1_result = (smooth_l1_option1 * smooth_l1_sign) + (smooth_l1_option2 * keras.backend.abs((smooth_l1_sign - 1.0)))
+        smooth_l1_result = (smooth_l1_option1 * smooth_l1_sign) + (smooth_l1_option2 * (1.0 - smooth_l1_sign))
         loss = outside_weights * smooth_l1_result
-        loss = tensorflow.reduce_mean(tensorflow.reduce_sum(loss, reduction_indices=[1]))
+
+        loss = tensorflow.reduce_sum(loss)
 
         return loss
 
