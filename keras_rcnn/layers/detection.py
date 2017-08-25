@@ -65,14 +65,20 @@ class Detection(keras.engine.topology.Layer):
         pred_scores = keras.backend.gather(pred_scores, indices_threshold)
         pred_boxes = keras.backend.gather(pred_boxes, indices_threshold)
 
+        # indices for most probable class per object
         indices = keras.backend.arange(0, keras.backend.shape(pred_scores)[0])
         pred_scores_classes = keras_rcnn.backend.gather_nd(pred_scores, keras.backend.concatenate([keras.backend.expand_dims(indices), keras.backend.expand_dims(pred_classes)], axis=1))
+
+        # indices for box coordinates of most probable class per object
         indices_boxes = keras.backend.concatenate([4 * pred_classes, 4 * pred_classes + 1, 4 * pred_classes + 2, 4 * pred_classes + 3], 0)
         indices = keras.backend.tile(indices, [4])
 
+        # boxes coordinates associated with most probable class per object
         pred_boxes = keras_rcnn.backend.gather_nd(pred_boxes, keras.backend.concatenate([keras.backend.expand_dims(indices), keras.backend.expand_dims(indices_boxes)], axis=1))
         pred_boxes = keras.backend.reshape(pred_boxes, (-1, 4))
 
+        # NMS over boxes
+        #TODO: correct this nms, not done properly
         indices = keras_rcnn.backend.non_maximum_suppression(pred_boxes, pred_scores_classes, keras.backend.shape(pred_boxes)[0], self.TEST_NMS)
         pred_scores = keras.backend.gather(pred_scores, indices)
         pred_boxes = keras.backend.gather(pred_boxes, indices)

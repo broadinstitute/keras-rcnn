@@ -36,7 +36,7 @@ class ProposalTarget(keras.layers.Layer):
     def build(self, input_shape):
         super(ProposalTarget, self).build(input_shape)
 
-    def call(self, inputs, **kwargs):
+    def call(self, inputs, training=None, **kwargs):
         # Proposal ROIs (x1, y1, x2, y2) coming from RPN
         # (i.e., rpn.proposal_layer.ProposalLayer), or any other source
         # GT boxes (x1, y1, x2, y2)
@@ -44,24 +44,30 @@ class ProposalTarget(keras.layers.Layer):
 
         # labels (class1, class2, ... , num_classes)
         # Include ground-truth boxes in the set of candidate rois
-        proposals, bounding_boxes, labels = inputs
+        def propose(i):
+            proposals, bounding_boxes, labels = inputs
 
-        proposals = keras.backend.concatenate((proposals, bounding_boxes), axis=1)
+            proposals = keras.backend.concatenate((proposals, bounding_boxes), axis=1)
 
-        rois_per_image = self.batchsize / self.num_images
-        fg_rois_per_image = keras.backend.round(self.fg_fraction * rois_per_image)
+            rois_per_image = self.batchsize / self.num_images
+            fg_rois_per_image = keras.backend.round(self.fg_fraction * rois_per_image)
 
-        # Sample rois with classification labels and bounding box regression
-        # targets
+            # Sample rois with classification labels and bounding box regression
+            # targets
 
-        # TODO: Fix usage of batch index
-        batch_index = 0
-        proposals = proposals[batch_index, :, :]
-        bounding_boxes = bounding_boxes[batch_index, :, :]
-        labels = labels[batch_index, :, :]
-        rois, labels, bbox_targets = sample_rois(proposals, bounding_boxes, labels, fg_rois_per_image, rois_per_image, self.fg_thresh, self.bg_thresh_hi, self.bg_thresh_lo)
-        self.proposals = keras.backend.shape(rois)[0]
-        return [keras.backend.expand_dims(rois, axis=0), keras.backend.expand_dims(labels, axis=0), keras.backend.expand_dims(bbox_targets, axis=0)]
+            # TODO: Fix usage of batch index
+            batch_index = 0
+            proposals = proposals[batch_index, :, :]
+            bounding_boxes = bounding_boxes[batch_index, :, :]
+            labels = labels[batch_index, :, :]
+            sample_outputs = sample_rois(proposals, bounding_boxes, labels, fg_rois_per_image, rois_per_image, self.fg_thresh, self.bg_thresh_hi, self.bg_thresh_lo)
+            return keras.backend.expand_dims(sample_outputs[i], 0)
+
+        rois = keras.backend.in_train_phase(lambda: propose(0), inputs[0], training=training)
+        labels = keras.backend.in_train_phase(lambda: propose(1), inputs[1], training=training)
+        bbox_targets = keras.backend.in_train_phase(lambda: propose(2), inputs[2], training=training)
+
+        return [rois, labels, bbox_targets]
 
     def compute_output_shape(self, input_shape):
         num_classes = input_shape[2][2]
