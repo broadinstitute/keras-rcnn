@@ -35,7 +35,7 @@ class RPNClassificationLoss(keras.layers.Layer):
         return loss
 
     def compute_output_shape(self, input_shape):
-        return None, None, None, self.anchors * 2
+        return input_shape[0]
 
 
 class RPNRegressionLoss(keras.layers.Layer):
@@ -90,4 +90,4 @@ class RPNRegressionLoss(keras.layers.Layer):
         return loss
 
     def compute_output_shape(self, input_shape):
-        return None, None, None, self.anchors * 4
+        return input_shape[0]
