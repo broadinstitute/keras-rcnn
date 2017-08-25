@@ -2,7 +2,6 @@ after_script:
   - codecov
 before_install:
   - pip install tensorflow
-  - pip install pylint
 cache:
   directories:
     - $HOME/.cache/pip
@@ -20,6 +19,4 @@ dist: trusty
 install: pip install --editable .[test]
 language: python
 script:
-  - pytest tests/ --cov keras_rcnn/
-  - pylint
-  # - pytest --pep8 -m pep8
+  - pytest tests/ --cov keras_rcnn/ --pep8
