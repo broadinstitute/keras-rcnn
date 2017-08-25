@@ -5,6 +5,7 @@ import skimage.transform
 import skimage.io
 import time
 
+
 def scale_size(size, min_size=224, max_size=224):
     """
     Rescales a given image size such that the larger axis is
@@ -45,7 +46,7 @@ class DictionaryIterator(keras.preprocessing.image.Iterator):
         rows, cols, channels          = self.target_shape
         self.metadata                 = numpy.array([[rows, cols, self.scale]])
 
-        super().__init__(len(self.dictionary), batch_size, shuffle, seed)
+        super(DictionaryIterator, self).__init__(len(self.dictionary), batch_size, shuffle, seed)
 
     def next(self):
         # Lock indexing to prevent race conditions.
