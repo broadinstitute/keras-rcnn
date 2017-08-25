@@ -95,7 +95,7 @@ class ObjectProposal(keras.engine.topology.Layer):
         return keras.backend.expand_dims(proposals, 0)
 
     def compute_output_shape(self, input_shape):
-        return None, self.maximum_proposals, 4
+        return None, None, 4
 
 
 def filter_boxes(proposals, minimum):
