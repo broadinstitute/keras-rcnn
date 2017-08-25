@@ -5,7 +5,13 @@ import keras_rcnn.layers.object_detection._object_proposal
 
 class Detection(keras.engine.topology.Layer):
     """
-    Get final detections + labels by unscaling back to image space, applying regression deltas, choosing box coordinates, and removing extra detections via NMS
+    Get final detections + labels by unscaling back to image space, applying regression deltas,
+    choosing box coordinates, and removing extra detections via NMS
+
+    # Arguments
+    threshold: objects with maximum score less than threshold are thrown out
+    test_nms: A float representing the threshold for deciding whether boxes overlap too much with respect to IoU
+
     """
     def __init__(self, threshold = 0.05, test_nms = 0.5, **kwargs):
         self.threshold = threshold
@@ -20,10 +26,16 @@ class Detection(keras.engine.topology.Layer):
 
     def call(self, x, **kwargs):
         """
+        # Inputs
         rois: output of proposal target (1, N, 4)
         pred_deltas: predicted deltas (1, N, 4*classes)
         pred_scores: score distributions (1, N, classes)
         metadata: image information (1, 3)
+
+        # Returns
+        pred_boxes: final predicted boxes of the predicted class (1, N, 4)
+        pred_scores: score distribution over all classes (1, N, classes), note the box only corresponds to the most
+            probable class, not the other classes
         """
         rois, pred_deltas, pred_scores, metadata = x[0], x[1], x[2], x[3]
 
