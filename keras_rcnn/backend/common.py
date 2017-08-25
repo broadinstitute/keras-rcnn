@@ -193,3 +193,54 @@ def smooth_l1_loss(y_true, y_pred):
     x = keras.backend.switch(p, q, r)
 
     return keras.backend.sum(x)
+
+
+def bbox_transform_inv(boxes, deltas):
+    def shape_zero():
+        x = keras.backend.int_shape(deltas)[-1]
+
+        return keras.backend.zeros_like(x, dtype=keras.backend.floatx())
+
+    def shape_non_zero():
+        a = boxes[:, 2] - boxes[:, 0] + 1.0
+        b = boxes[:, 3] - boxes[:, 1] + 1.0
+
+        ctr_x = boxes[:, 0] + 0.5 * a
+        ctr_y = boxes[:, 1] + 0.5 * b
+
+        dx = deltas[:, 0::4]
+        dy = deltas[:, 1::4]
+        dw = deltas[:, 2::4]
+        dh = deltas[:, 3::4]
+
+        pred_ctr_x = dx * a[:, keras_rcnn.backend.newaxis] + ctr_x[:, keras_rcnn.backend.newaxis]
+        pred_ctr_y = dy * b[:, keras_rcnn.backend.newaxis] + ctr_y[:, keras_rcnn.backend.newaxis]
+
+        pred_w = keras.backend.exp(dw) * a[:, keras_rcnn.backend.newaxis]
+        pred_h = keras.backend.exp(dh) * b[:, keras_rcnn.backend.newaxis]
+
+
+        indices = keras.backend.tile(keras.backend.arange(0, keras.backend.shape(deltas)[0]), [4])
+        indices = keras.backend.reshape(indices, (-1, 1))
+        indices = keras.backend.tile(indices, [1, keras.backend.shape(deltas)[-1] // 4])
+        indices = keras.backend.reshape(indices, (-1, 1))
+        indices_coords = keras.backend.tile(keras.backend.arange(0, keras.backend.shape(deltas)[1], step = 4), [keras.backend.shape(deltas)[0]])
+        indices_coords = keras.backend.concatenate([indices_coords, indices_coords + 1, indices_coords + 2, indices_coords + 3], 0)
+        indices = keras.backend.concatenate([indices, keras.backend.expand_dims(indices_coords)], axis=1)
+
+
+        updates = keras.backend.concatenate([keras.backend.reshape(pred_ctr_x - 0.5 * pred_w, (-1,)),
+                                             keras.backend.reshape(pred_ctr_y - 0.5 * pred_h, (-1,)),
+                                             keras.backend.reshape(pred_ctr_x + 0.5 * pred_w, (-1,)),
+                                             keras.backend.reshape(pred_ctr_y + 0.5 * pred_h, (-1,))], axis=0)
+        pred_boxes = keras_rcnn.backend.scatter_add_tensor(keras.backend.zeros_like(deltas), indices, updates)
+        return pred_boxes
+
+
+    zero_boxes = keras.backend.equal(keras.backend.shape(deltas)[0], 0)
+
+    pred_boxes = keras.backend.switch(zero_boxes, shape_zero, shape_non_zero)
+
+    return pred_boxes
+
+

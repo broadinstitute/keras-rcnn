@@ -58,7 +58,7 @@ class ObjectProposal(keras.engine.topology.Layer):
         deltas = keras.backend.reshape(deltas, (-1, 4))
         scores = keras.backend.reshape(scores, (-1, 1))
 
-        deltas = bbox_transform_inv(anchors, deltas)
+        deltas = keras_rcnn.backend.bbox_transform_inv(anchors, deltas)
 
         # 2. clip predicted boxes to image
         proposals = keras_rcnn.backend.clip(deltas, image_shape)
@@ -96,55 +96,6 @@ class ObjectProposal(keras.engine.topology.Layer):
 
     def compute_output_shape(self, input_shape):
         return None, self.maximum_proposals, 4
-
-
-def bbox_transform_inv(shifted, boxes):
-    def shape_zero():
-        x = keras.backend.int_shape(boxes)[-1]
-
-        return keras.backend.zeros_like(x, dtype=keras.backend.floatx())
-
-    def shape_non_zero():
-        a = shifted[:, 2] - shifted[:, 0] + 1.0
-        b = shifted[:, 3] - shifted[:, 1] + 1.0
-
-        ctr_x = shifted[:, 0] + 0.5 * a
-        ctr_y = shifted[:, 1] + 0.5 * b
-
-        dx = boxes[:, 0::4]
-        dy = boxes[:, 1::4]
-        dw = boxes[:, 2::4]
-        dh = boxes[:, 3::4]
-
-        pred_ctr_x = dx * a[:, keras_rcnn.backend.newaxis] + ctr_x[:, keras_rcnn.backend.newaxis]
-        pred_ctr_y = dy * b[:, keras_rcnn.backend.newaxis] + ctr_y[:, keras_rcnn.backend.newaxis]
-
-        pred_w = keras.backend.exp(dw) * a[:, keras_rcnn.backend.newaxis]
-        pred_h = keras.backend.exp(dh) * b[:, keras_rcnn.backend.newaxis]
-
-
-        indices = keras.backend.tile(keras.backend.arange(0, keras.backend.shape(boxes)[0]), [4])
-        indices = keras.backend.reshape(indices, (-1, 1))
-        indices = keras.backend.tile(indices, [1, keras.backend.shape(boxes)[-1] // 4])
-        indices = keras.backend.reshape(indices, (-1, 1))
-        indices_coords = keras.backend.tile(keras.backend.arange(0, keras.backend.shape(boxes)[1], step = 4), [keras.backend.shape(boxes)[0]])
-        indices_coords = keras.backend.concatenate([indices_coords, indices_coords + 1, indices_coords + 2, indices_coords + 3], 0)
-        indices = keras.backend.concatenate([indices, keras.backend.expand_dims(indices_coords)], axis=1)
-
-
-        updates = keras.backend.concatenate([keras.backend.reshape(pred_ctr_x - 0.5 * pred_w, (-1,)),
-                                             keras.backend.reshape(pred_ctr_y - 0.5 * pred_h, (-1,)),
-                                             keras.backend.reshape(pred_ctr_x + 0.5 * pred_w, (-1,)),
-                                             keras.backend.reshape(pred_ctr_y + 0.5 * pred_h, (-1,))], axis=0)
-        pred_boxes = keras_rcnn.backend.scatter_add_tensor(keras.backend.zeros_like(boxes), indices, updates)
-        return pred_boxes
-
-
-    zero_boxes = keras.backend.equal(keras.backend.shape(boxes)[0], 0)
-
-    pred_boxes = keras.backend.switch(zero_boxes, shape_zero, shape_non_zero)
-
-    return pred_boxes
 
 
 def filter_boxes(proposals, minimum):
