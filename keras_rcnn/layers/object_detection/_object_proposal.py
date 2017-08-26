@@ -1,6 +1,5 @@
 import keras.backend
 import keras.engine
-import numpy
 
 import keras_rcnn.backend
 import keras_rcnn.layers
@@ -20,11 +19,17 @@ class ObjectProposal(keras.engine.topology.Layer):
     # Output shape
         (# images, # proposals, 4)
     """
-    def __init__(self, maximum_proposals=300, min_size=16, stride=16, **kwargs):
+    def __init__(
+        self,
+        maximum_proposals=300,
+        minimum_size=16,
+        stride=16,
+        **kwargs
+    ):
         self.maximum_proposals = maximum_proposals
 
         # minimum width/height of proposals in original image size
-        self.min_size = min_size
+        self.minimum_size = minimum_size
 
         self.stride = stride
 
@@ -65,7 +70,7 @@ class ObjectProposal(keras.engine.topology.Layer):
 
         # 3. remove predicted boxes with either height or width < threshold
         # (NOTE: convert min_size to input image scale stored in im_info[2])
-        indices = filter_boxes(proposals, self.min_size * image_scale)
+        indices = filter_boxes(proposals, self.minimum_size * image_scale)
         proposals = keras.backend.gather(proposals, indices)
 
         scores = scores[..., (scores.shape[-1] // 2):]
@@ -87,7 +92,12 @@ class ObjectProposal(keras.engine.topology.Layer):
         scores = keras.backend.gather(scores, indices)
 
         # 6. apply nms (e.g. threshold = 0.7)
-        indices = keras_rcnn.backend.non_maximum_suppression(proposals, scores, self.maximum_proposals, 0.7)
+        indices = keras_rcnn.backend.non_maximum_suppression(
+            boxes=proposals,
+            scores=scores,
+            maximum=self.maximum_proposals,
+            threshold=0.7
+        )
 
         proposals = keras.backend.gather(proposals, indices)
 
@@ -100,8 +110,8 @@ class ObjectProposal(keras.engine.topology.Layer):
 
 def filter_boxes(proposals, minimum):
     """
-    Filters proposed RoIs so that all have width and height at least as big as minimum
-
+    Filters proposed RoIs so that all have width and height at least as big as
+    minimum
     """
     ws = proposals[:, 2] - proposals[:, 0] + 1
     hs = proposals[:, 3] - proposals[:, 1] + 1

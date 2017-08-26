@@ -21,11 +21,12 @@ class TestDetection:
 
         metadata = keras.backend.variable([[224, 224, 1.5]])
 
-        boxes, classes = proposal_target.call([proposals, pred_boxes, pred_scores, metadata])
+        boxes, classes = proposal_target.call(
+            [proposals, pred_boxes, pred_scores, metadata])
 
-        assert keras.backend.eval(classes).shape[:2] == keras.backend.eval(boxes).shape[:2]
+        assert keras.backend.eval(classes).shape[:2] == keras.backend.eval(
+            boxes).shape[:2]
 
         assert keras.backend.eval(boxes).shape[-1] == 4
-        
-        assert keras.backend.eval(classes).shape[-1] == num_classes
 
+        assert keras.backend.eval(classes).shape[-1] == num_classes

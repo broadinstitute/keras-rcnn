@@ -60,12 +60,12 @@ class RegionOfInterest(keras.engine.topology.Layer):
         y2 = keras.backend.expand_dims(y2, axis=-1)
 
         boxes = keras.backend.concatenate([y1, x1, y2, x2], axis=-1)
-        
         boxes = keras.backend.reshape(boxes, (-1, 4))
-        
         slices = keras_rcnn.backend.crop_and_resize(image, boxes, self.shape)
 
         return keras.backend.expand_dims(slices, axis=0)
 
     def compute_output_shape(self, input_shape):
-        return (None, input_shape[1][1], self.shape[0], self.shape[1], self.channels)
+        proposals = input_shape[1][1]
+
+        return None, proposals, self.shape[0], self.shape[1], self.channels

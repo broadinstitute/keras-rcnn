@@ -29,13 +29,13 @@ class RPNClassificationLoss(keras.layers.Layer):
         output = keras_rcnn.backend.gather_nd(output, indices)
         target = keras_rcnn.backend.gather_nd(target, indices)
 
-        loss = keras.backend.sparse_categorical_crossentropy(target, output)
+        loss = keras.backend.sparse_categorical_crossentropy(output, target)
         loss = keras.backend.mean(loss)
 
         return loss
 
     def compute_output_shape(self, input_shape):
-        return None, None, None, self.anchors * 2
+        return input_shape[0]
 
 
 class RPNRegressionLoss(keras.layers.Layer):
@@ -71,7 +71,9 @@ class RPNRegressionLoss(keras.layers.Layer):
         mask = keras.backend.less_equal(keras.backend.abs(x), 1.0)
         mask = keras.backend.cast(mask, keras.backend.floatx())
 
-        a_x = keras_rcnn.backend.where(keras.backend.not_equal(labels, 0), keras.backend.ones_like(labels), keras.backend.zeros_like(labels))
+        a_x = keras_rcnn.backend.where(keras.backend.not_equal(labels, 0),
+                                       keras.backend.ones_like(labels),
+                                       keras.backend.zeros_like(labels))
         a_x = keras.backend.cast(a_x, keras.backend.floatx())
 
         a_y = mask * (0.5 * x * x) + (1 - mask) * (keras.backend.abs(x) - 0.5)
@@ -88,4 +90,4 @@ class RPNRegressionLoss(keras.layers.Layer):
         return loss
 
     def compute_output_shape(self, input_shape):
-        return None, None, None, self.anchors * 4
+        return input_shape[0]

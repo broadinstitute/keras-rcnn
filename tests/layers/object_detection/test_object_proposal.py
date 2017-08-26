@@ -29,6 +29,8 @@ def test_filter_boxes():
 
     minimum = 3
 
-    results = keras_rcnn.layers.object_detection._object_proposal.filter_boxes(proposals, minimum)
+    results = keras_rcnn.layers.object_detection._object_proposal.filter_boxes(
+        proposals, minimum)
 
-    numpy.testing.assert_array_equal(keras.backend.eval(results), numpy.array([0, 1]))
+    numpy.testing.assert_array_equal(keras.backend.eval(results),
+                                     numpy.array([0, 1]))
