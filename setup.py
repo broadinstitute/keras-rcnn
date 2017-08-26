@@ -14,6 +14,7 @@ setuptools.setup(
         ],
     },
     install_requires=[
+        "jsonschema",
         "keras",
         "keras-resnet",
         "scikit-image"
