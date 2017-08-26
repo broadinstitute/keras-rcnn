@@ -35,8 +35,8 @@ class Detection(keras.engine.topology.Layer):
         """
         rois, pred_deltas, pred_scores, metadata = x[0], x[1], x[2], x[3]
 
-        rois = rois[0, :, :]
-        pred_deltas = pred_deltas[0, :, :]
+        rois = keras.backend.reshape(rois, (-1, 4))
+        pred_deltas = keras.backend.reshape(pred_deltas, (-1, keras.backend.shape(pred_deltas)[2]))
 
         # unscale back to raw image space
         boxes = rois / metadata[0][2]
