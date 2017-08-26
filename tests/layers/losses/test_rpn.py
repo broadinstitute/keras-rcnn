@@ -17,7 +17,8 @@ def test_rpn_classification():
 
     metadata = keras.backend.variable(numpy.array([[224, 224, 1]]))
 
-    labels, bbox_reg_targets = keras_rcnn.layers.AnchorTarget()([scores, y_true, metadata])
+    labels, bbox_reg_targets = keras_rcnn.layers.AnchorTarget()(
+        [scores, y_true, metadata])
 
     numpy.testing.assert_array_equal(layer.call([scores, labels]), scores)
 
@@ -42,16 +43,19 @@ def test_rpn_regression():
     all_anchors = keras_rcnn.backend.shift((rr, cc), stride)
 
     # only keep anchors inside the image
-    inds_inside, y_true = keras_rcnn.layers.object_detection._anchor_target.inside_image(all_anchors, metadata[0])
+    inds_inside, y_true = keras_rcnn.layers.object_detection._anchor_target.inside_image(
+        all_anchors, metadata[0])
 
     scores = keras.backend.variable(numpy.zeros((1, 14, 14, anchors * 2)))
     deltas = keras.backend.variable(numpy.zeros((1, 14, 14, anchors * 4)))
 
     expected_loss = 0
 
-    labels, bbox_reg_targets = keras_rcnn.layers.AnchorTarget()([scores, keras.backend.expand_dims(y_true, 0), metadata])
+    labels, bbox_reg_targets = keras_rcnn.layers.AnchorTarget()(
+        [scores, keras.backend.expand_dims(y_true, 0), metadata])
 
-    numpy.testing.assert_array_equal(layer.call([deltas, bbox_reg_targets, labels]), deltas)
+    numpy.testing.assert_array_equal(
+        layer.call([deltas, bbox_reg_targets, labels]), deltas)
 
     assert len(layer.losses) == 1
 

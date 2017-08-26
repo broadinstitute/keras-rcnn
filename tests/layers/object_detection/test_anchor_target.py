@@ -29,9 +29,11 @@ def test_label():
 
     all_bbox = keras_rcnn.backend.shift((feat_h, feat_w), stride)
 
-    inds_inside, all_inside_bbox = keras_rcnn.layers.object_detection._anchor_target.inside_image(all_bbox, img_info[0])
+    inds_inside, all_inside_bbox = keras_rcnn.layers.object_detection._anchor_target.inside_image(
+        all_bbox, img_info[0])
 
-    argmax_overlaps_inds, bbox_labels = keras_rcnn.layers.object_detection._anchor_target.label(gt_boxes, all_inside_bbox, inds_inside)
+    argmax_overlaps_inds, bbox_labels = keras_rcnn.layers.object_detection._anchor_target.label(
+        gt_boxes, all_inside_bbox, inds_inside)
 
     result1 = keras.backend.eval(argmax_overlaps_inds)
     result2 = keras.backend.eval(bbox_labels)
@@ -44,7 +46,8 @@ def test_label():
 
     assert numpy.min(result2) >= -1
 
-    argmax_overlaps_inds, bbox_labels = keras_rcnn.layers.object_detection._anchor_target.label(gt_boxes, all_inside_bbox, inds_inside, clobber_positives=False)
+    argmax_overlaps_inds, bbox_labels = keras_rcnn.layers.object_detection._anchor_target.label(
+        gt_boxes, all_inside_bbox, inds_inside, clobber_positives=False)
 
     result1 = keras.backend.eval(argmax_overlaps_inds)
     result2 = keras.backend.eval(bbox_labels)
@@ -59,7 +62,8 @@ def test_label():
 
     gt_boxes = keras.backend.variable(224 * numpy.random.random((55, 4)))
     gt_boxes = tensorflow.convert_to_tensor(gt_boxes, dtype=tensorflow.float32)
-    argmax_overlaps_inds, bbox_labels = keras_rcnn.layers.object_detection._anchor_target.label(gt_boxes, all_inside_bbox, inds_inside, clobber_positives=False)
+    argmax_overlaps_inds, bbox_labels = keras_rcnn.layers.object_detection._anchor_target.label(
+        gt_boxes, all_inside_bbox, inds_inside, clobber_positives=False)
     result1 = keras.backend.eval(argmax_overlaps_inds)
     result2 = keras.backend.eval(bbox_labels)
 
@@ -75,7 +79,8 @@ def test_label():
 def test_subsample_positive_labels():
     x = keras.backend.ones((10,))
 
-    y = keras_rcnn.layers.object_detection._anchor_target.subsample_positive_labels(x)
+    y = keras_rcnn.layers.object_detection._anchor_target.subsample_positive_labels(
+        x)
 
     numpy.testing.assert_array_equal(
         keras.backend.eval(x),
@@ -84,7 +89,8 @@ def test_subsample_positive_labels():
 
     x = keras.backend.ones((1000,))
 
-    y = keras_rcnn.layers.object_detection._anchor_target.subsample_positive_labels(x)
+    y = keras_rcnn.layers.object_detection._anchor_target.subsample_positive_labels(
+        x)
 
     assert keras.backend.eval(keras.backend.sum(y) < keras.backend.sum(x))
 
@@ -92,7 +98,8 @@ def test_subsample_positive_labels():
 def test_subsample_negative_labels():
     x = keras.backend.zeros((10,))
 
-    y = keras_rcnn.layers.object_detection._anchor_target.subsample_negative_labels(x)
+    y = keras_rcnn.layers.object_detection._anchor_target.subsample_negative_labels(
+        x)
 
     numpy.testing.assert_array_equal(
         keras.backend.eval(x),
@@ -101,7 +108,8 @@ def test_subsample_negative_labels():
 
     x = keras.backend.zeros((1000,))
 
-    y = keras_rcnn.layers.object_detection._anchor_target.subsample_negative_labels(x)
+    y = keras_rcnn.layers.object_detection._anchor_target.subsample_negative_labels(
+        x)
 
     assert keras.backend.eval(keras.backend.sum(y) < keras.backend.sum(x))
 
@@ -163,22 +171,31 @@ def test_unmap():
     stride = 16
     features = (14, 14)
     anchors = 9
-    total_anchors = features[0]*features[1]*anchors
+    total_anchors = features[0] * features[1] * anchors
     img_info = keras.backend.variable([[224, 224, 3]])
     gt_boxes = numpy.zeros((91, 4))
     gt_boxes = keras.backend.variable(gt_boxes)
 
     all_anchors = keras_rcnn.backend.shift(features, stride)
 
-    inds_inside, all_inside_anchors = keras_rcnn.layers.object_detection._anchor_target.inside_image(all_anchors, img_info[0])
+    inds_inside, all_inside_anchors = keras_rcnn.layers.object_detection._anchor_target.inside_image(
+        all_anchors, img_info[0])
 
-    argmax_overlaps_indices, labels = keras_rcnn.layers.object_detection._anchor_target.label(gt_boxes, all_inside_anchors, inds_inside)
-    bbox_reg_targets = keras_rcnn.backend.bbox_transform(all_inside_anchors, keras.backend.gather(gt_boxes, argmax_overlaps_indices))
+    argmax_overlaps_indices, labels = keras_rcnn.layers.object_detection._anchor_target.label(
+        gt_boxes, all_inside_anchors, inds_inside)
+    bbox_reg_targets = keras_rcnn.backend.bbox_transform(all_inside_anchors,
+                                                         keras.backend.gather(
+                                                             gt_boxes,
+                                                             argmax_overlaps_indices))
 
-    labels = keras_rcnn.layers.object_detection._anchor_target.unmap(labels, total_anchors, inds_inside, fill=-1)
-    bbox_reg_targets = keras_rcnn.layers.object_detection._anchor_target.unmap(bbox_reg_targets, total_anchors, inds_inside, fill=0)
+    labels = keras_rcnn.layers.object_detection._anchor_target.unmap(labels,
+                                                                     total_anchors,
+                                                                     inds_inside,
+                                                                     fill=-1)
+    bbox_reg_targets = keras_rcnn.layers.object_detection._anchor_target.unmap(
+        bbox_reg_targets, total_anchors, inds_inside, fill=0)
 
-    assert keras.backend.eval(labels).shape == (total_anchors, )
+    assert keras.backend.eval(labels).shape == (total_anchors,)
     assert keras.backend.eval(bbox_reg_targets).shape == (total_anchors, 4)
 
 
@@ -190,7 +207,8 @@ def test_inside_image():
 
     img_info = (224, 224, 1)
 
-    inds_inside, all_inside_anchors = keras_rcnn.layers.object_detection._anchor_target.inside_image(all_anchors, img_info)
+    inds_inside, all_inside_anchors = keras_rcnn.layers.object_detection._anchor_target.inside_image(
+        all_anchors, img_info)
 
     inds_inside = keras.backend.eval(inds_inside)
 
