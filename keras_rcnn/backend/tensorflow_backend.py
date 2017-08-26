@@ -116,12 +116,24 @@ def crop_and_resize(image, boxes, size):
     return tensorflow.image.crop_and_resize(image, boxes, box_ind, size)
 
 
-def smooth_l1_loss(y_true, y_pred):
-    x = keras.backend.abs(y_true - y_pred)
+def smooth_l1(output, target, anchored=False, weights=None):
+    difference = keras.backend.abs(output - target)
 
-    x = tensorflow.where(x < 1, 0.5 * keras.backend.square(x), x - 0.5)
+    p = difference < 1
+    q = 0.5 * keras.backend.square(difference)
+    r = difference - 0.5
 
-    return keras.backend.sum(x)
+    difference = tensorflow.where(p, q, r)
+
+    loss = keras.backend.sum(difference, axis=2)
+
+    if weights is not None:
+        loss *= weights
+
+    if anchored:
+        return loss
+
+    return keras.backend.sum(loss)
 
 
 def squeeze(a, axis=None):

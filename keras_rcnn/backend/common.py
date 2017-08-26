@@ -209,18 +209,48 @@ def overlap(a, b):
     return intersection / ua
 
 
-def smooth_l1_loss(y_true, y_pred):
-    delta = 1
+def smooth_l1(output, target, anchored=False, weights=None):
+    difference = keras.backend.abs(output - target)
 
-    x = keras.backend.abs(y_true - y_pred)
+    p = difference < 1
+    q = 0.5 * keras.backend.square(difference)
+    r = difference - 0.5
 
-    p = x < delta
-    q = 0.5 * x ** 2
-    r = delta * (x - 0.5 * delta)
+    difference = keras.backend.switch(p, q, r)
 
-    x = keras.backend.switch(p, q, r)
+    loss = keras.backend.sum(difference, axis=2)
 
-    return keras.backend.sum(x)
+    if weights is not None:
+        loss *= weights
+
+    if anchored:
+        return loss
+
+    return keras.backend.sum(loss)
+
+
+def softmax_classification(output, target, anchored=False, weights=None):
+    classes = keras.backend.int_shape(output)[-1]
+
+    target = keras.backend.reshape(target, [-1, classes])
+    output = keras.backend.reshape(output, [-1, classes])
+
+    loss = keras.backend.categorical_crossentropy(
+        target, output, from_logits=True
+    )
+
+    if anchored:
+        if weights is not None:
+            loss = keras.backend.reshape(loss, keras.backend.shape(weights))
+
+            loss *= weights
+
+        return loss
+
+    if weights is not None:
+        loss *= keras.backend.reshape(weights, [-1])
+
+    return keras.backend.sum(loss)
 
 
 def bbox_transform_inv(boxes, deltas):
