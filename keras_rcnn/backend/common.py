@@ -255,7 +255,7 @@ def softmax_classification(output, target, anchored=False, weights=None):
 
 def bbox_transform_inv(boxes, deltas):
     def shape_zero():
-        x = keras.backend.int_shape(deltas)[-1]
+        x = keras.backend.shape(deltas)[1]
 
         return keras.backend.zeros_like(x, dtype=keras.backend.floatx())
 
