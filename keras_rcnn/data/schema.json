@@ -1,0 +1,63 @@
+{
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "properties": {
+        "id": {
+            "type": "integer"
+        },
+        "image": {
+            "properties": {
+                "pathname": {
+                    "type": "string"
+                }
+            },
+            "type": "object"
+        },
+        "objects": {
+            "items": {
+                "properties": {
+                    "bounding_box": {
+                        "properties": {
+                            "maximum": {
+                                "properties": {
+                                    "c": {
+                                        "type": "integer"
+                                    },
+                                    "r": {
+                                        "type": "integer"
+                                    }
+                                },
+                                "type": "object"
+                            },
+                            "minimum": {
+                                "properties": {
+                                    "c": {
+                                        "type": "integer"
+                                    },
+                                    "r": {
+                                        "type": "integer"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        },
+                        "type": "object"
+                    },
+                    "class": {
+                        "type": "string"
+                    },
+                    "mask": {
+                        "properties": {
+                            "pathname": {
+                                "type": "string"
+                            }
+                        },
+                        "type": "object"
+                    }
+                },
+                "type": "object"
+            },
+            "type": "array"
+        }
+    },
+    "type": "object"
+}
