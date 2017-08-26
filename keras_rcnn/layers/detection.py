@@ -37,10 +37,8 @@ class Detection(keras.engine.topology.Layer):
 
         rois = rois[0, :, :]
         pred_deltas = pred_deltas[0, :, :]
-        pred_scores = pred_scores[0, :, :]
 
         # unscale back to raw image space
-        pred_deltas = keras.backend.reshape(pred_deltas,(-1, 4))
         boxes = rois / metadata[0][2]
 
         # Apply bounding-box regression deltas
@@ -48,11 +46,9 @@ class Detection(keras.engine.topology.Layer):
 
         pred_boxes = keras_rcnn.backend.clip(pred_boxes, metadata[0][:2])
 
-        pred_scores = keras.backend.reshape(pred_scores, (-1, 2))
-
         return [
             keras.backend.expand_dims(pred_boxes, 0),
-            keras.backend.expand_dims(pred_scores, 0)
+            pred_scores
         ]
 
     def compute_output_shape(self, input_shape):
