@@ -7,22 +7,12 @@ import keras_rcnn.backend
 class Detection(keras.engine.topology.Layer):
     """
     Get final detections + labels by unscaling back to image space, applying
-    regression deltas, choosing box coordinates, and removing extra
-    detections via NMS
+    regression deltas
 
-    Arguments:
-        threshold: objects with maximum score less than threshold are thrown
-        out
-
-        test_nms: A float representing the threshold for deciding whether
-        boxes overlap too much with respect to IoU
 
     """
 
-    def __init__(self, threshold=0.05, test_nms=0.5, **kwargs):
-        self.threshold = threshold
-
-        self.TEST_NMS = test_nms
+    def __init__(self, **kwargs):
 
         super(Detection, self).__init__(**kwargs)
 
@@ -47,10 +37,8 @@ class Detection(keras.engine.topology.Layer):
 
         rois = rois[0, :, :]
         pred_deltas = pred_deltas[0, :, :]
-        pred_scores = pred_scores[0, :, :]
 
         # unscale back to raw image space
-
         boxes = rois / metadata[0][2]
 
         # Apply bounding-box regression deltas
@@ -58,67 +46,9 @@ class Detection(keras.engine.topology.Layer):
 
         pred_boxes = keras_rcnn.backend.clip(pred_boxes, metadata[0][:2])
 
-        # Final detections
-
-        # for each object, get the top class score and corresponding bbox,
-        # apply nms
-        pred_classes = keras.backend.argmax(pred_scores, axis=1)
-        pred_classes = keras.backend.cast(pred_classes, 'int32')
-
-        # keep detections above threshold
-
-        indices_threshold = keras_rcnn.backend.where(
-            keras.backend.greater(
-                keras.backend.max(pred_scores, axis=1),
-                self.threshold
-            )
-        )
-
-        indices_threshold = keras.backend.reshape(indices_threshold, (-1,))
-
-        pred_scores = keras.backend.gather(pred_scores, indices_threshold)
-        pred_boxes = keras.backend.gather(pred_boxes, indices_threshold)
-
-        indices = keras.backend.arange(0, keras.backend.shape(pred_scores)[0])
-
-        pred_scores_classes = keras_rcnn.backend.gather_nd(
-            pred_scores,
-            keras.backend.concatenate([
-                keras.backend.expand_dims(indices),
-                keras.backend.expand_dims(pred_classes)
-            ], axis=1))
-
-        indices_boxes = keras.backend.concatenate([
-            4 * pred_classes,
-            4 * pred_classes + 1,
-            4 * pred_classes + 2,
-            4 * pred_classes + 3
-        ], 0)
-
-        indices = keras.backend.tile(indices, [4])
-
-        pred_boxes = keras_rcnn.backend.gather_nd(
-            pred_boxes,
-            keras.backend.concatenate([
-                keras.backend.expand_dims(indices),
-                keras.backend.expand_dims(indices_boxes)
-            ], axis=1))
-
-        pred_boxes = keras.backend.reshape(pred_boxes, (-1, 4))
-
-        indices = keras_rcnn.backend.non_maximum_suppression(
-            boxes=pred_boxes,
-            scores=pred_scores_classes,
-            maximum=keras.backend.shape(pred_boxes)[0],
-            threshold=self.TEST_NMS
-        )
-
-        pred_scores = keras.backend.gather(pred_scores, indices)
-        pred_boxes = keras.backend.gather(pred_boxes, indices)
-
         return [
             keras.backend.expand_dims(pred_boxes, 0),
-            keras.backend.expand_dims(pred_scores, 0)
+            pred_scores
         ]
 
     def compute_output_shape(self, input_shape):
