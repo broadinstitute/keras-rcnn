@@ -161,7 +161,8 @@ def region_proposal_network():
 
 @pytest.fixture()
 def x():
-    return numpy.arange(2 * 9 * 14 * 14, dtype=numpy.float32).reshape(1, 18, 14, 14)
+    x = numpy.arange(2 * 9 * 14 * 14, dtype=numpy.float32)
+    return x.reshape(1, 18, 14, 14)
 
 
 @pytest.fixture()

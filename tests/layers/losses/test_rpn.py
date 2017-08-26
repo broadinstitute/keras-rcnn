@@ -4,6 +4,7 @@ import numpy
 import keras_rcnn.backend
 import keras_rcnn.layers
 import keras_rcnn.layers.object_detection
+import keras_rcnn.layers.object_detection._anchor_target as anchor_target
 
 
 def test_rpn_classification():
@@ -43,8 +44,9 @@ def test_rpn_regression():
     all_anchors = keras_rcnn.backend.shift((rr, cc), stride)
 
     # only keep anchors inside the image
-    inds_inside, y_true = keras_rcnn.layers.object_detection._anchor_target.inside_image(
-        all_anchors, metadata[0])
+    inds_inside, y_true = anchor_target.inside_image(
+        all_anchors, metadata[0]
+    )
 
     scores = keras.backend.variable(numpy.zeros((1, 14, 14, anchors * 2)))
     deltas = keras.backend.variable(numpy.zeros((1, 14, 14, anchors * 4)))

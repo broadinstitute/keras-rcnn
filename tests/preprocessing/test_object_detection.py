@@ -1,5 +1,6 @@
-import keras_rcnn.preprocessing._object_detection
 import numpy
+
+import keras_rcnn.preprocessing._object_detection
 
 
 def test_scale_shape():
@@ -7,12 +8,13 @@ def test_scale_shape():
     max_size = 300
     size = (600, 1000)
 
-    size, scale = keras_rcnn.preprocessing._object_detection.scale_size(size,
-                                                                        min_size,
-                                                                        max_size)
+    size, scale = keras_rcnn.preprocessing._object_detection.scale_size(
+        size, min_size, max_size
+    )
 
     expected = (180, 300)
     numpy.testing.assert_equal(size, expected)
 
     expected = 0.3
+
     assert numpy.isclose(scale, expected)
