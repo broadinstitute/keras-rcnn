@@ -235,3 +235,29 @@ def test_bbox_transform_inv():
         dtype=numpy.float32)
     numpy.testing.assert_array_almost_equal(keras.backend.eval(pred_boxes)[0],
                                             expected[0], 0, verbose=True)
+
+
+def test_smooth_l1():
+    output = keras.backend.variable(
+        [[[2.5, 0.0, 0.4, 0.0],
+          [0.0, 0.0, 0.0, 0.0],
+          [0.0, 2.5, 0.0, 0.4]],
+         [[3.5, 0.0, 0.0, 0.0],
+          [0.0, 0.4, 0.0, 0.9],
+          [0.0, 0.0, 1.5, 0.0]]]
+    )
+
+    target = keras.backend.zeros_like(output)
+
+    x = keras_rcnn.backend.smooth_l1(output, target)
+
+    numpy.testing.assert_approx_equal(keras.backend.eval(x), 8.645)
+
+    weights = keras.backend.variable(
+        [[2, 1, 1],
+         [0, 3, 0]]
+    )
+
+    x = keras_rcnn.backend.smooth_l1(output, target, weights=weights)
+
+    numpy.testing.assert_approx_equal(keras.backend.eval(x), 7.695)
