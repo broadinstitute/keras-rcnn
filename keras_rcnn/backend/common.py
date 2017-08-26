@@ -229,6 +229,30 @@ def smooth_l1(output, target, anchored=False, weights=None):
     return keras.backend.sum(loss)
 
 
+def softmax_classification(output, target, anchored=False, weights=None):
+    classes = keras.backend.int_shape(output)[-1]
+
+    target = keras.backend.reshape(target, [-1, classes])
+    output = keras.backend.reshape(output, [-1, classes])
+
+    loss = keras.backend.categorical_crossentropy(
+        target, output, from_logits=True
+    )
+
+    if anchored:
+        if weights is not None:
+            loss = keras.backend.reshape(loss, keras.backend.shape(weights))
+
+            loss *= weights
+
+        return loss
+
+    if weights is not None:
+        loss *= keras.backend.reshape(weights, [-1])
+
+    return keras.backend.sum(loss)
+
+
 def bbox_transform_inv(boxes, deltas):
     def shape_zero():
         x = keras.backend.int_shape(deltas)[-1]

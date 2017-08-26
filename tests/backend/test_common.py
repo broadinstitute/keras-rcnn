@@ -261,3 +261,50 @@ def test_smooth_l1():
     x = keras_rcnn.backend.smooth_l1(output, target, weights=weights)
 
     numpy.testing.assert_approx_equal(keras.backend.eval(x), 7.695)
+
+
+def test_softmax_classification():
+    output = keras.backend.variable(
+        [[[-100,  100, -100],
+          [ 100, -100, -100],
+          [   0,    0, -100],
+          [-100, -100,  100]],
+         [[-100,    0,    0],
+          [-100,  100, -100],
+          [-100,  100, -100],
+          [ 100, -100, -100]]]
+    )
+
+    target = keras.backend.variable(
+        [[[0, 1, 0],
+          [1, 0, 0],
+          [1, 0, 0],
+          [0, 0, 1]],
+         [[0, 0, 1],
+          [0, 1, 0],
+          [0, 1, 0],
+          [1, 0, 0]]]
+    )
+
+    weights = keras.backend.variable(
+        [[1.0, 1.0, 0.5, 1.0],
+         [1.0, 1.0, 1.0, 0.0]]
+    )
+
+    x = keras_rcnn.backend.softmax_classification(
+        output, target, weights=weights
+    )
+
+    y = -1.5 * numpy.log(0.5)
+
+    numpy.testing.assert_approx_equal(keras.backend.eval(x), y)
+
+    x = keras_rcnn.backend.softmax_classification(
+        output, target, anchored=True, weights=weights
+    )
+
+    y = numpy.array(
+        [[0, 0, - 0.5 * numpy.log(.5), 0], [-numpy.log(.5), 0, 0, 0]]
+    )
+
+    numpy.testing.assert_array_almost_equal(keras.backend.eval(x), y)
