@@ -1,9 +1,8 @@
 import keras.backend
 import keras.preprocessing.image
 import numpy
-import skimage.transform
 import skimage.io
-import time
+import skimage.transform
 
 
 def scale_size(size, min_size=224, max_size=224):
