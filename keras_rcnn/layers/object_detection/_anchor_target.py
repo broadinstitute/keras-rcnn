@@ -70,11 +70,11 @@ class AnchorTarget(keras.layers.Layer):
         total_anchors = rr * cc * total_anchors // 2
 
         # 1. Generate proposals from bbox deltas and shifted anchors
-        anchors = keras_rcnn.backend.shift((rr, cc), self.stride)
+        all_anchors = keras_rcnn.backend.shift((rr, cc), self.stride)
 
         # only keep anchors inside the image
         inds_inside, anchors = inside_image(
-            anchors,
+            all_anchors,
             metadata,
             self.allowed_border
         )
@@ -99,18 +99,20 @@ class AnchorTarget(keras.layers.Layer):
         labels = unmap(labels, total_anchors, inds_inside, fill=-1)
         bbox_reg_targets = unmap(bbox_reg_targets, total_anchors, inds_inside,
                                  fill=0)
+
         labels = keras.backend.expand_dims(labels, axis=0)
         bbox_reg_targets = keras.backend.expand_dims(bbox_reg_targets, axis=0)
+        all_anchors = keras.backend.reshape(all_anchors, (1, -1, 4))
 
         # TODO: implement inside and outside weights
-        return [labels, bbox_reg_targets]
+        return [all_anchors, labels, bbox_reg_targets]
 
     def compute_output_shape(self, input_shape):
-        return [(1, None), (1, None, 4)]
+        return [(1, None, 4), (1, None), (1, None, 4)]
 
     def compute_mask(self, inputs, mask=None):
         # unfortunately this is required
-        return 2 * [None]
+        return 3 * [None]
 
 
 def balance(labels):
