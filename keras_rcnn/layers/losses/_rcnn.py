@@ -20,9 +20,6 @@ class RCNNClassificationLoss(keras.layers.Layer):
 
     @staticmethod
     def compute_loss(output, target):
-        import IPython
-        IPython.embed()
-
         loss = keras_rcnn.backend.softmax_classification(
             output, target, anchored=True
         )
