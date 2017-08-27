@@ -51,7 +51,7 @@ class ProposalTarget(keras.layers.Layer):
         # labels (class1, class2, ... , num_classes)
         # Include ground-truth boxes in the set of candidate rois
         def propose(i):
-            proposals, bounding_boxes, labels = inputs
+            proposals, labels, bounding_boxes = inputs
 
 
             proposals = keras.backend.concatenate((proposals, bounding_boxes), 
