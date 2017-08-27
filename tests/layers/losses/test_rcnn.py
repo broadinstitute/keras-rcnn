@@ -15,7 +15,7 @@ def test_rcnn_classification():
     target = keras.backend.variable(target)
     scores = keras.backend.variable(numpy.random.random((1, 91, num_classes)))
 
-    numpy.testing.assert_array_equal(layer.call([target, scores]), scores)
+    numpy.testing.assert_array_equal(layer.call([scores, target]), scores)
 
     assert len(layer.losses) == 1
 
@@ -29,7 +29,7 @@ def test_rcnn_regression():
 
     expected_loss = 0
 
-    numpy.testing.assert_array_equal(layer.call([target, deltas]), deltas)
+    numpy.testing.assert_array_equal(layer.call([deltas, target]), deltas)
 
     assert len(layer.losses) == 1
 
@@ -50,7 +50,7 @@ def test_rcnn_regression():
     target = numpy.expand_dims(target, 0)
     target = keras.backend.variable(target)
 
-    numpy.testing.assert_array_equal(layer.call([target, deltas]), deltas)
+    numpy.testing.assert_array_equal(layer.call([deltas, target]), deltas)
 
     expected_loss = 52.625
 

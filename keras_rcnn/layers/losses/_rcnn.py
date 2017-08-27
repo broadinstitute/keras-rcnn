@@ -10,29 +10,24 @@ class RCNNClassificationLoss(keras.layers.Layer):
         super(RCNNClassificationLoss, self).__init__(**kwargs)
 
     def call(self, inputs, **kwargs):
-        target, output = inputs
+        output, target = inputs
 
-        loss = self.compute_loss(target, output)
+        loss = self.compute_loss(output, target)
 
         self.add_loss(loss, inputs)
 
         return output
 
     @staticmethod
-    def compute_loss(target, output):
-        """
-        Classification loss of Faster R-CNN.
+    def compute_loss(output, target):
+        loss = keras.backend.categorical_crossentropy(output, target)
 
-        :param target:
-        :param output:
+        loss = keras.backend.mean(loss)
 
-        :return:
-        """
-        return keras.backend.mean(
-            keras.losses.categorical_crossentropy(target, output))
+        return loss
 
     def compute_output_shape(self, input_shape):
-        return input_shape[1]
+        return input_shape[0]
 
 
 class RCNNRegressionLoss(keras.layers.Layer):
@@ -40,19 +35,18 @@ class RCNNRegressionLoss(keras.layers.Layer):
         super(RCNNRegressionLoss, self).__init__(**kwargs)
 
     def call(self, inputs, **kwargs):
-        target, output = inputs
+        output, target = inputs
 
-        loss = self.compute_loss(target, output)
+        loss = self.compute_loss(output, target)
 
         self.add_loss(loss, inputs)
 
         return output
 
     @staticmethod
-    def compute_loss(target, output):
+    def compute_loss(output, target):
         """
         Return the regression loss of Faster R-CNN.
-
         :return: A loss function for R-CNNs.
         """
         inside_weights = 1.0
@@ -90,4 +84,4 @@ class RCNNRegressionLoss(keras.layers.Layer):
         return loss
 
     def compute_output_shape(self, input_shape):
-        return input_shape[1]
+        return input_shape[0]
