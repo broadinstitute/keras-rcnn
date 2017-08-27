@@ -11,7 +11,7 @@ def scale_size(size, min_size=224, max_size=224):
     no larger than max_size and the smallest axis is as close
     as possible to min_size.
     """
-    assert (len(size) == 2)
+    assert(len(size) == 2)
 
     scale = min_size / numpy.min(size)
 
@@ -83,8 +83,8 @@ class DictionaryIterator(keras.preprocessing.image.Iterator):
                     raise Exception(
                         "Class {} not found in '{}'.".format(b["class"],
                                                              self.classes))
-
-                box = [b["y1"], b["x1"], b["y2"], b["x2"]]
+                ######TODO:switch
+                box = [b["x1"], b["y1"], b["x2"], b["y2"]]
                 boxes = numpy.append(boxes, [[box]], axis=1)
 
                 # Store the labels in one-hot form.
