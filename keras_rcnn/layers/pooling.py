@@ -31,7 +31,7 @@ class RegionOfInterest(keras.engine.topology.Layer):
 
         :rtype: `(samples, proposals, width, height, channels)`
         """
-        image, boxes = x[0], x[1]
+        image, boxes, metadata = x[0], x[1], x[2]
 
         # convert regions from (x, y, w, h) to (x1, y1, x2, y2)
         boxes = keras.backend.cast(boxes, keras.backend.floatx())
@@ -40,26 +40,25 @@ class RegionOfInterest(keras.engine.topology.Layer):
 
         x1 = boxes[..., 0]
         y1 = boxes[..., 1]
-        x2 = boxes[..., 0] + boxes[..., 2]
-        y2 = boxes[..., 1] + boxes[..., 3]
+        x2 = boxes[..., 2]
+        y2 = boxes[..., 3]
 
         # normalize the boxes
-        shape = keras.backend.int_shape(image)
 
-        h = keras.backend.cast(shape[1], keras.backend.floatx())
-        w = keras.backend.cast(shape[2], keras.backend.floatx())
+        h = keras.backend.cast(metadata[0][0], keras.backend.floatx())
+        w = keras.backend.cast(metadata[0][1], keras.backend.floatx())
 
         x1 /= w
         y1 /= h
         x2 /= w
         y2 /= h
 
-        x1 = keras.backend.expand_dims(x1, axis=-1)
-        y1 = keras.backend.expand_dims(y1, axis=-1)
-        x2 = keras.backend.expand_dims(x2, axis=-1)
-        y2 = keras.backend.expand_dims(y2, axis=-1)
+        x1 = keras.backend.expand_dims(x1, axis=2)
+        y1 = keras.backend.expand_dims(y1, axis=2)
+        x2 = keras.backend.expand_dims(x2, axis=2)
+        y2 = keras.backend.expand_dims(y2, axis=2)
 
-        boxes = keras.backend.concatenate([y1, x1, y2, x2], axis=-1)
+        boxes = keras.backend.concatenate([y1, x1, y2, x2], axis=2)
         boxes = keras.backend.reshape(boxes, (-1, 4))
         slices = keras_rcnn.backend.crop_and_resize(image, boxes, self.shape)
 
