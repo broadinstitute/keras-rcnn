@@ -33,11 +33,10 @@ class ProposalTarget(keras.layers.Layer):
         self.bg_thresh_hi = bg_thresh_hi
         self.bg_thresh_lo = bg_thresh_lo
         self.batchsize = batchsize
-        self.num_classes = None
         self.num_images = num_images
-        self.proposals = None
         self.rois_per_image = self.batchsize / self.num_images
         self.fg_rois_per_image = keras.backend.round(self.fg_fraction * self.rois_per_image)
+        self.fg_rois_per_this_image = None
 
         super(ProposalTarget, self).__init__(**kwargs)
 
@@ -82,7 +81,8 @@ class ProposalTarget(keras.layers.Layer):
         Generate a random sample of RoIs comprising foreground and background
         examples.
 
-        gt_boxes is (1, N, 4) with 4 coordinates and 1 class label
+        all_rois is (N, 4)
+        gt_boxes is (N, 4) with 4 coordinates
 
         gt_labels is in one hot form
         """
@@ -93,64 +93,36 @@ class ProposalTarget(keras.layers.Layer):
         gt_assignment = keras.backend.argmax(overlaps, axis=1)
         max_overlaps = keras.backend.max(overlaps, axis=1)
 
-        # finds the ground truth labels that correspond to the predicted regions of interest
+        # finds the ground truth labels corresponding to the ground truth boxes with greatest overlap for each predicted regions of interest
         labels = keras.backend.gather(gt_labels, gt_assignment)
 
-        def no_sample(indices):
-            return keras.backend.reshape(indices, (-1,))
-
-        def sample(indices, size):
-            return keras_rcnn.backend.shuffle(
-                keras.backend.reshape(indices, (-1,)))[:size]
-
-        # Select foreground RoIs as those with >= FG_THRESH overlap
-        fg_inds = keras_rcnn.backend.where(max_overlaps >= self.fg_thresh)
-
-        # Guard against the case when an image has fewer than fg_rois_per_image
-        # foreground RoIs
-        fg_rois_per_image = keras.backend.cast(self.fg_rois_per_image, 'int32')
-        fg_rois_per_this_image = keras.backend.minimum(fg_rois_per_image,
-                                                       keras.backend.shape(
-                                                           fg_inds)[0])
-
-        # Sample foreground regions without replacement
-        fg_inds = keras.backend.switch(keras.backend.shape(fg_inds)[0] > 0,
-                                       lambda: no_sample(fg_inds),
-                                       lambda: sample(fg_inds,
-                                                      fg_rois_per_this_image))
-
-        # Select background RoIs as those within [BG_THRESH_LO, BG_THRESH_HI)
-        bg_inds = keras_rcnn.backend.where(
-            (max_overlaps < self.bg_thresh_hi) & (max_overlaps >= self.bg_thresh_lo))
-
-        # Compute number of background RoIs to take from this image (guarding
-        # against there being fewer than desired)
-        rois_per_image = keras.backend.cast(self.rois_per_image, 'int32')
-        bg_rois_per_this_image = rois_per_image - fg_rois_per_this_image
-        bg_rois_per_this_image = keras.backend.minimum(bg_rois_per_this_image,
-                                                       keras.backend.shape(
-                                                           bg_inds)[0])
-
-        # Sample background regions without replacement
-        bg_inds = keras.backend.switch(keras.backend.shape(bg_inds)[0] > 0,
-                                       lambda: no_sample(bg_inds),
-                                       lambda: sample(bg_inds,
-                                                      bg_rois_per_this_image))
-
-        # The indices that we're selecting (both fg and bg)
-        keep_inds = keras.backend.concatenate([fg_inds, bg_inds])
+        # Select RoIs
+        keep_inds = self.get_rois(max_overlaps, labels)
 
         # Select sampled values from various arrays:
         labels = keras.backend.gather(labels, keep_inds)
+        rois = keras.backend.gather(all_rois, keep_inds)
 
+        labels = self.set_label_background(labels)
+
+        # Compute bounding-box regression targets for an image.
+        gt_boxes = keras.backend.gather(gt_boxes,
+                                        keras.backend.gather(
+                                                gt_assignment, keep_inds
+                                                )
+                                        )
+        bbox_targets = self.get_bbox_targets(rois, labels, gt_boxes)
+
+        return rois, labels, bbox_targets
+
+    def set_label_background(self, labels):
         # Clamp labels for the background RoIs to 0
-        update_indices = keras.backend.arange(fg_rois_per_this_image,
+        update_indices = keras.backend.arange(self.fg_rois_per_this_image,
                                               keras.backend.shape(labels)[0])
         update_indices_0 = keras.backend.reshape(update_indices, (-1, 1))
         update_indices_1 = keras_rcnn.backend.where(
             keras.backend.equal(keras.backend.gather(labels, update_indices),
-                                1))[
-                           :, 1]
+                                1))[:, 1]
         update_indices_1 = keras.backend.reshape(
             keras.backend.cast(update_indices_1, 'int32'), (-1, 1))
 
@@ -174,21 +146,7 @@ class ProposalTarget(keras.layers.Layer):
             update_indices,
             inverse_labels + keras.backend.ones_like(inverse_labels)
         )
-
-        rois = keras.backend.gather(all_rois, keep_inds)
-
-        # Compute bounding-box regression targets for an image.
-        targets = keras_rcnn.backend.bbox_transform(
-            rois,
-            keras.backend.gather(
-                gt_boxes,
-                keras.backend.gather(gt_assignment, keep_inds)
-            )
-        )
-
-        bbox_targets = get_bbox_regression_labels(labels, targets)
-
-        return rois, labels, bbox_targets
+        return labels
 
     def compute_output_shape(self, input_shape):
         num_classes = input_shape[2][2]
@@ -196,6 +154,62 @@ class ProposalTarget(keras.layers.Layer):
 
     def compute_mask(self, inputs, mask=None):
         return [None, None, None]
+
+    def get_bbox_targets(self, rois, labels, gt_boxes):
+        targets = keras_rcnn.backend.bbox_transform(
+            rois,
+            gt_boxes
+        )
+        return get_bbox_regression_labels(labels, targets)
+
+
+    def get_rois(self, max_overlaps):
+
+        # Select foreground RoIs as those with >= FG_THRESH overlap
+        fg_inds = keras_rcnn.backend.where(max_overlaps >= self.fg_thresh)
+
+        # Guard against the case when an image has fewer than fg_rois_per_image
+        # foreground RoIs
+        self.fg_rois_per_this_image = keras.backend.minimum(self.fg_rois_per_image,
+                                                       keras.backend.shape(
+                                                           fg_inds)[0])
+
+        # Sample foreground regions without replacement
+        fg_inds = self.sample_indices(fg_inds, self.fg_rois_per_this_image)
+
+
+        # Select background RoIs as those within [BG_THRESH_LO, BG_THRESH_HI)
+        bg_inds = keras_rcnn.backend.where(
+            (max_overlaps < self.bg_thresh_hi) & (max_overlaps >= self.bg_thresh_lo))
+
+        # Compute number of background RoIs to take from this image (guarding
+        # against there being fewer than desired)
+        bg_rois_per_this_image = self.rois_per_image - self.fg_rois_per_this_image
+        bg_rois_per_this_image = keras.backend.minimum(bg_rois_per_this_image,
+                                                       keras.backend.shape(
+                                                           bg_inds)[0])
+
+        # Sample background regions without replacement
+        bg_inds = self.sample_indices(bg_inds, bg_rois_per_this_image)
+
+        # The indices that we're selecting (both fg and bg)
+        keep_inds = keras.backend.concatenate([fg_inds, bg_inds])
+
+        return keep_inds
+
+    def sample_indices(self, indices, threshold):
+        def no_sample(indices):
+            return keras.backend.reshape(indices, (-1,))
+
+        def sample(indices, size):
+            return keras_rcnn.backend.shuffle(
+                keras.backend.reshape(indices, (-1,)))[:size]
+
+        return keras.backend.switch(keras.backend.shape(indices)[0] > 0,
+                                       lambda: no_sample(indices),
+                                       lambda: sample(indices,
+                                                      threshold))
+
 
 
 def get_bbox_regression_labels(labels, bbox_target_data):

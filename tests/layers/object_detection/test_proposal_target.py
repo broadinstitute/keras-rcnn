@@ -3,7 +3,7 @@ import keras.utils
 import numpy
 
 import keras_rcnn.layers
-import keras_rcnn.layers.object_detection._proposal_target as proposal_target
+import keras_rcnn.layers.object_detection._proposal_target as proposal_targetg
 
 
 class TestProposalTarget:
@@ -30,6 +30,18 @@ class TestProposalTarget:
         pass
 
     def test_compute_mask(self):
+        pass
+
+    def test_set_label_background(self):
+        pass
+
+    def test_get_bbox_targets(self):
+        pass
+
+    def test_get_rois(self):
+        pass
+
+    def test_sample_indices(self):
         pass
 
 
