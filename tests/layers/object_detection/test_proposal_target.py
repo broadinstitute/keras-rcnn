@@ -23,6 +23,15 @@ class TestProposalTarget:
 
         proposal_target.call([proposals, bounding_boxes, labels])
 
+    def test_build(self):
+        pass
+
+    def test_compute_output_shape(self):
+        pass
+
+    def test_compute_mask(self):
+        pass
+
 
 def test_get_bbox_regression_labels():
     n = 10
