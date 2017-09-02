@@ -41,14 +41,12 @@ class RCNNRegressionLoss(keras.layers.Layer):
     def call(self, inputs, training=None, **kwargs):
         output, target, labels_target = inputs
 
-        def no_loss():
-            return 0
-
         loss = keras.backend.in_train_phase(
             lambda: self.compute_loss(output, target, labels_target),
             keras.backend.variable(0), training=training)
 
         self.add_loss(loss, inputs)
+
         return loss
 
     @staticmethod
@@ -67,8 +65,8 @@ class RCNNRegressionLoss(keras.layers.Layer):
         target = target[:, :, 4:]
         labels_target = labels_target[:, :, 1:]
 
-        # mask out output values where class is different from target
-        a=keras.backend.cast(keras_rcnn.backend.where(keras.backend.equal(labels_target,1)), 'int32')
+        # mask out output values where class is different from targetrcnn loss function
+        a = keras.backend.cast(keras_rcnn.backend.where(keras.backend.equal(labels_target, 1)), 'int32')
         indices_r = a[:, :2]
         indices_c = a[:, 2:]
         indices_0 = keras.backend.concatenate([indices_r, indices_c * 4], 1)
