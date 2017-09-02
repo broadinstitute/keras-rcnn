@@ -236,7 +236,7 @@ def softmax_classification(output, target, anchored=False, weights=None):
     output = keras.backend.reshape(output, [-1, classes])
 
     loss = keras.backend.categorical_crossentropy(
-        target, output, from_logits=True
+        target, output, from_logits=False
     )
 
     if anchored:
@@ -250,7 +250,7 @@ def softmax_classification(output, target, anchored=False, weights=None):
     if weights is not None:
         loss *= keras.backend.reshape(weights, [-1])
 
-    return keras.backend.sum(loss)
+    return loss
 
 
 def bbox_transform_inv(boxes, deltas):

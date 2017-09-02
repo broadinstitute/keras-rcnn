@@ -42,14 +42,8 @@ class ObjectProposal(keras.engine.topology.Layer):
         """
         `image_shape_and_scale` has the shape [width, height, scale]
         """
-        image_shape_and_scale, deltas, scores = inputs
-
-        # the first set of anchors channels are bg probs
-        # the second set are the fg probs, which we want
-        # scores = scores[:, :, :, 9:]
-
-        rr = keras.backend.shape(scores)[1]
-        cc = keras.backend.shape(scores)[2]
+        image_shape_and_scale, deltas, scores, anchors = inputs
+        anchors = keras.backend.reshape(anchors, (-1, 4))
 
         # TODO: Fix usage of batch index
         batch_index = 0
@@ -58,7 +52,6 @@ class ObjectProposal(keras.engine.topology.Layer):
         image_scale = image_shape_and_scale[batch_index, -1]
 
         # 1. generate proposals from bbox deltas and shifted anchors
-        anchors = keras_rcnn.backend.shift([rr, cc], self.stride)
 
         deltas = keras.backend.reshape(deltas, (-1, 4))
         scores = keras.backend.reshape(scores, (-1, 1))
