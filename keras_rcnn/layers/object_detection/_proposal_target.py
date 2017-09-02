@@ -27,7 +27,7 @@ class ProposalTarget(keras.layers.Layer):
     [(None, None, 4), (None, None, classes), (None, None, 4)]
     """
 
-    def __init__(self, fg_fraction=0.5, fg_thresh=0.7, bg_thresh_hi=0.5, bg_thresh_lo=0.1, batchsize=256, num_images=2, **kwargs):
+    def __init__(self, fg_fraction=0.5, fg_thresh=0.7, bg_thresh_hi=0.5, bg_thresh_lo=0.1, batchsize=256, num_images=1, **kwargs):
         self.fg_fraction = fg_fraction
         self.fg_thresh = fg_thresh
         self.bg_thresh_hi = bg_thresh_hi
@@ -82,7 +82,7 @@ class ProposalTarget(keras.layers.Layer):
         examples.
 
         all_rois is (N, 4)
-        gt_boxes is (N, 4) with 4 coordinates
+        gt_boxes is (K, 4) with 4 coordinates
 
         gt_labels is in one hot form
         """
@@ -96,8 +96,8 @@ class ProposalTarget(keras.layers.Layer):
         # finds the ground truth labels corresponding to the ground truth boxes with greatest overlap for each predicted regions of interest
         labels = keras.backend.gather(gt_labels, gt_assignment)
 
-        # Select RoIs
-        keep_inds = self.get_rois(max_overlaps, labels)
+        # Select RoIs with given parameters for fg/bg objects
+        keep_inds = self.get_fg_bg_rois(max_overlaps)
 
         # Select sampled values from various arrays:
         labels = keras.backend.gather(labels, keep_inds)
@@ -156,6 +156,7 @@ class ProposalTarget(keras.layers.Layer):
         return [None, None, None]
 
     def get_bbox_targets(self, rois, labels, gt_boxes):
+        gt_boxes = keras.backend.cast(gt_boxes, keras.backend.floatx())
         targets = keras_rcnn.backend.bbox_transform(
             rois,
             gt_boxes
@@ -163,14 +164,15 @@ class ProposalTarget(keras.layers.Layer):
         return get_bbox_regression_labels(labels, targets)
 
 
-    def get_rois(self, max_overlaps):
+    def get_fg_bg_rois(self, max_overlaps):
 
         # Select foreground RoIs as those with >= FG_THRESH overlap
         fg_inds = keras_rcnn.backend.where(max_overlaps >= self.fg_thresh)
 
         # Guard against the case when an image has fewer than fg_rois_per_image
         # foreground RoIs
-        self.fg_rois_per_this_image = keras.backend.minimum(self.fg_rois_per_image,
+        fg_rois_per_image = keras.backend.cast(self.fg_rois_per_image, 'int32')
+        self.fg_rois_per_this_image = keras.backend.minimum(fg_rois_per_image,
                                                        keras.backend.shape(
                                                            fg_inds)[0])
 
@@ -184,7 +186,8 @@ class ProposalTarget(keras.layers.Layer):
 
         # Compute number of background RoIs to take from this image (guarding
         # against there being fewer than desired)
-        bg_rois_per_this_image = self.rois_per_image - self.fg_rois_per_this_image
+        bg_rois_per_this_image = keras.backend.cast(self.rois_per_image, 'int32') - self.fg_rois_per_this_image
+        bg_rois_per_this_image = keras.backend.cast(bg_rois_per_this_image, 'int32')
         bg_rois_per_this_image = keras.backend.minimum(bg_rois_per_this_image,
                                                        keras.backend.shape(
                                                            bg_inds)[0])
