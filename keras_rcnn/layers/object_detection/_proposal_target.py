@@ -72,7 +72,7 @@ class ProposalTarget(keras.layers.Layer):
 
         rois = keras.backend.in_train_phase(lambda: propose(0), inputs[0], training=training)
         labels = keras.backend.in_train_phase(lambda: propose(1), inputs[1], training=training)
-        bbox_targets = keras.backend.in_train_phase(lambda: propose(2), inputs[2], training=training)
+        bbox_targets = keras.backend.in_train_phase(lambda: propose(2), keras.backend.zeros_like(inputs[2]), training=training)
 
         return [rois, labels, bbox_targets]
 

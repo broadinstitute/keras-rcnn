@@ -102,7 +102,7 @@ class AnchorTarget(keras.layers.Layer):
 
         labels = keras.backend.expand_dims(labels, axis=0)
         bbox_reg_targets = keras.backend.expand_dims(bbox_reg_targets, axis=0)
-        all_anchors = keras.backend.reshape(all_anchors, (1, -1, 4))
+        all_anchors = keras.backend.expand_dims(all_anchors, axis=0)
 
         # TODO: implement inside and outside weights
         return [all_anchors, labels, bbox_reg_targets]
