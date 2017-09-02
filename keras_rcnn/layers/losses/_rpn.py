@@ -7,7 +7,7 @@ class RPNClassificationLoss(keras.layers.Layer):
     def __init__(self, anchors, **kwargs):
         self.anchors = anchors
 
-        super(RPNRegressionLoss, self).__init__(**kwargs)
+        super(RPNClassificationLoss, self).__init__(**kwargs)
 
     def call(self, inputs, training=None, **kwargs):
         output, target, labels = inputs
