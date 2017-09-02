@@ -9,10 +9,12 @@ class RPNClassificationLoss(keras.layers.Layer):
 
         super(RPNClassificationLoss, self).__init__(**kwargs)
 
-    def call(self, inputs, **kwargs):
+    def call(self, inputs, training=None, **kwargs):
         output, target = inputs
 
-        loss = self.compute_loss(output, target)
+        loss = keras.backend.in_train_phase(
+            lambda: self.compute_loss(output, target),
+            keras.backend.variable(0), training=training)
 
         self.add_loss(loss, inputs)
 
@@ -44,11 +46,12 @@ class RPNRegressionLoss(keras.layers.Layer):
 
         super(RPNRegressionLoss, self).__init__(**kwargs)
 
-    def call(self, inputs, **kwargs):
+    def call(self, inputs, training=None, **kwargs):
         output, target, labels = inputs
 
-        loss = self.compute_loss(output, target, labels)
-
+        loss = keras.backend.in_train_phase(
+            lambda: self.compute_loss(output, target, labels),
+            keras.backend.variable(0), training=training)
         self.add_loss(loss, inputs)
 
         return output
