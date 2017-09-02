@@ -12,10 +12,10 @@ class RegionOfInterest(keras.engine.topology.Layer):
     :return: slices: 5D Tensor (number of regions, slice_height,
     slice_width, channels)
     """
-    def __init__(self, shape=(7, 7), stride=1, **kwargs):
+    def __init__(self, extent=(14, 14), stride=1, **kwargs):
         self.channels = None
 
-        self.shape = shape
+        self.extent = extent
 
         self.stride = stride
 
@@ -44,9 +44,10 @@ class RegionOfInterest(keras.engine.topology.Layer):
         y2 = boxes[..., 3]
 
         # normalize the boxes
+        shape = metadata[0]
 
-        h = keras.backend.cast(metadata[0][0], keras.backend.floatx())
-        w = keras.backend.cast(metadata[0][1], keras.backend.floatx())
+        h = keras.backend.cast(shape[0], keras.backend.floatx())
+        w = keras.backend.cast(shape[1], keras.backend.floatx())
 
         x1 /= w
         y1 /= h
@@ -60,11 +61,10 @@ class RegionOfInterest(keras.engine.topology.Layer):
 
         boxes = keras.backend.concatenate([y1, x1, y2, x2], axis=2)
         boxes = keras.backend.reshape(boxes, (-1, 4))
-        slices = keras_rcnn.backend.crop_and_resize(image, boxes, self.shape)
+
+        slices = keras_rcnn.backend.crop_and_resize(image, boxes, self.extent)
 
         return keras.backend.expand_dims(slices, axis=0)
 
     def compute_output_shape(self, input_shape):
-        proposals = input_shape[1][1]
-
-        return None, proposals, self.shape[0], self.shape[1], self.channels
+        return (1, input_shape[1][1], self.extent[0], self.extent[1], self.channels)
