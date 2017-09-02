@@ -1,8 +1,8 @@
+import keras.backend
 import keras.layers
 import tensorflow
 
 import keras_rcnn.backend
-import keras.backend
 
 
 class RCNNClassificationLoss(keras.layers.Layer):
@@ -14,7 +14,9 @@ class RCNNClassificationLoss(keras.layers.Layer):
 
         loss = keras.backend.in_train_phase(
             lambda: self.compute_loss(output, target),
-            keras.backend.variable(0), training=training)
+            keras.backend.variable(0),
+            training=training
+        )
 
         self.add_loss(loss, inputs)
 
@@ -43,7 +45,9 @@ class RCNNRegressionLoss(keras.layers.Layer):
 
         loss = keras.backend.in_train_phase(
             lambda: self.compute_loss(output, target, labels_target),
-            keras.backend.variable(0), training=training)
+            keras.backend.variable(0),
+            training=training
+        )
 
         self.add_loss(loss, inputs)
 
