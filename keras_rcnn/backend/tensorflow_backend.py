@@ -108,7 +108,7 @@ def crop_and_resize(image, boxes, size):
     4D Tensor (number of regions, slice_height, slice_width, channels)
     """
     box_ind = keras.backend.zeros_like(boxes, "int32")
-    box_ind = box_ind[..., 0]
+    box_ind = box_ind[:, 0]
     box_ind = keras.backend.reshape(box_ind, [-1])
 
     boxes = keras.backend.reshape(boxes, [-1, 4])
