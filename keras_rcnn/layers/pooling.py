@@ -38,10 +38,10 @@ class RegionOfInterest(keras.engine.topology.Layer):
 
         boxes = boxes / self.stride
 
-        x1 = boxes[..., 0]
-        y1 = boxes[..., 1]
-        x2 = boxes[..., 2]
-        y2 = boxes[..., 3]
+        x1 = boxes[:, 0]
+        y1 = boxes[:, 1]
+        x2 = boxes[:, 2]
+        y2 = boxes[:, 3]
 
         # normalize the boxes
         shape = metadata[0]

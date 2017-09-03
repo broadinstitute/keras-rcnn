@@ -84,8 +84,8 @@ def _detections():
 
         y = keras.layers.TimeDistributed(keras.layers.Flatten())(yr)
 
-        y = keras.layers.TimeDistributed(keras.layers.Dense(4096, activation="relu"))(y)
-        y = keras.layers.TimeDistributed(keras.layers.Dense(4096, activation="relu"))(y)
+        # y = keras.layers.TimeDistributed(keras.layers.Dense(4096, activation="relu"))(y)
+        # y = keras.layers.TimeDistributed(keras.layers.Dense(4096, activation="relu"))(y)
 
         deltas = keras.layers.TimeDistributed(keras.layers.Dense(4 * 2, activation="linear"))(y)
         scores = keras.layers.TimeDistributed(keras.layers.Dense(1 * 2, activation="softmax"))(y)
