@@ -67,16 +67,16 @@ def _proposals(options=None):
 
         proposals_ = keras_rcnn.layers.ObjectProposal()([metadata, deltas, scores, anchors])
 
-        proposals, labels_targets, bounding_box_targets = keras_rcnn.layers.ProposalTarget()([proposals_, labels, boxes])
+        proposals, label_targets, bounding_box_targets = keras_rcnn.layers.ProposalTarget()([proposals_, labels, boxes])
 
-        return [proposals, labels_targets, bounding_box_targets]
+        return [proposals, label_targets, bounding_box_targets]
 
     return f
 
 
 def _detections():
     def f(inputs):
-        features, metadata, proposals, labels, boxes = inputs
+        features, metadata, proposals, label_targets, bounding_box_targets = inputs
 
         yr = keras_rcnn.layers.RegionOfInterest()([features, proposals, metadata])
 
@@ -90,8 +90,8 @@ def _detections():
         deltas = keras.layers.TimeDistributed(keras.layers.Dense(4 * 2, activation="linear"))(y)
         scores = keras.layers.TimeDistributed(keras.layers.Dense(1 * 2, activation="softmax"))(y)
 
-        deltas = keras_rcnn.layers.losses.RCNNRegressionLoss()([deltas, boxes, labels])
-        scores = keras_rcnn.layers.losses.RCNNClassificationLoss()([scores, labels])
+        deltas = keras_rcnn.layers.losses.RCNNRegressionLoss()([deltas, bounding_box_targets, label_targets])
+        scores = keras_rcnn.layers.losses.RCNNClassificationLoss()([scores, label_targets])
 
         return [deltas, scores]
 
