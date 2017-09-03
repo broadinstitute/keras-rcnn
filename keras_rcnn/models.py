@@ -93,7 +93,7 @@ def _detections():
         deltas = keras_rcnn.layers.losses.RCNNRegressionLoss()([deltas, bounding_box_targets, label_targets])
         scores = keras_rcnn.layers.losses.RCNNClassificationLoss()([scores, label_targets])
 
-        return [deltas, scores]
+        return [proposals, deltas, scores]
 
     return f
 
