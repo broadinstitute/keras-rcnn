@@ -59,14 +59,14 @@ class AnchorTarget(keras.layers.Layer):
         super(AnchorTarget, self).build(input_shape)
 
     def call(self, inputs, **kwargs):
-        scores, gt_boxes, metadata = inputs
+        deltas, gt_boxes, metadata = inputs
 
         metadata = metadata[0, :]  # keras.backend.int_shape(image)[1:]
 
         gt_boxes = gt_boxes[0]
 
         # TODO: Fix usage of batch index
-        rr, cc, total_anchors = keras.backend.int_shape(scores)[1:]
+        rr, cc, total_anchors = keras.backend.int_shape(deltas)[1:]
         total_anchors = rr * cc * total_anchors // 2
 
         # 1. Generate proposals from bbox deltas and shifted anchors

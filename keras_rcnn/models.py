@@ -57,7 +57,7 @@ def _proposals(options=None):
         deltas = keras.layers.Conv2D(9 * 4, (1, 1), name="deltas")(y)
         scores = keras.layers.Conv2D(9 * 2, (1, 1), name="scores")(y)
 
-        anchors, rpn_labels, bounding_box_targets = keras_rcnn.layers.AnchorTarget()([scores, boxes, metadata])
+        anchors, rpn_labels, bounding_box_targets = keras_rcnn.layers.AnchorTarget()([deltas, boxes, metadata])
 
         scores_reshaped = keras.layers.Reshape((-1, 2))(scores)
         scores_reshaped = keras.layers.Activation("softmax")(scores_reshaped)
@@ -84,8 +84,8 @@ def _detections():
 
         y = keras.layers.TimeDistributed(keras.layers.Flatten())(yr)
 
-        y = keras.layers.TimeDistributed(keras.layers.Dense(4096, activation="relu"))(y)
-        y = keras.layers.TimeDistributed(keras.layers.Dense(4096, activation="relu"))(y)
+        y = keras.layers.TimeDistributed(keras.layers.Dense(1024, activation="relu"))(y)
+        y = keras.layers.TimeDistributed(keras.layers.Dense(1024, activation="relu"))(y)
 
         deltas = keras.layers.TimeDistributed(keras.layers.Dense(4 * 2, activation="linear"))(y)
         scores = keras.layers.TimeDistributed(keras.layers.Dense(1 * 2, activation="softmax"))(y)
