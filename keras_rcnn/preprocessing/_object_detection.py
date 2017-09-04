@@ -95,7 +95,7 @@ class DictionaryIterator(keras.preprocessing.image.Iterator):
             # Scale the ground truth boxes to the selected image scale.
             boxes[batch_index, :, :4] *= self.scale
 
-        return [images, boxes, self.metadata, labels], None
+        return [images, self.metadata, boxes, labels], None
 
 
 class ObjectDetectionGenerator:
