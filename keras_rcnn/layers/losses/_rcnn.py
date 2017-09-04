@@ -20,7 +20,7 @@ class RCNNClassificationLoss(keras.layers.Layer):
 
         self.add_loss(loss, inputs)
 
-        return loss
+        return output
 
     @staticmethod
     def compute_loss(output, target):
@@ -51,7 +51,7 @@ class RCNNRegressionLoss(keras.layers.Layer):
 
         self.add_loss(loss, inputs)
 
-        return loss
+        return output
 
     @staticmethod
     def compute_loss(output, target, labels_target):
