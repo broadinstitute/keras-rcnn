@@ -74,7 +74,7 @@ def _proposals(options=None):
     return f
 
 
-def _detections():
+def _detections(classes):
     def f(inputs):
         features, metadata, proposals, label_targets, bounding_box_targets = inputs
 
@@ -87,8 +87,8 @@ def _detections():
         y = keras.layers.TimeDistributed(keras.layers.Dense(1024, activation="relu"))(y)
         y = keras.layers.TimeDistributed(keras.layers.Dense(1024, activation="relu"))(y)
 
-        deltas = keras.layers.TimeDistributed(keras.layers.Dense(4 * 2, activation="linear"))(y)
-        scores = keras.layers.TimeDistributed(keras.layers.Dense(1 * 2, activation="softmax"))(y)
+        deltas = keras.layers.TimeDistributed(keras.layers.Dense(4 * classes, activation="linear"))(y)
+        scores = keras.layers.TimeDistributed(keras.layers.Dense(1 * classes, activation="softmax"))(y)
 
         deltas = keras_rcnn.layers.losses.RCNNRegressionLoss()([deltas, bounding_box_targets, label_targets])
         scores = keras_rcnn.layers.losses.RCNNClassificationLoss()([scores, label_targets])
@@ -98,7 +98,7 @@ def _detections():
     return f
 
 
-def detections():
+def detections(classes):
     def f(inputs):
         options = {
             "activation": "relu",
@@ -112,7 +112,7 @@ def detections():
 
         proposals = _proposals(options)([boxes, features, labels, metadata])
 
-        detections = _detections()([features, metadata] + proposals)
+        detections = _detections(classes)([features, metadata] + proposals)
 
         return detections
 
