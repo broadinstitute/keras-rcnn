@@ -11,6 +11,38 @@ def test_shuffle():
 
     keras_rcnn.backend.shuffle(x)
 
+def test_matmul():
+    pass
+
+def test_gather_nd():
+    pass
+
+def test_argsort():
+    pass
+
+def test_scatter_add_tensor():
+    ref = keras.backend.ones((4, 5))
+    ii = keras.backend.reshape(keras.backend.cast(keras.backend.zeros((4,)), 'int32'), (-1, 1))
+    jj = keras.backend.reshape(keras.backend.arange(0, 4), (-1, 1))
+    indices = keras.backend.concatenate([ii, jj], 1)
+    updates = keras.backend.arange(4, dtype=keras.backend.floatx()) * 2
+    result = keras_rcnn.backend.scatter_add_tensor(ref, indices, updates)
+    result = keras.backend.eval(result)
+    expected = numpy.ones((4, 5))
+    expected[0, :4] += numpy.arange(4) * 2
+    numpy.testing.assert_array_almost_equal(result, expected)
+
+def test_meshgrid():
+    pass
+
+def test_unique():
+    pass
+
+def test_smooth_l1():
+    pass
+
+def test_where():
+    pass
 
 def test_non_max_suppression():
     boxes = numpy.zeros((1764, 4))
