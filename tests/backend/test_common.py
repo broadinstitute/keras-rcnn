@@ -267,47 +267,56 @@ def test_smooth_l1():
 
 
 def test_softmax_classification():
-    output = keras.backend.variable(
-        [[[-100,  100, -100],
-          [ 100, -100, -100],
-          [   0,    0, -100],
-          [-100, -100,  100]],
-         [[-100,    0,    0],
-          [-100,  100, -100],
-          [-100,  100, -100],
-          [ 100, -100, -100]]]
-    )
+    output = [[[-100,  100, -100],
+              [ 100, -100, -100],
+              [   0,    0, -100],
+              [-100, -100,  100]],
 
-    target = keras.backend.variable(
-        [[[0, 1, 0],
-          [1, 0, 0],
-          [1, 0, 0],
-          [0, 0, 1]],
-         [[0, 0, 1],
-          [0, 1, 0],
-          [0, 1, 0],
-          [1, 0, 0]]]
-    )
+             [[-100,    0,    0],
+              [-100,  100, -100],
+              [-100,  100, -100],
+              [ 100, -100, -100]]]
 
-    weights = keras.backend.variable(
-        [[1.0, 1.0, 0.5, 1.0],
-         [1.0, 1.0, 1.0, 0.0]]
-    )
+    target = [[[0, 1, 0],
+              [1, 0, 0],
+              [1, 0, 0],
+              [0, 0, 1]],
+             [[0, 0, 1],
+              [0, 1, 0],
+              [0, 1, 0],
+              [1, 0, 0]]]
+
+    weights =  [[1.0, 1.0, 0.5, 1.0],
+                [1.0, 1.0, 1.0, 0.0]]
 
     x = keras_rcnn.backend.softmax_classification(
-        output, target, weights=weights
+        keras.backend.variable(output),
+        keras.backend.variable(target),
+        weights=keras.backend.variable(weights)
     )
 
-    y = -1.5 * numpy.log(0.5)
+    output_y = numpy.reshape(output, [-1, 3])
+    target_y = numpy.reshape(target, [-1, 3])
+    output_y = output_y / numpy.sum(output_y, axis=1, keepdims=True)
 
-    numpy.testing.assert_approx_equal(keras.backend.eval(x), y)
+    # epsilon = keras.backend.epsilon()
+    # stop python for complaining weakref
+    epsilon = 1e-07
+
+    output_y = numpy.clip(output_y,
+                        epsilon,
+                        1. - epsilon)
+    _y = - numpy.sum(target_y * numpy.log(output_y), axis=1)
+    y = _y * numpy.reshape(weights, -1)
+
+    numpy.testing.assert_array_almost_equal(keras.backend.eval(x), y)
 
     x = keras_rcnn.backend.softmax_classification(
-        output, target, anchored=True, weights=weights
+        keras.backend.variable(output),
+        keras.backend.variable(target),
+        weights=keras.backend.variable(weights),
+        anchored=True
     )
 
-    y = numpy.array(
-        [[0, 0, - 0.5 * numpy.log(.5), 0], [-numpy.log(.5), 0, 0, 0]]
-    )
-
+    y = weights * numpy.reshape(_y, numpy.asarray(weights).shape)
     numpy.testing.assert_array_almost_equal(keras.backend.eval(x), y)
