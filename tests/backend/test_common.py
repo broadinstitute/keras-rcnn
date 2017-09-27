@@ -20,7 +20,10 @@ def test_anchor():
          [-80., -168., 95., 183.],
          [-168., -344., 183., 359.]]
     )
-    y = keras_rcnn.backend.anchor()
+
+    y = keras_rcnn.backend.anchor(
+            scales=keras.backend.cast([8, 16, 32], keras.backend.floatx())
+        )
     y = keras.backend.eval(y)
     numpy.testing.assert_array_almost_equal(x, y)
 
