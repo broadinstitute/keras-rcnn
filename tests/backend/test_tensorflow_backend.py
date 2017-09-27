@@ -60,7 +60,8 @@ def test_crop_and_resize():
     image = keras.backend.variable(numpy.ones((1, 28, 28, 3)))
 
     boxes = keras.backend.variable(
-        numpy.array([[[0.1, 0.1, 0.2, 0.2], [0.5, 0.5, 0.8, 0.8]]]))
+        numpy.array( [[0.1, 0.1, 0.2, 0.2],
+                      [0.5, 0.5, 0.8, 0.8]] ))
 
     size = [7, 7]
 
