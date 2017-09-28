@@ -19,17 +19,19 @@ def test_rcnn_classification():
 
     assert len(layer.losses) == 1
 
-
 def test_rcnn_regression():
+    keras.backend.set_learning_phase(1)
     num_classes = 5
     layer = keras_rcnn.layers.losses.RCNNRegressionLoss()
 
-    deltas = numpy.zeros((1, 91, 4 * num_classes))
-    target = numpy.zeros((1, 91, 4 * num_classes))
+    deltas = numpy.zeros((1, 91, 4 * num_classes), dtype="float32")
+    target = numpy.zeros((1, 91, 4 * num_classes), dtype="float32")
+    labels_target = numpy.zeros((1, 91, num_classes), dtype="float32")
+    labels_target[:,:,1] = 1
 
     expected_loss = 0
 
-    numpy.testing.assert_array_equal(layer.call([deltas, target]), deltas)
+    numpy.testing.assert_array_equal(layer.call([deltas, target, labels_target]), deltas)
 
     assert len(layer.losses) == 1
 
@@ -50,8 +52,11 @@ def test_rcnn_regression():
     target = numpy.expand_dims(target, 0)
     target = keras.backend.variable(target)
 
-    numpy.testing.assert_array_equal(layer.call([deltas, target]), deltas)
+    labels_target = numpy.zeros((1, 5, 3), dtype="float32")
+    labels_target[:,:,1] = 1
 
-    expected_loss = 52.625
+    numpy.testing.assert_array_equal(layer.call([deltas, target, labels_target]), deltas)
 
-    assert keras.backend.eval(layer.losses[1]) == expected_loss
+    expected_loss = 4.205409
+
+    numpy.testing.assert_almost_equal(keras.backend.eval(layer.losses[1]), expected_loss)
