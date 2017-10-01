@@ -33,7 +33,6 @@ class RPNClassificationLoss(keras.layers.Layer):
 
         output = keras_rcnn.backend.gather_nd(output, indices)
         target = keras_rcnn.backend.gather_nd(target, indices)
-
         loss = keras.backend.sparse_categorical_crossentropy(target, output)
         loss = keras.backend.mean(loss)
 

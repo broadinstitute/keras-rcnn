@@ -51,7 +51,8 @@ class Detection(keras.engine.topology.Layer):
         # Apply bounding-box regression deltas
         pred_boxes = keras_rcnn.backend.bbox_transform_inv(boxes, pred_deltas)
 
-        pred_boxes = keras_rcnn.backend.clip(pred_boxes, metadata[0][:2] / metadata[0][2])
+        pred_boxes = keras_rcnn.backend.clip(pred_boxes,
+                                             metadata[0][:2] / metadata[0][2])
         pred_scores = keras.backend.reshape(pred_scores,
                                             (keras.backend.shape(rois)[0], -1))
         return [

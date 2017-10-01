@@ -19,8 +19,9 @@ def test_rpn_classification():
     scores = keras.backend.variable(0.5 * numpy.ones((1, 14, 14, anchors * 2)))
 
     metadata = keras.backend.variable(numpy.array([[224, 224, 1]]))
-    anchors, rpn_labels, bounding_box_targets = keras_rcnn.layers.AnchorTarget()(
-        [scores, y_true, metadata])
+    anchors, rpn_labels, bounding_box_targets = \
+        keras_rcnn.layers.AnchorTarget()(
+            [scores, y_true, metadata])
 
     numpy.testing.assert_array_equal(layer.call([scores, rpn_labels]), scores)
 
@@ -29,6 +30,7 @@ def test_rpn_classification():
     expected_loss = -numpy.log(0.5)
 
     assert numpy.isclose(keras.backend.eval(layer.losses[0]), expected_loss)
+
 
 def test_rpn_regression():
     keras.backend.set_learning_phase(1)
@@ -55,8 +57,9 @@ def test_rpn_regression():
 
     expected_loss = 0
 
-    anchors, rpn_labels, bounding_box_targets = keras_rcnn.layers.AnchorTarget()(
-        [scores, keras.backend.expand_dims(y_true, 0), metadata])
+    anchors, rpn_labels, bounding_box_targets = \
+        keras_rcnn.layers.AnchorTarget()(
+            [scores, keras.backend.expand_dims(y_true, 0), metadata])
 
     numpy.testing.assert_array_equal(
         layer.call([deltas, bounding_box_targets, rpn_labels]), deltas)

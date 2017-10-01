@@ -15,7 +15,6 @@ def test_roi():
 
     slices = roi_align([image, boxes, metadata])
 
-
     assert keras.backend.eval(slices).shape == (1, 2, 7, 7, 3)
 
     with mock.patch("keras_rcnn.backend.crop_and_resize",
@@ -29,5 +28,5 @@ def test_roi():
     a = keras.backend.placeholder(shape=(None, 224, 224, 3))
     b = keras.backend.placeholder(shape=(1, None, 4))
     y = keras_rcnn.layers.RegionOfInterest([7, 7])([a, b, metadata])
+    # Should be (None, None, 7, 7, 3)
     assert keras.backend.int_shape(y) == (1, None, 7, 7, 3)
-                                        # Should be None
