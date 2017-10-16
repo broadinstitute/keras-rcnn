@@ -27,8 +27,18 @@ def scale_size(size, min_size=224, max_size=224):
 
 
 class DictionaryIterator(keras.preprocessing.image.Iterator):
-    def __init__(self, dictionary, classes, generator, batch_size=1,
-                 shuffle=False, seed=None):
+    def __init__(
+        self, 
+        dictionary, 
+        classes, 
+        target_shape,
+        scale,
+        ox,
+        oy,
+        generator, 
+        batch_size=1,
+        shuffle=False, 
+        seed=None):
         self.dictionary = dictionary
         self.classes = classes
         self.generator = generator
@@ -39,9 +49,17 @@ class DictionaryIterator(keras.preprocessing.image.Iterator):
         cols, rows, channels = dictionary[0]["shape"]
         self.image_shape = (rows, cols, channels)
 
-        self.target_shape, self.scale = scale_size(self.image_shape[0:2])
+        if target_shape is None:
+            self.target_shape, self.scale = scale_size(self.image_shape[0:2])
+            self.target_shape = self.target_shape + (self.image_shape[2],)
+        else:
+            self.target_shape = target_shape
+            
+        self.scale = scale
+        self.ox = ox
+        self.oy = oy
         self.target_shape = self.target_shape + (self.image_shape[2],)
-
+        
         # Metadata needs to be computed only once.
         rows, cols, channels = self.target_shape
         self.metadata = numpy.array([[rows, cols, self.scale]])
@@ -67,10 +85,18 @@ class DictionaryIterator(keras.preprocessing.image.Iterator):
             path = self.dictionary[image_index]["filename"]
             image = skimage.io.imread(path)
 
-            # Assert that the loaded image has the predefined image shape.
-            if image.shape != self.image_shape:
-                raise Exception(
-                    "All input images need to be of the same shape.")
+            #crop
+            if self.ox is None:
+                offset_x = numpy.random.randint(0, self.image_shape[1]-self.target_shape[1]+1)
+            else:
+                offset_x = self.ox
+            
+            if self.oy is None:
+                offset_y = numpy.random.randint(0, self.image_shape[0] - self.target_shape[0] + 1)
+            else:
+                offset_y = self.oy
+            
+            image = image[offset_y:self.target_shape[0] + offset_y, offset_x:self.target_shape[1] + offset_x, :]
 
             # Copy image to batch blob.
             images[batch_index] = skimage.transform.rescale(image,
@@ -83,8 +109,12 @@ class DictionaryIterator(keras.preprocessing.image.Iterator):
                     raise Exception(
                         "Class {} not found in '{}'.".format(b["class"],
                                                              self.classes))
-                ######TODO:switch
-                box = [b["x1"], b["y1"], b["x2"], b["y2"]]
+                x1 = int(b["x1"])
+                x2 = int(b["x2"])
+                y1 = int(b["y1"])
+                y2 = int(b["y2"])
+                
+                box = [x1, y1, x2, y2]
                 boxes = numpy.append(boxes, [[box]], axis=1)
 
                 # Store the labels in one-hot form.
@@ -99,5 +129,5 @@ class DictionaryIterator(keras.preprocessing.image.Iterator):
 
 
 class ObjectDetectionGenerator:
-    def flow(self, dictionary, classes):
-        return DictionaryIterator(dictionary, classes, self)
+    def flow(self, dictionary, classes, target_shape=None, scale=None, ox=None, oy=None):
+        return DictionaryIterator(dictionary, classes, target_shape, scale, ox, oy, self)
