@@ -122,7 +122,7 @@ class TestProposalTarget:
             [0., 19.5617218, 223., 92.74246979]],
             dtype=numpy.float32)
 
-        gt_boxes = numpy.array([[ 147.,   25.,  222.,  111.]])
+        gt_boxes = numpy.array([[147., 25., 222., 111.]])
 
         rois, labels, bbox_targets = proposal_target.sample_rois(
             all_rois, gt_boxes, gt_labels)
@@ -181,13 +181,13 @@ class TestProposalTarget:
                                           expected_rois.sum(),
                                           2)
 
-        expected_labels = numpy.array([ 1.,  1.,  0.,  0.,  0.,  0.,  0.,
-                                        0.,  0.,  0.,  0.,  0.,  0.,  0.,
-                                        0.,  0.,  0.,  0.,  0.,  0.,  0.,
-                                        0.,  0.,  0.,  0.,  0.,  0.,  0.,
-                                        0.,  0.,  0.,  0.,  0.,  0.,  0.,
-                                        0.,  0.,  0.,  0.,  0.,  0.,  0.,
-                                        0.,  0.,  0.,  0.,  0.,  0.])
+        expected_labels = numpy.array([1., 1., 0., 0., 0., 0., 0.,
+                                       0., 0., 0., 0., 0., 0., 0.,
+                                       0., 0., 0., 0., 0., 0., 0.,
+                                       0., 0., 0., 0., 0., 0., 0.,
+                                       0., 0., 0., 0., 0., 0., 0.,
+                                       0., 0., 0., 0., 0., 0., 0.,
+                                       0., 0., 0., 0., 0., 0.])
         numpy.testing.assert_almost_equal(keras.backend.eval(labels)[:, 1]
                                           .sum(),
                                           expected_labels.sum(),

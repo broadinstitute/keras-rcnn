@@ -22,8 +22,7 @@ def test_anchor():
     )
 
     y = keras_rcnn.backend.anchor(
-            scales=keras.backend.cast([8, 16, 32], keras.backend.floatx())
-        )
+        scales=keras.backend.cast([8, 16, 32], keras.backend.floatx()))
     y = keras.backend.eval(y)
     numpy.testing.assert_array_almost_equal(x, y)
 
@@ -267,27 +266,26 @@ def test_smooth_l1():
 
 
 def test_softmax_classification():
-    output = [[[-100,  100, -100],
-              [ 100, -100, -100],
-              [   0,    0, -100],
-              [-100, -100,  100]],
-
-             [[-100,    0,    0],
-              [-100,  100, -100],
-              [-100,  100, -100],
-              [ 100, -100, -100]]]
+    output = [[[-100, 100, -100],
+              [100, -100, -100],
+              [0, 0, -100],
+              [-100, -100, 100]],
+              [[-100, 0, 0],
+              [-100, 100, -100],
+              [-100, 100, -100],
+              [100, -100, -100]]]
 
     target = [[[0, 1, 0],
               [1, 0, 0],
               [1, 0, 0],
               [0, 0, 1]],
-             [[0, 0, 1],
+              [[0, 0, 1],
               [0, 1, 0],
               [0, 1, 0],
               [1, 0, 0]]]
 
-    weights =  [[1.0, 1.0, 0.5, 1.0],
-                [1.0, 1.0, 1.0, 0.0]]
+    weights = [[1.0, 1.0, 0.5, 1.0],
+               [1.0, 1.0, 1.0, 0.0]]
 
     x = keras_rcnn.backend.softmax_classification(
         keras.backend.variable(output),
@@ -304,8 +302,8 @@ def test_softmax_classification():
     epsilon = 1e-07
 
     output_y = numpy.clip(output_y,
-                        epsilon,
-                        1. - epsilon)
+                          epsilon,
+                          1. - epsilon)
     _y = - numpy.sum(target_y * numpy.log(output_y), axis=1)
     y = _y * numpy.reshape(weights, -1)
 
