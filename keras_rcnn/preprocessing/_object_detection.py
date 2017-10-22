@@ -82,45 +82,55 @@ class DictionaryIterator(keras.preprocessing.image.Iterator):
                              dtype=numpy.uint8)
 
         for batch_index, image_index in enumerate(selection):
-            path = self.dictionary[image_index]["filename"]
-            image = skimage.io.imread(path)
+            count = 0 
+            while count == 0:
+                path = self.dictionary[image_index]["filename"]
+                image = skimage.io.imread(path)
 
-            #crop
-            if self.ox is None:
-                offset_x = numpy.random.randint(0, self.image_shape[1]-self.target_shape[1]+1)
-            else:
-                offset_x = self.ox
-            
-            if self.oy is None:
-                offset_y = numpy.random.randint(0, self.image_shape[0] - self.target_shape[0] + 1)
-            else:
-                offset_y = self.oy
-            
-            image = image[offset_y:self.target_shape[0] + offset_y, offset_x:self.target_shape[1] + offset_x, :]
+                #crop
+                if self.ox is None:
+                    offset_x = numpy.random.randint(0, self.image_shape[1]-self.target_shape[1]+1)
+                else:
+                    offset_x = self.ox
 
-            # Copy image to batch blob.
-            images[batch_index] = skimage.transform.rescale(image,
-                                                            scale=self.scale,
-                                                            mode="reflect")
+                if self.oy is None:
+                    offset_y = numpy.random.randint(0, self.image_shape[0]-self.target_shape[0]+1)
+                else:
+                    offset_y = self.oy
 
-            # Set ground truth boxes.
-            for i, b in enumerate(self.dictionary[image_index]["boxes"]):
-                if b["class"] not in self.classes:
-                    raise Exception(
-                        "Class {} not found in '{}'.".format(b["class"],
-                                                             self.classes))
-                x1 = int(b["x1"])
-                x2 = int(b["x2"])
-                y1 = int(b["y1"])
-                y2 = int(b["y2"])
-                
-                box = [x1, y1, x2, y2]
-                boxes = numpy.append(boxes, [[box]], axis=1)
+                image = image[offset_y:self.target_shape[0]+offset_y, offset_x:self.target_shape[1]+offset_x, :]
 
-                # Store the labels in one-hot form.
-                label = [0] * (num_classes + 1)
-                label[self.classes[b["class"]]] = 1
-                labels = numpy.append(labels, [[label]], axis=1)
+                # Copy image to batch blob.
+                images[batch_index] = skimage.transform.rescale(image,
+                                                                scale=self.scale,
+                                                                mode="reflect")
+
+
+                # Set ground truth boxes.
+                for i, b in enumerate(self.dictionary[image_index]["boxes"]):
+                    if b["class"] not in self.classes:
+                        raise Exception(
+                            "Class {} not found in '{}'.".format(b["class"],
+                                                                 self.classes))
+                    x1 = int(b["x1"]) - offset_x
+                    x2 = int(b["x2"]) - offset_x
+                    y1 = int(b["y1"]) - offset_y
+                    y2 = int(b["y2"]) - offset_y
+                    if x2 == image.shape[1]:
+                        x2 -= 1
+                    if y2 == image.shape[0]:
+                        y2 -= 1
+
+                    if x1 >= 0 and x2 < image.shape[1] and y1 >= 0 and y2 < image.shape[0]:
+                        count += 1
+
+                        box = [x1, y1, x2, y2]
+                        boxes = numpy.append(boxes, [[box]], axis=1)
+
+                        # Store the labels in one-hot form.
+                        label = [0] * (num_classes + 1)
+                        label[self.classes[b["class"]]] = 1
+                        labels = numpy.append(labels, [[label]], axis=1)
 
             # Scale the ground truth boxes to the selected image scale.
             boxes[batch_index, :, :4] *= self.scale
