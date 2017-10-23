@@ -10,7 +10,6 @@ if "KERAS_BACKEND" in os.environ:
     backends = {
         "cntk",
         "tensorflow",
-        "theano"
     }
 
     assert _backend in backends
@@ -19,8 +18,6 @@ if "KERAS_BACKEND" in os.environ:
 
 if _BACKEND == "cntk":
     from .cntk_backend import *
-elif _BACKEND == "theano":
-    from .theano_backend import *
 elif _BACKEND == "tensorflow":
     from .tensorflow_backend import *
 else:
