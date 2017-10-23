@@ -1,3 +1,7 @@
-from .object_detection import (ObjectProposal)
+from .losses import (RPNClassificationLoss, RPNRegressionLoss)
 
-from .pooling import ROI
+from .object_detection import (AnchorTarget, ObjectProposal, ProposalTarget)
+
+from .pooling import RegionOfInterest
+
+from .detection import Detection

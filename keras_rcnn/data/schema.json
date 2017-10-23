@@ -1,0 +1,72 @@
+{
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "items": {
+        "properties": {
+            "id": {
+                "type": "string"
+            },
+            "image": {
+                "properties": {
+                    "checksum": {
+                        "type": "string"
+                    },
+                    "pathname": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "objects": {
+                "items": {
+                    "properties": {
+                        "bounding_box": {
+                            "properties": {
+                                "maximum": {
+                                    "properties": {
+                                        "c": {
+                                            "type": "integer"
+                                        },
+                                        "r": {
+                                            "type": "integer"
+                                        }
+                                    },
+                                    "type": "object"
+                                },
+                                "minimum": {
+                                    "properties": {
+                                        "c": {
+                                            "type": "integer"
+                                        },
+                                        "r": {
+                                            "type": "integer"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            },
+                            "type": "object"
+                        },
+                        "class": {
+                            "type": "string"
+                        },
+                        "mask": {
+                            "properties": {
+                                "pathname": {
+                                    "type": [
+                                        "null",
+                                        "string"
+                                    ]
+                                }
+                            },
+                            "type": "object"
+                        }
+                    },
+                    "type": "object"
+                },
+                "type": "array"
+            }
+        },
+        "type": "object"
+    },
+    "type": "array"
+}

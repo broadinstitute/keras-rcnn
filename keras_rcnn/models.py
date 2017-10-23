@@ -1,63 +1,119 @@
-# -*- coding: utf-8 -*-
+import keras.backend
+import keras.engine
+import keras.layers
 
-import keras
-import keras_resnet
-
-import keras_rcnn.layers
+import keras_rcnn.backend
 import keras_rcnn.classifiers
+import keras_rcnn.datasets.malaria
+import keras_rcnn.layers
+import keras_rcnn.preprocessing
 
 
-class RCNN(keras.models.Model):
-    """
-    Faster R-CNN model by S Ren et, al. (2015).
+def _features(options=None):
+    if options is None:
+        options = {}
 
-    :param inputs: input tensor (e.g. an instance of `keras.layers.Input`)
-    :param encoder: (Convolutional) feature extractor, e.g., `keras_resnet.ResNet50`
-    :param heads: R-CNN classifiers for object detection and/or segmentation on the proposed regions
-    :param rois: integer, number of regions of interest per image
+    def f(inputs):
+        y = keras.layers.Conv2D(64, name="convolution_1_1", **options)(inputs)
+        y = keras.layers.Conv2D(64, name="convolution_1_2", **options)(y)
 
-    :return model: a functional model API for R-CNN.
-    """
+        y = keras.layers.MaxPooling2D(strides=(2, 2), name="max_pooling_1")(y)
 
-    def __init__(self, inputs, encoder, heads, rois):
-        # Extract features with the encoder
-        y = encoder(inputs)
+        y = keras.layers.Conv2D(128, name="convolution_2_1", **options)(y)
+        y = keras.layers.Conv2D(128, name="convolution_2_2", **options)(y)
 
-        features = y.layers[-2].output
+        y = keras.layers.MaxPooling2D(strides=(2, 2), name="max_pooling_2")(y)
 
-        # Propose regions given the features
-        rpn_classification = keras.layers.Conv2D(9 * 1, (1, 1), activation="sigmoid")(features)
+        y = keras.layers.Conv2D(256, name="convolution_3_1", **options)(y)
+        y = keras.layers.Conv2D(256, name="convolution_3_2", **options)(y)
+        y = keras.layers.Conv2D(256, name="convolution_3_3", **options)(y)
 
-        rpn_regression = keras.layers.Conv2D(9 * 4, (1, 1))(features)
+        y = keras.layers.MaxPooling2D(strides=(2, 2), name="max_pooling_3")(y)
 
-        rpn_prediction = keras.layers.concatenate([rpn_classification, rpn_regression])
+        y = keras.layers.Conv2D(512, name="convolution_4_1", **options)(y)
+        y = keras.layers.Conv2D(512, name="convolution_4_2", **options)(y)
+        y = keras.layers.Conv2D(512, name="convolution_4_3", **options)(y)
 
-        proposals = keras_rcnn.layers.object_detection.ObjectProposal(rois)([rpn_regression, rpn_classification])
+        y = keras.layers.MaxPooling2D(strides=(2, 2), name="max_pooling_4")(y)
 
-        # Apply the classifiers on the proposed regions
-        slices = keras_rcnn.layers.ROI((7, 7))([inputs, proposals])
+        y = keras.layers.Conv2D(512, name="convolution_5_1", **options)(y)
+        y = keras.layers.Conv2D(512, name="convolution_5_2", **options)(y)
+        y = keras.layers.Conv2D(512, name="convolution_5_3", **options)(y)
 
-        [score, boxes] = heads(slices)
+        return y
 
-        super(RCNN, self).__init__(inputs, [rpn_prediction, score, boxes])
+    return f
 
 
-class ResNet50RCNN(RCNN):
-    """
-    Faster R-CNN model with ResNet50.
+def _proposals(options=None):
+    if options is None:
+        options = {}
 
-    :param inputs: input tensor (e.g. an instance of `keras.layers.Input`)
-    :param classes: integer, number of classes
-    :param rois: integer, number of regions of interest per image
+    def f(inputs):
+        boxes, features, labels, metadata = inputs
 
-    :return model: a functional model API for R-CNN.
-    """
+        y = keras.layers.Conv2D(512, name="convolution_3x3", **options)(features)
 
-    def __init__(self, inputs, classes, rois=300):
-        # ResNet50 as encoder
-        encoder = keras_resnet.ResNet50
+        deltas = keras.layers.Conv2D(9 * 4, (1, 1), name="deltas")(y)
+        scores = keras.layers.Conv2D(9 * 2, (1, 1), name="scores")(y)
 
-        # ResHead with score and boxes
-        heads = keras_rcnn.classifiers.residual(classes)
+        anchors, rpn_labels, bounding_box_targets = keras_rcnn.layers.AnchorTarget()([deltas, boxes, metadata])
 
-        super(ResNet50RCNN, self).__init__(inputs, encoder, heads, rois)
+        scores_reshaped = keras.layers.Reshape((-1, 2))(scores)
+        scores_reshaped = keras.layers.Activation("softmax")(scores_reshaped)
+
+        deltas = keras_rcnn.layers.losses.RPNRegressionLoss(9)([deltas, bounding_box_targets, rpn_labels])
+        scores = keras_rcnn.layers.losses.RPNClassificationLoss(9)([scores_reshaped, rpn_labels])
+
+        proposals_ = keras_rcnn.layers.ObjectProposal()([metadata, deltas, scores, anchors])
+
+        proposals, label_targets, bounding_box_targets = keras_rcnn.layers.ProposalTarget()([proposals_, labels, boxes])
+
+        return [proposals, label_targets, bounding_box_targets]
+
+    return f
+
+
+def _detections(classes):
+    def f(inputs):
+        features, metadata, proposals, label_targets, bounding_box_targets = inputs
+
+        yr = keras_rcnn.layers.RegionOfInterest()([features, proposals, metadata])
+
+        yr = keras.layers.TimeDistributed(keras.layers.pooling.MaxPooling2D(pool_size=(2, 2)))(yr)
+
+        y = keras.layers.TimeDistributed(keras.layers.Flatten())(yr)
+
+        y = keras.layers.TimeDistributed(keras.layers.Dense(1024, activation="relu"))(y)
+        y = keras.layers.TimeDistributed(keras.layers.Dense(1024, activation="relu"))(y)
+
+        deltas = keras.layers.TimeDistributed(keras.layers.Dense(4 * classes, activation="linear"))(y)
+        scores = keras.layers.TimeDistributed(keras.layers.Dense(1 * classes, activation="softmax"))(y)
+
+        deltas = keras_rcnn.layers.losses.RCNNRegressionLoss()([deltas, bounding_box_targets, label_targets])
+        scores = keras_rcnn.layers.losses.RCNNClassificationLoss()([scores, label_targets])
+
+        return [proposals, deltas, scores]
+
+    return f
+
+
+def detections(classes):
+    def f(inputs):
+        options = {
+            "activation": "relu",
+            "kernel_size": (3, 3),
+            "padding": "same"
+        }
+
+        image, metadata, boxes, labels = inputs
+
+        features = _features(options)(image)
+
+        proposals = _proposals(options)([boxes, features, labels, metadata])
+
+        detections = _detections(classes)([features, metadata] + proposals)
+
+        return detections
+
+    return f

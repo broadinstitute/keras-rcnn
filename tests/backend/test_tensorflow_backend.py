@@ -1,13 +1,66 @@
-import numpy
-import keras.layers
 import keras.backend
-import keras_rcnn.backend
+import numpy
+import tensorflow
+
+import keras_rcnn.backend.tensorflow_backend
+import keras_rcnn.backend.common
+
+
+def test_shuffle():
+    x = keras.backend.variable(numpy.random.random((10,)))
+
+    keras_rcnn.backend.shuffle(x)
+
+def test_matmul():
+    pass
+
+def test_gather_nd():
+    pass
+
+def test_argsort():
+    pass
+
+def test_scatter_add_tensor():
+    ref = keras.backend.ones((4, 5))
+    ii = keras.backend.reshape(keras.backend.cast(keras.backend.zeros((4,)), 'int32'), (-1, 1))
+    jj = keras.backend.reshape(keras.backend.arange(0, 4), (-1, 1))
+    indices = keras.backend.concatenate([ii, jj], 1)
+    updates = keras.backend.arange(4, dtype=keras.backend.floatx()) * 2
+    result = keras_rcnn.backend.scatter_add_tensor(ref, indices, updates)
+    result = keras.backend.eval(result)
+    expected = numpy.ones((4, 5))
+    expected[0, :4] += numpy.arange(4) * 2
+    numpy.testing.assert_array_almost_equal(result, expected)
+
+def test_meshgrid():
+    pass
+
+def test_unique():
+    pass
+
+def test_smooth_l1():
+    pass
+
+def test_where():
+    pass
+
+def test_non_max_suppression():
+    boxes = numpy.zeros((1764, 4))
+    scores = numpy.random.rand(14 * 14, 9).flatten()
+    threshold = 0.5
+    maximum = 100
+    nms = tensorflow.image.non_max_suppression(boxes=boxes,
+                                               iou_threshold=threshold,
+                                               max_output_size=maximum,
+                                               scores=scores)
+    assert keras.backend.eval(nms).shape == (maximum,)
 
 
 def test_crop_and_resize():
     image = keras.backend.variable(numpy.ones((1, 28, 28, 3)))
 
-    boxes = keras.backend.variable(numpy.array([[[0.1, 0.1, 0.2, 0.2],[0.5, 0.5, 0.8, 0.8]]]))
+    boxes = keras.backend.variable(
+        numpy.array([[[0.1, 0.1, 0.2, 0.2], [0.5, 0.5, 0.8, 0.8]]]))
 
     size = [7, 7]
 
@@ -16,100 +69,21 @@ def test_crop_and_resize():
     assert keras.backend.eval(slices).shape == (2, 7, 7, 3)
 
 
-def test_inside_image():
-    stride = 16
-    features = (14, 14)
+def test_squeeze():
+    x = [[[0], [1], [2]]]
 
-    all_anchors = keras_rcnn.backend.shift(features, stride)
-
-    img_info = (224, 224, 1)
-
-    inds_inside, all_inside_anchors = keras_rcnn.backend.inside_image(all_anchors, img_info)
-
-    inds_inside = keras.backend.eval(inds_inside)
-
-    assert inds_inside.shape == (84,)
-
-    all_inside_anchors = keras.backend.eval(all_inside_anchors)
-
-    assert all_inside_anchors.shape == (84, 4)
-
-
-def test_propose():
-    rpn_scores = keras.backend.variable(numpy.random.random((1, 7, 7, 9)))
-    rpn_boxes = keras.backend.variable(numpy.random.random((1, 7, 7, 36)))
-    proposals = keras_rcnn.backend.propose(rpn_boxes, rpn_scores, 300)
-    assert keras.backend.eval(proposals).shape[0] == 1
-    assert keras.backend.eval(proposals).shape[-1] == 4
-
-    proposals = keras_rcnn.backend.propose(rpn_boxes, rpn_scores, 10)
-    assert keras.backend.eval(proposals).shape == (1, 10, 4)
-
-
-def test_overlap():
-    x = numpy.asarray([
-        [0, 10, 0, 10],
-        [0, 20, 0, 20],
-        [0, 30, 0, 30],
-        [0, 40, 0, 40],
-        [0, 50, 0, 50],
-        [0, 60, 0, 60],
-        [0, 70, 0, 70],
-        [0, 80, 0, 80],
-        [0, 90, 0, 90]
-    ])
     x = keras.backend.variable(x)
-    y = numpy.asarray([
-        [0, 20, 0, 20],
-        [0, 40, 0, 40],
-        [0, 60, 0, 60],
-        [0, 80, 0, 80]
-    ])
-    y = keras.backend.variable(y)
-    overlapping = keras_rcnn.backend.overlap(x, y)
-    overlapping = keras.backend.eval(overlapping)
-    expected = numpy.array([
-        [0.0, 0.0, 0.0, 0.0],
-        [1.0, 0.0, 0.0, 0.0],
-        [0.0, 0.0, 0.0, 0.0],
-        [0.0, 1.0, 0.0, 0.0],
-        [0.0, 0.0, 0.0, 0.0],
-        [0.0, 0.0, 1.0, 0.0],
-        [0.0, 0.0, 0.0, 0.0],
-        [0.0, 0.0, 0.0, 1.0],
-        [0.0, 0.0, 0.0, 0.0]
-    ])
 
-    numpy.testing.assert_array_equal(overlapping, expected)
+    assert keras.backend.int_shape(x) == (1, 3, 1)
 
+    y = keras_rcnn.backend.tensorflow_backend.squeeze(x)
 
-def test_overlapping():
-    stride = 16
-    features = (14, 14)
-    img_info = (224, 224, 1)
-    gt_boxes = numpy.zeros((91, 4))
-    gt_boxes = keras.backend.variable(gt_boxes)
+    assert keras.backend.int_shape(y) == (3,)
 
-    all_anchors = keras_rcnn.backend.shift(features, stride)
+    y = keras_rcnn.backend.tensorflow_backend.squeeze(x, 0)
 
-    inds_inside, all_inside_anchors = keras_rcnn.backend.inside_image(all_anchors, img_info)
+    assert keras.backend.int_shape(y) == (3, 1)
 
-    argmax_overlaps_inds, max_overlaps, gt_argmax_overlaps_inds = keras_rcnn.backend.overlapping(gt_boxes, all_inside_anchors, inds_inside)
+    y = keras_rcnn.backend.tensorflow_backend.squeeze(x, 2)
 
-    argmax_overlaps_inds = keras.backend.eval(argmax_overlaps_inds)
-    max_overlaps = keras.backend.eval(max_overlaps)
-    gt_argmax_overlaps_inds = keras.backend.eval(gt_argmax_overlaps_inds)
-
-    assert argmax_overlaps_inds.shape == (84, )
-
-    assert max_overlaps.shape == (84, )
-
-    assert gt_argmax_overlaps_inds.shape == (91, )
-
-
-def test_shift():
-    y = keras_rcnn.backend.shift((14, 14), 16)
-
-    y = keras.backend.eval(y)
-
-    assert y.shape == (1764, 4)
+    assert keras.backend.int_shape(y) == (1, 3)

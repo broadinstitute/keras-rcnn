@@ -88,7 +88,7 @@ def img_info():
 
 @pytest.fixture()
 def pooling():
-    return keras_rcnn.layers.ROI([7, 7], 1)
+    return keras_rcnn.layers.RegionOfInterest([7, 7], 1)
 
 
 @pytest.fixture()
@@ -161,7 +161,8 @@ def region_proposal_network():
 
 @pytest.fixture()
 def x():
-    return numpy.arange(2 * 9 * 14 * 14, dtype=numpy.float32).reshape(1, 18, 14, 14)
+    x = numpy.arange(2 * 9 * 14 * 14, dtype=numpy.float32)
+    return x.reshape(1, 18, 14, 14)
 
 
 @pytest.fixture()
