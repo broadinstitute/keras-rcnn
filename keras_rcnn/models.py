@@ -113,7 +113,7 @@ def _train(classes):
         deltas, scores = _extract_regions(classes)([features, metadata, proposals])
 
         deltas = keras_rcnn.layers.losses.RCNNRegressionLoss()([deltas, bounding_box_targets, labels_targets])
-        scores = keras_rcnn.layers.losses.RCNNClassificationLoss(training=False)([scores, labels_targets])
+        scores = keras_rcnn.layers.losses.RCNNClassificationLoss()([scores, labels_targets])
 
         return [all_anchors, deltas, proposals, scores]
 
