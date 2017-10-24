@@ -118,3 +118,20 @@ def _train(classes):
         return [all_anchors, deltas, proposals, scores]
 
     return f
+
+
+class RCNN(keras.models.Model):
+    def __init__(self, image, classes):
+        inputs = [
+            keras.layers.Input((None, 4)),
+            image,
+            keras.layers.Input((None, classes)),
+            keras.layers.Input((3,))
+        ]
+
+        outputs = _train(classes)(inputs)
+
+        super(RCNN, self).__init__(inputs, outputs)
+
+    def compile(self, optimizer, **kwargs):
+        super(RCNN, self).compile(optimizer, None)
