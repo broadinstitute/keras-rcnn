@@ -38,16 +38,18 @@ class AnchorTarget(keras.layers.Layer):
     """
 
     def __init__(
-            self,
-            allowed_border=0,
-            clobber_positives=False,
-            negative_overlap=0.3,
-            positive_overlap=0.7,
-            stride=16,
-            **kwargs
+        self,
+        allowed_border=0,
+        clobber_positives=False,
+        negative_overlap=0.3,
+        positive_overlap=0.7,
+        stride=16,
+        **kwargs
     ):
         self.allowed_border = allowed_border
+
         self.clobber_positives = clobber_positives
+
         self.negative_overlap = negative_overlap
         self.positive_overlap = positive_overlap
 
