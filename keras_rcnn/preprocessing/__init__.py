@@ -1,2 +1,2 @@
 from ._object_detection import ObjectDetectionGenerator
-from ._object_detection import ObjectDetectionGenerator
+from ._object_detection import DebugObjectDetectionGenerator

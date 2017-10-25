@@ -5,9 +5,6 @@ import tensorflow
 import keras_rcnn.backend
 import keras_rcnn.layers
 
-RPN_FG_FRACTION = 0.5
-RPN_BATCHSIZE = 256
-
 
 class AnchorTarget(keras.layers.Layer):
     """
@@ -38,16 +35,18 @@ class AnchorTarget(keras.layers.Layer):
     """
 
     def __init__(
-            self,
-            allowed_border=0,
-            clobber_positives=False,
-            negative_overlap=0.3,
-            positive_overlap=0.7,
-            stride=16,
-            **kwargs
+        self,
+        allowed_border=0,
+        clobber_positives=False,
+        negative_overlap=0.3,
+        positive_overlap=0.7,
+        stride=16,
+        **kwargs
     ):
         self.allowed_border = allowed_border
+
         self.clobber_positives = clobber_positives
+
         self.negative_overlap = negative_overlap
         self.positive_overlap = positive_overlap
 
@@ -221,7 +220,7 @@ def overlapping(anchors, gt_boxes, inds_inside):
     return argmax_overlaps_inds, max_overlaps, gt_argmax_overlaps_inds
 
 
-def subsample_negative_labels(labels):
+def subsample_negative_labels(labels, rpn_batchsize=256):
     """
     subsample negative labels if we have too many
     :param labels: array of labels (1 is positive, 0 is negative, -1 is dont
@@ -229,7 +228,7 @@ def subsample_negative_labels(labels):
 
     :return:
     """
-    num_bg = RPN_BATCHSIZE - keras.backend.shape(
+    num_bg = rpn_batchsize - keras.backend.shape(
         keras_rcnn.backend.where(keras.backend.equal(labels, 1)))[0]
 
     bg_inds = keras_rcnn.backend.where(keras.backend.equal(labels, 0))
@@ -257,7 +256,7 @@ def subsample_negative_labels(labels):
     return keras.backend.switch(condition, labels, lambda: more_negative())
 
 
-def subsample_positive_labels(labels):
+def subsample_positive_labels(labels, rpn_fg_fraction=0.5, rpn_batchsize=256):
     """
     subsample positive labels if we have too many
 
@@ -267,7 +266,7 @@ def subsample_positive_labels(labels):
     :return:
     """
 
-    num_fg = int(RPN_FG_FRACTION * RPN_BATCHSIZE)
+    num_fg = int(rpn_fg_fraction * rpn_batchsize)
 
     fg_inds = keras_rcnn.backend.where(keras.backend.equal(labels, 1))
     num_fg_inds = keras.backend.shape(fg_inds)[0]
