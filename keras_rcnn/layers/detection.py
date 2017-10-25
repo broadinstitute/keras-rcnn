@@ -25,7 +25,7 @@ class Detection(keras.engine.topology.Layer):
     def build(self, input_shape):
         super(Detection, self).build(input_shape)
 
-    def call(self, x, **kwargs):
+    def call(self, x, training=None, **kwargs):
         """
         # Inputs
         rois: output of proposal target (1, N, 4)
