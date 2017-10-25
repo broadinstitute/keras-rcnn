@@ -88,13 +88,21 @@ def _train(classes, training_options=None):
     if training_options is None:
         training_options = {
             "anchor_target": {
-
+                "allowed_border": 0,
+                "clobber_positives": False,
+                "negative_overlap": 0.3,
+                "positive_overlap": 0.7,
             },
             "object_proposal": {
-
+                "maximum_proposals": 300,
+                "minimum_size": 16,
+                "stride": 16
             },
             "proposal_target": {
-
+                "fg_fraction": 0.5,
+                "fg_thresh": 0.7,
+                "bg_thresh_hi": 0.5,
+                "bg_thresh_lo": 0.1,
             }
         }
 
