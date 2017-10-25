@@ -26,7 +26,7 @@ def scale_size(size, min_size=224, max_size=224):
     return (int(rows), int(cols)), scale
 
 
-class DictionaryIterator(keras.preprocessing.image.Iterator):
+class DebugDictionaryIterator(keras.preprocessing.image.Iterator):
     def __init__(
         self, 
         dictionary, 
@@ -137,7 +137,6 @@ class DictionaryIterator(keras.preprocessing.image.Iterator):
 
         return [images, self.metadata, boxes, labels], None
 
-
-class ObjectDetectionGenerator:
+class DebugObjectDetectionGenerator:
     def flow(self, dictionary, classes, target_shape=None, scale=None, ox=None, oy=None):
         return DictionaryIterator(dictionary, classes, target_shape, scale, ox, oy, self)

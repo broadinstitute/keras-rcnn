@@ -9,96 +9,82 @@ import keras_rcnn.layers
 import keras_rcnn.preprocessing
 
 
-def _features(options=None):
+def _extract_features(options=None, training=None):
     if options is None:
         options = {}
 
     def f(inputs):
-        y = keras.layers.Conv2D(64, name="convolution_1_1", **options)(inputs)
-        y = keras.layers.Conv2D(64, name="convolution_1_2", **options)(y)
+        features = keras.layers.Conv2D(64, name="convolution_1_1", **options)(inputs)
+        features = keras.layers.Conv2D(64, name="convolution_1_2", **options)(features)
 
-        y = keras.layers.MaxPooling2D(strides=(2, 2), name="max_pooling_1")(y)
+        features = keras.layers.MaxPooling2D(strides=(2, 2), name="max_pooling_1")(features)
 
-        y = keras.layers.Conv2D(128, name="convolution_2_1", **options)(y)
-        y = keras.layers.Conv2D(128, name="convolution_2_2", **options)(y)
+        features = keras.layers.Conv2D(128, name="convolution_2_1", **options)(features)
+        features = keras.layers.Conv2D(128, name="convolution_2_2", **options)(features)
 
-        y = keras.layers.MaxPooling2D(strides=(2, 2), name="max_pooling_2")(y)
+        features = keras.layers.MaxPooling2D(strides=(2, 2), name="max_pooling_2")(features)
 
-        y = keras.layers.Conv2D(256, name="convolution_3_1", **options)(y)
-        y = keras.layers.Conv2D(256, name="convolution_3_2", **options)(y)
-        y = keras.layers.Conv2D(256, name="convolution_3_3", **options)(y)
+        features = keras.layers.Conv2D(256, name="convolution_3_1", **options)(features)
+        features = keras.layers.Conv2D(256, name="convolution_3_2", **options)(features)
+        features = keras.layers.Conv2D(256, name="convolution_3_3", **options)(features)
+        features = keras.layers.Conv2D(256, name="convolution_3_4", **options)(features)
 
-        y = keras.layers.MaxPooling2D(strides=(2, 2), name="max_pooling_3")(y)
+        features = keras.layers.MaxPooling2D(strides=(2, 2), name="max_pooling_3")(features)
 
-        y = keras.layers.Conv2D(512, name="convolution_4_1", **options)(y)
-        y = keras.layers.Conv2D(512, name="convolution_4_2", **options)(y)
-        y = keras.layers.Conv2D(512, name="convolution_4_3", **options)(y)
+        features = keras.layers.Conv2D(512, name="convolution_4_1", **options)(features)
+        features = keras.layers.Conv2D(512, name="convolution_4_2", **options)(features)
+        features = keras.layers.Conv2D(512, name="convolution_4_3", **options)(features)
+        features = keras.layers.Conv2D(512, name="convolution_4_4", **options)(features)
 
-        y = keras.layers.MaxPooling2D(strides=(2, 2), name="max_pooling_4")(y)
+        features = keras.layers.MaxPooling2D(strides=(2, 2), name="max_pooling_4")(features)
 
-        y = keras.layers.Conv2D(512, name="convolution_5_1", **options)(y)
-        y = keras.layers.Conv2D(512, name="convolution_5_2", **options)(y)
-        y = keras.layers.Conv2D(512, name="convolution_5_3", **options)(y)
+        features = keras.layers.Conv2D(512, name="convolution_5_1", **options)(features)
+        features = keras.layers.Conv2D(512, name="convolution_5_2", **options)(features)
+        features = keras.layers.Conv2D(512, name="convolution_5_3", **options)(features)
 
-        return y
+        return features
 
     return f
 
 
-def _proposals(options=None):
+def _extract_proposals(options=None):
     if options is None:
         options = {}
 
     def f(inputs):
-        boxes, features, labels, metadata = inputs
+        convolution_3x3 = keras.layers.Conv2D(512, name="convolution_3x3", **options)(inputs)
 
-        y = keras.layers.Conv2D(512, name="convolution_3x3", **options)(features)
+        deltas = keras.layers.Conv2D(9 * 4, (1, 1), activation="linear", kernel_initializer="zero", name="deltas")(convolution_3x3)
+        scores = keras.layers.Conv2D(9 * 2, (1, 1), kernel_initializer="uniform", name="scores")(convolution_3x3)
 
-        deltas = keras.layers.Conv2D(9 * 4, (1, 1), name="deltas")(y)
-        scores = keras.layers.Conv2D(9 * 2, (1, 1), name="scores")(y)
-
-        anchors, rpn_labels, bounding_box_targets = keras_rcnn.layers.AnchorTarget()([deltas, boxes, metadata])
-
-        scores_reshaped = keras.layers.Reshape((-1, 2))(scores)
-        scores_reshaped = keras.layers.Activation("softmax")(scores_reshaped)
-
-        deltas = keras_rcnn.layers.losses.RPNRegressionLoss(9)([deltas, bounding_box_targets, rpn_labels])
-        scores = keras_rcnn.layers.losses.RPNClassificationLoss(9)([scores_reshaped, rpn_labels])
-
-        proposals_ = keras_rcnn.layers.ObjectProposal()([metadata, deltas, scores, anchors])
-
-        proposals, label_targets, bounding_box_targets = keras_rcnn.layers.ProposalTarget()([proposals_, labels, boxes])
-
-        return [proposals, label_targets, bounding_box_targets]
+        return [deltas, scores]
 
     return f
 
 
-def _detections(classes):
+def _extract_regions(classes):
     def f(inputs):
-        features, metadata, proposals, label_targets, bounding_box_targets = inputs
+        features, metadata, proposals = inputs
 
-        yr = keras_rcnn.layers.RegionOfInterest()([features, proposals, metadata])
+        regions = keras_rcnn.layers.RegionOfInterest(extent=(14, 14))([features, proposals, metadata])
 
-        yr = keras.layers.TimeDistributed(keras.layers.pooling.MaxPooling2D(pool_size=(2, 2)))(yr)
+        regions = keras.layers.TimeDistributed(keras.layers.Flatten())(regions)
 
-        y = keras.layers.TimeDistributed(keras.layers.Flatten())(yr)
+        regions = keras.layers.TimeDistributed(keras.layers.Dense(256, activation="relu"))(regions)
+        regions = keras.layers.TimeDistributed(keras.layers.Dropout(0.5))(regions)
 
-        y = keras.layers.TimeDistributed(keras.layers.Dense(1024, activation="relu"))(y)
-        y = keras.layers.TimeDistributed(keras.layers.Dense(1024, activation="relu"))(y)
+        regions = keras.layers.TimeDistributed(keras.layers.Dense(256, activation="relu"))(regions)
+        regions = keras.layers.TimeDistributed(keras.layers.Dropout(0.5))(regions)
 
-        deltas = keras.layers.TimeDistributed(keras.layers.Dense(4 * classes, activation="linear"))(y)
-        scores = keras.layers.TimeDistributed(keras.layers.Dense(1 * classes, activation="softmax"))(y)
+        deltas = keras.layers.TimeDistributed(keras.layers.Dense(4 * classes, activation="linear", kernel_initializer="zero"))(regions)
+        scores = keras.layers.TimeDistributed(keras.layers.Dense(classes, activation="softmax", kernel_initializer="zero"))(regions)
 
-        deltas = keras_rcnn.layers.losses.RCNNRegressionLoss()([deltas, bounding_box_targets, label_targets])
-        scores = keras_rcnn.layers.losses.RCNNClassificationLoss()([scores, label_targets])
-
-        return [proposals, deltas, scores]
+        return [deltas, scores]
 
     return f
 
 
-def detections(classes):
+def _train(classes):
     def f(inputs):
         options = {
             "activation": "relu",
@@ -106,14 +92,46 @@ def detections(classes):
             "padding": "same"
         }
 
-        image, metadata, boxes, labels = inputs
+        bounding_boxes, image, labels, metadata = inputs
 
-        features = _features(options)(image)
+        features = _extract_features(options)(image)
 
-        proposals = _proposals(options)([boxes, features, labels, metadata])
+        deltas, scores = _extract_proposals(options)(features)
 
-        detections = _detections(classes)([features, metadata] + proposals)
+        all_anchors, rpn_labels, bounding_box_targets = keras_rcnn.layers.AnchorTarget()([scores, bounding_boxes, metadata])
 
-        return detections
+        scores_reshaped = keras.layers.Reshape((-1, 2))(scores)
+        scores_reshaped = keras.layers.Activation("softmax")(scores_reshaped)
+
+        deltas = keras_rcnn.layers.RPNRegressionLoss(9)([deltas, bounding_box_targets, rpn_labels])
+        scores = keras_rcnn.layers.RPNClassificationLoss(9)([scores_reshaped, rpn_labels])
+
+        proposals_ = keras_rcnn.layers.ObjectProposal()([metadata, deltas, scores, all_anchors])
+
+        proposals, labels_targets, bounding_box_targets = keras_rcnn.layers.ProposalTarget()([proposals_, labels, bounding_boxes])
+
+        deltas, scores = _extract_regions(classes)([features, metadata, proposals])
+
+        deltas = keras_rcnn.layers.losses.RCNNRegressionLoss()([deltas, bounding_box_targets, labels_targets])
+        scores = keras_rcnn.layers.losses.RCNNClassificationLoss()([scores, labels_targets])
+
+        return [all_anchors, deltas, proposals, scores]
 
     return f
+
+
+class RCNN(keras.models.Model):
+    def __init__(self, image, classes):
+        inputs = [
+            keras.layers.Input((None, 4)),
+            image,
+            keras.layers.Input((None, classes)),
+            keras.layers.Input((3,))
+        ]
+
+        outputs = _train(classes)(inputs)
+
+        super(RCNN, self).__init__(inputs, outputs)
+
+    def compile(self, optimizer, **kwargs):
+        super(RCNN, self).compile(optimizer, None)
