@@ -115,7 +115,9 @@ def _train(classes):
         deltas = keras_rcnn.layers.losses.RCNNRegressionLoss()([deltas, bounding_box_targets, labels_targets])
         scores = keras_rcnn.layers.losses.RCNNClassificationLoss()([scores, labels_targets])
 
-        return [all_anchors, deltas, proposals, scores]
+        final_boxes, final_scores = keras_rcnn.layers.Detection()([proposals, deltas, scores, metadata])
+
+        return [all_anchors, proposals, deltas, scores, final_boxes]
 
     return f
 
