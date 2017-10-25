@@ -9,6 +9,17 @@ import keras_rcnn.layers
 import keras_rcnn.preprocessing
 
 
+import keras.backend
+import keras.engine
+import keras.layers
+
+import keras_rcnn.backend
+import keras_rcnn.classifiers
+import keras_rcnn.datasets.malaria
+import keras_rcnn.layers
+import keras_rcnn.preprocessing
+
+
 def _extract_features(options=None, training=None):
     if options is None:
         options = {}
@@ -84,7 +95,28 @@ def _extract_regions(classes):
     return f
 
 
-def _train(classes):
+def _train(classes, training_options=None):
+    if training_options is None:
+        training_options = {
+            "anchor_target": {
+                "allowed_border": 0,
+                "clobber_positives": False,
+                "negative_overlap": 0.3,
+                "positive_overlap": 0.7,
+            },
+            "object_proposal": {
+                "maximum_proposals": 300,
+                "minimum_size": 16,
+                "stride": 16
+            },
+            "proposal_target": {
+                "fg_fraction": 0.5,
+                "fg_thresh": 0.7,
+                "bg_thresh_hi": 0.5,
+                "bg_thresh_lo": 0.1,
+            }
+        }
+
     def f(inputs):
         options = {
             "activation": "relu",
@@ -98,7 +130,12 @@ def _train(classes):
 
         deltas, scores = _extract_proposals(options)(features)
 
-        all_anchors, rpn_labels, bounding_box_targets = keras_rcnn.layers.AnchorTarget()([scores, bounding_boxes, metadata])
+        all_anchors, rpn_labels, bounding_box_targets = keras_rcnn.layers.AnchorTarget(
+            allowed_border=training_options["anchor_target"]["allowed_border"],
+            clobber_positives=training_options["anchor_target"]["clobber_positives"],
+            negative_overlap=training_options["anchor_target"]["negative_overlap"],
+            positive_overlap=training_options["anchor_target"]["positive_overlap"]
+        )([scores, bounding_boxes, metadata])
 
         scores_reshaped = keras.layers.Reshape((-1, 2))(scores)
         scores_reshaped = keras.layers.Activation("softmax")(scores_reshaped)
@@ -106,9 +143,18 @@ def _train(classes):
         deltas = keras_rcnn.layers.RPNRegressionLoss(9)([deltas, bounding_box_targets, rpn_labels])
         scores = keras_rcnn.layers.RPNClassificationLoss(9)([scores_reshaped, rpn_labels])
 
-        proposals_ = keras_rcnn.layers.ObjectProposal()([metadata, deltas, scores, all_anchors])
+        proposals_ = keras_rcnn.layers.ObjectProposal(
+            maximum_proposals=training_options["object_proposal"]["maximum_proposals"],
+            minimum_size=training_options["object_proposal"]["minimum_size"],
+            stride=training_options["object_proposal"]["stride"]
+        )([metadata, deltas, scores, all_anchors])
 
-        proposals, labels_targets, bounding_box_targets = keras_rcnn.layers.ProposalTarget()([proposals_, labels, bounding_boxes])
+        proposals, labels_targets, bounding_box_targets = keras_rcnn.layers.ProposalTarget(
+            fg_fraction=training_options["proposal_target"]["fg_fraction"],
+            fg_thresh=training_options["proposal_target"]["fg_thresh"],
+            bg_thresh_hi=training_options["proposal_target"]["bg_thresh_hi"],
+            bg_thresh_lo=training_options["proposal_target"]["bg_thresh_lo"]
+        )([proposals_, labels, bounding_boxes])
 
         deltas, scores = _extract_regions(classes)([features, metadata, proposals])
 
@@ -123,7 +169,7 @@ def _train(classes):
 
 
 class RCNN(keras.models.Model):
-    def __init__(self, image, classes):
+    def __init__(self, image, classes, training_options=None):
         inputs = [
             keras.layers.Input((None, 4)),
             image,
@@ -131,7 +177,7 @@ class RCNN(keras.models.Model):
             keras.layers.Input((3,))
         ]
 
-        outputs = _train(classes)(inputs)
+        outputs = _train(classes, training_options)(inputs)
 
         super(RCNN, self).__init__(inputs, outputs)
 
