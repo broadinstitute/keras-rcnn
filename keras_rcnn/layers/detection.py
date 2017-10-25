@@ -39,24 +39,28 @@ class Detection(keras.engine.topology.Layer):
         the box only corresponds to the most
             probable class, not the other classes
         """
-        rois, pred_deltas, pred_scores, metadata = x[0], x[1], x[2], x[3]
+        def boxes():
+            rois, pred_deltas, pred_scores, metadata = x[0], x[1], x[2], x[3]
+            rois = keras.backend.reshape(rois, (-1, 4))
 
-        rois = keras.backend.reshape(rois, (-1, 4))
-        pred_deltas = keras.backend.reshape(pred_deltas,
-                                            (keras.backend.shape(rois)[0], -1))
+            # unscale back to raw image space
+            boxes = rois / metadata[0][2]     
+            
+            pred_deltas = keras.backend.reshape(pred_deltas,
+                                                (keras.backend.shape(rois)[0], -1))
 
-        # unscale back to raw image space
-        boxes = rois / metadata[0][2]
+            # Apply bounding-box regression deltas
+            pred_boxes = keras_rcnn.backend.bbox_transform_inv(boxes, pred_deltas)
 
-        # Apply bounding-box regression deltas
-        pred_boxes = keras_rcnn.backend.bbox_transform_inv(boxes, pred_deltas)
+            pred_boxes = keras_rcnn.backend.clip(pred_boxes, metadata[0][:2])
 
-        pred_boxes = keras_rcnn.backend.clip(pred_boxes, metadata[0][:2] / metadata[0][2])
-        pred_scores = keras.backend.reshape(pred_scores,
-                                            (keras.backend.shape(rois)[0], -1))
+            return keras.backend.expand_dims(pred_boxes, 0)
+        
+        pred_boxes = keras.backend.in_train_phase(x[1], lambda: boxes(), training=training)
+
         return [
-            keras.backend.expand_dims(pred_boxes, 0),
-            keras.backend.expand_dims(pred_scores, 0)
+            pred_boxes,
+            x[2]
         ]
 
     def compute_output_shape(self, input_shape):
