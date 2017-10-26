@@ -61,7 +61,6 @@ class DictionaryIterator(keras.preprocessing.image.Iterator):
             self.target_shape = self.target_shape + (self.image_shape[2],)
         else:
             self.target_shape = target_shape + (self.image_shape[2],)
-            print(self.target_shape)
 
         # Metadata needs to be computed only once.
         rows, cols, channels = self.target_shape
@@ -101,7 +100,7 @@ class DictionaryIterator(keras.preprocessing.image.Iterator):
 
                 # Copy image to batch blob.
                 images[batch_index] = skimage.transform.rescale(image, scale=self.scale, mode="reflect")
-                
+
                 # Set ground truth boxes.
                 for i, b in enumerate(self.dictionary[image_index]["boxes"]):
                     if b["class"] not in self.classes:
