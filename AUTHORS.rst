@@ -14,4 +14,4 @@ Claire McQuin <mcquincl@gmail.com> @mcquin
 
 Mihai Morariu <mihaimorariu@gmail.com> @mihaimorariu
 
-Victor Kulikovv <>
+Victor Kulikovv <kulikov.victor@gmail.com>
