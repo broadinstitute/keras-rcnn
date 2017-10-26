@@ -54,16 +54,15 @@ class DictionaryIterator(keras.preprocessing.image.Iterator):
         self.ox = ox
         self.oy = oy
         if target_shape is None:
-            self.target_shape, self.scale = scale_size(self.image_shape[0:2],
-                                                       numpy.min(self.image_shape[:2]),
-                                                       numpy.max(self.image_shape[:2])
-                                                      )
+            self.target_shape, self.scale = scale_size(self.image_shape[0:2], numpy.min(self.image_shape[:2]), numpy.max(self.image_shape[:2]))
+
             self.target_shape = self.target_shape + (self.image_shape[2],)
         else:
             self.target_shape = target_shape + (self.image_shape[2],)
 
         # Metadata needs to be computed only once.
         rows, cols, channels = self.target_shape
+
         self.metadata = numpy.array([[rows, cols, self.scale]])
 
         super(DictionaryIterator, self).__init__(len(self.dictionary), batch_size, shuffle, seed)
