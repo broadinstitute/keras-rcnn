@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 import keras.backend
 import keras.preprocessing.image
 import numpy
@@ -11,7 +13,7 @@ def scale_size(size, min_size, max_size):
     no larger than max_size and the smallest axis is as close
     as possible to min_size.
     """
-    assert(len(size) == 2)
+    assert (len(size) == 2)
 
     scale = min_size / numpy.min(size)
 
@@ -28,19 +30,18 @@ def scale_size(size, min_size, max_size):
 
 class DictionaryIterator(keras.preprocessing.image.Iterator):
     def __init__(
-        self,
-        dictionary,
-        classes,
-        target_shape,
-        scale,
-        ox,
-        oy,
-        generator,
-        batch_size=1,
-        shuffle=False,
-        seed=None
+            self,
+            dictionary,
+            classes,
+            target_shape,
+            scale,
+            ox,
+            oy,
+            generator,
+            batch_size=1,
+            shuffle=False,
+            seed=None
     ):
-
         self.dictionary = dictionary
         self.classes = classes
         self.generator = generator
@@ -86,11 +87,6 @@ class DictionaryIterator(keras.preprocessing.image.Iterator):
                 path = self.dictionary[image_index]["filename"]
                 image = skimage.io.imread(path)
 
-                # Assert that the loaded image has the predefined image shape.
-                if image.shape != self.image_shape:
-                    raise Exception(
-                        "All input images need to be of the same shape.")
-
                 #crop
                 if self.ox is None:
                     offset_x = numpy.random.randint(0, self.image_shape[1]-self.target_shape[1]+1)
@@ -105,6 +101,7 @@ class DictionaryIterator(keras.preprocessing.image.Iterator):
 
                 # Copy image to batch blob.
                 images[batch_index] = skimage.transform.rescale(image, scale=self.scale, mode="reflect")
+                
                 # Set ground truth boxes.
                 for i, b in enumerate(self.dictionary[image_index]["boxes"]):
                     if b["class"] not in self.classes:
@@ -139,13 +136,13 @@ class DictionaryIterator(keras.preprocessing.image.Iterator):
 
 class DebugDictionaryIterator(keras.preprocessing.image.Iterator):
     def __init__(
-        self,
-        dictionary,
-        classes,
-        generator,
-        batch_size=1,
-        shuffle=False,
-        seed=None
+            self,
+            dictionary,
+            classes,
+            generator,
+            batch_size=1,
+            shuffle=False,
+            seed=None
     ):
         self.dictionary = dictionary
         self.classes = classes
@@ -162,7 +159,9 @@ class DebugDictionaryIterator(keras.preprocessing.image.Iterator):
         rows, cols, channels = self.target_shape
         self.metadata = numpy.array([[448, 448, 1]])
 
-        super(DebugDictionaryIterator, self).__init__(len(self.dictionary), batch_size, shuffle, seed)
+        super(DebugDictionaryIterator, self).__init__(len(self.dictionary),
+                                                      batch_size, shuffle,
+                                                      seed)
 
     def next(self):
         # Lock indexing to prevent race conditions.
@@ -172,9 +171,11 @@ class DebugDictionaryIterator(keras.preprocessing.image.Iterator):
         # Labels has num_classes + 1 elements, since 0 is reserved for
         # background.
         num_classes = len(self.classes)
-        images = numpy.zeros((batch_size,) + self.target_shape, dtype=keras.backend.floatx())
+        images = numpy.zeros((batch_size,) + self.target_shape,
+                             dtype=keras.backend.floatx())
         boxes = numpy.zeros((batch_size, 0, 4), dtype=keras.backend.floatx())
-        labels = numpy.zeros((batch_size, 0, num_classes + 1), dtype=numpy.uint8)
+        labels = numpy.zeros((batch_size, 0, num_classes + 1),
+                             dtype=numpy.uint8)
 
         for batch_index, image_index in enumerate(selection):
             count = 0
@@ -187,18 +188,24 @@ class DebugDictionaryIterator(keras.preprocessing.image.Iterator):
                     raise Exception(
                         "All input images need to be of the same shape.")
 
-                #crop
-                offset_x = numpy.random.randint(0, self.image_shape[1]-self.target_shape[1]+1)
-                offset_y = numpy.random.randint(0, self.image_shape[0]-self.target_shape[0]+1)
-                image = image[offset_y:self.target_shape[0]+offset_y, offset_x:self.target_shape[1]+offset_x, :]
+                # crop
+                offset_x = numpy.random.randint(0, self.image_shape[1] -
+                                                self.target_shape[1] + 1)
+                offset_y = numpy.random.randint(0, self.image_shape[0] -
+                                                self.target_shape[0] + 1)
+                image = image[offset_y:self.target_shape[0] + offset_y,
+                        offset_x:self.target_shape[1] + offset_x, :]
 
                 # Copy image to batch blob.
-                images[batch_index] = skimage.transform.rescale(image, scale=self.scale, mode="reflect")
+                images[batch_index] = skimage.transform.rescale(image,
+                                                                scale=self.scale,
+                                                                mode="reflect")
                 # Set ground truth boxes.
                 for i, b in enumerate(self.dictionary[image_index]["boxes"]):
                     if b["class"] not in self.classes:
                         raise Exception(
-                            "Class {} not found in '{}'.".format(b["class"], self.classes))
+                            "Class {} not found in '{}'.".format(b["class"],
+                                                                 self.classes))
 
                     x1 = int(b["x1"]) - offset_x
                     x2 = int(b["x2"]) - offset_x
@@ -209,7 +216,8 @@ class DebugDictionaryIterator(keras.preprocessing.image.Iterator):
                     if y2 == image.shape[0]:
                         y2 -= 1
 
-                    if x1 >= 0 and x2 < image.shape[1] and y1 >= 0 and y2 < image.shape[0]:
+                    if x1 >= 0 and x2 < image.shape[1] and y1 >= 0 and y2 < \
+                            image.shape[0]:
                         count += 1
 
                         box = [x1, y1, x2, y2]
@@ -232,5 +240,7 @@ class DebugObjectDetectionGenerator:
 
 
 class ObjectDetectionGenerator:
-    def flow(self, dictionary, classes, target_shape=None, scale=None, ox=None, oy=None):
-        return DictionaryIterator(dictionary, classes, target_shape, scale, ox, oy, self)
+    def flow(self, dictionary, classes, target_shape=None, scale=None, ox=None,
+             oy=None):
+        return DictionaryIterator(dictionary, classes, target_shape, scale, ox,
+                                  oy, self)

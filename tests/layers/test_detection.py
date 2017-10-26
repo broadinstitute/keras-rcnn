@@ -8,7 +8,7 @@ import keras_rcnn.layers
 class TestDetection:
     def test_call(self):
         num_classes = 2
-        detections = keras_rcnn.layers.Detection()
+        detections = keras_rcnn.layers.ObjectDetection()
 
         proposals = numpy.array([[5, 10, 30, 50], [6.4, 1, 24.2, 33.2]])
         proposals = keras.backend.variable(proposals)

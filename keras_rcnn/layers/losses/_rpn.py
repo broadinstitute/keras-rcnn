@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 import keras.backend
 import keras.layers
 
@@ -13,11 +15,7 @@ class RPNClassificationLoss(keras.layers.Layer):
     def call(self, inputs, training=None, **kwargs):
         output, target = inputs
 
-        loss = keras.backend.in_train_phase(
-            lambda: self.compute_loss(output, target),
-            keras.backend.variable(0),
-            training=training
-        )
+        loss = keras.backend.in_train_phase(lambda: self.compute_loss(output, target), keras.backend.variable(0), training=training)
 
         self.add_loss(loss, inputs)
 
@@ -52,11 +50,7 @@ class RPNRegressionLoss(keras.layers.Layer):
     def call(self, inputs, training=None, **kwargs):
         output, target, labels = inputs
 
-        loss = keras.backend.in_train_phase(
-            lambda: self.compute_loss(output, target, labels),
-            keras.backend.variable(0),
-            training=training
-        )
+        loss = keras.backend.in_train_phase(lambda: self.compute_loss(output, target, labels), keras.backend.variable(0), training=training)
 
         self.add_loss(loss, inputs)
 
@@ -75,19 +69,11 @@ class RPNRegressionLoss(keras.layers.Layer):
         target = keras_rcnn.backend.gather_nd(target, indices)
         labels = keras_rcnn.backend.gather_nd(labels, indices)
 
-        p_star_i = keras_rcnn.backend.where(
-            keras.backend.greater(labels, 0),
-            keras.backend.ones_like(labels),
-            keras.backend.zeros_like(labels)
-        )
+        p_star_i = keras_rcnn.backend.where(keras.backend.greater(labels, 0), keras.backend.ones_like(labels), keras.backend.zeros_like(labels))
 
         p_star_i = keras.backend.expand_dims(p_star_i, 0)
 
-        a_y = keras_rcnn.backend.smooth_l1(
-            keras.backend.expand_dims(output, 0),
-            keras.backend.expand_dims(target, 0),
-            anchored=True
-        )
+        a_y = keras_rcnn.backend.smooth_l1(keras.backend.expand_dims(output, 0), keras.backend.expand_dims(target, 0), anchored=True)
 
         a = p_star_i * a_y
 

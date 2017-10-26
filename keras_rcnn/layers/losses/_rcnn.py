@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 import keras.backend
 import keras.layers
 import tensorflow
@@ -12,21 +14,15 @@ class RCNNClassificationLoss(keras.layers.Layer):
     def call(self, inputs, training=None, **kwargs):
         output, target = inputs
 
-        loss = keras.backend.in_train_phase(
-            lambda: self.compute_loss(output, target),
-            keras.backend.variable(0),
-            training=training
-        )
+        loss = keras.backend.in_train_phase(lambda: self.compute_classification_loss(output, target), keras.backend.variable(0), training=training)
 
         self.add_loss(loss, inputs)
 
         return output
 
     @staticmethod
-    def compute_loss(output, target):
-        loss = keras_rcnn.backend.softmax_classification(
-            output, target, anchored=True
-        )
+    def compute_classification_loss(output, target):
+        loss = keras_rcnn.backend.softmax_classification(output, target, anchored=True)
 
         loss = keras.backend.mean(loss)
 
@@ -43,18 +39,14 @@ class RCNNRegressionLoss(keras.layers.Layer):
     def call(self, inputs, training=None, **kwargs):
         output, target, labels_target = inputs
 
-        loss = keras.backend.in_train_phase(
-            lambda: self.compute_loss(output, target, labels_target),
-            keras.backend.variable(0),
-            training=training
-        )
+        loss = keras.backend.in_train_phase(lambda: self.compute_regression_loss(output, target, labels_target), keras.backend.variable(0), training=training)
 
         self.add_loss(loss, inputs)
 
         return output
 
     @staticmethod
-    def compute_loss(output, target, labels_target):
+    def compute_regression_loss(output, target, labels_target):
         """
         Return the regression loss of Faster R-CNN.
         :return: A loss function for R-CNNs.
@@ -83,9 +75,7 @@ class RCNNRegressionLoss(keras.layers.Layer):
         output = output * labels
 
         inside_mul = inside_weights * keras.backend.abs(output - target)
-        smooth_l1_sign = keras.backend.cast(
-            keras.backend.less(inside_mul, 1.0 / sigma2),
-            keras.backend.floatx())
+        smooth_l1_sign = keras.backend.cast(keras.backend.less(inside_mul, 1.0 / sigma2), keras.backend.floatx())
 
         smooth_l1_option1 = (inside_mul * inside_mul) * (0.5 * sigma2)
         smooth_l1_option2 = inside_mul - (0.5 / sigma2)
@@ -102,4 +92,3 @@ class RCNNRegressionLoss(keras.layers.Layer):
 
     def compute_output_shape(self, input_shape):
         return input_shape[0]
-

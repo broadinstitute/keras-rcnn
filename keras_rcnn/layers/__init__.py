@@ -1,7 +1,13 @@
-from .losses import (RPNClassificationLoss, RPNRegressionLoss)
+from .losses import (
+    RCNNClassificationLoss,
+    RCNNMaskLoss,
+    RCNNRegressionLoss,
+    RPNClassificationLoss,
+    RPNRegressionLoss
+)
 
 from .object_detection import (AnchorTarget, ObjectProposal, ProposalTarget)
 
-from .pooling import RegionOfInterest
+from ._pooling import RegionOfInterest
 
-from .detection import Detection
+from ._object_detection import ObjectDetection

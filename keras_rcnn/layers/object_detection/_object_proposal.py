@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 import keras.backend
 import keras.engine
 
@@ -19,13 +21,7 @@ class ObjectProposal(keras.engine.topology.Layer):
     # Output shape
         (# images, # proposals, 4)
     """
-    def __init__(
-        self,
-        maximum_proposals=300,
-        minimum_size=16,
-        stride=16,
-        **kwargs
-    ):
+    def __init__(self, maximum_proposals=300, minimum_size=16, stride=16, **kwargs):
         self.maximum_proposals = maximum_proposals
 
         # minimum width/height of proposals in original image size
@@ -85,12 +81,7 @@ class ObjectProposal(keras.engine.topology.Layer):
         scores = keras.backend.gather(scores, indices)
 
         # 6. apply nms (e.g. threshold = 0.7)
-        indices = keras_rcnn.backend.non_maximum_suppression(
-            boxes=proposals,
-            scores=scores,
-            maximum=self.maximum_proposals,
-            threshold=0.7
-        )
+        indices = keras_rcnn.backend.non_maximum_suppression(boxes=proposals, scores=scores, maximum=self.maximum_proposals, threshold=0.7)
 
         proposals = keras.backend.gather(proposals, indices)
 

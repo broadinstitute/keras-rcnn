@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 import keras.backend
 
 import keras_rcnn.backend

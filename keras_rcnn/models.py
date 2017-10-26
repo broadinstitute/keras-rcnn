@@ -1,13 +1,4 @@
-import keras.backend
-import keras.engine
-import keras.layers
-
-import keras_rcnn.backend
-import keras_rcnn.classifiers
-import keras_rcnn.datasets.malaria
-import keras_rcnn.layers
-import keras_rcnn.preprocessing
-
+# -*- coding: utf-8 -*-
 
 import keras.backend
 import keras.engine
@@ -109,6 +100,9 @@ def _train(classes, training_options=None):
                 "minimum_size": 16,
                 "stride": 16
             },
+            "object_detection": {
+
+            },
             "proposal_target": {
                 "fg_fraction": 0.5,
                 "fg_thresh": 0.7,
@@ -161,9 +155,9 @@ def _train(classes, training_options=None):
         deltas = keras_rcnn.layers.losses.RCNNRegressionLoss()([deltas, bounding_box_targets, labels_targets])
         scores = keras_rcnn.layers.losses.RCNNClassificationLoss()([scores, labels_targets])
 
-        final_boxes, final_scores = keras_rcnn.layers.Detection()([proposals, deltas, scores, metadata])
+        bounding_boxes, scores = keras_rcnn.layers.ObjectDetection()([proposals, deltas, scores, metadata])
 
-        return [all_anchors, proposals, deltas, scores, final_boxes]
+        return [bounding_boxes, proposals, scores]
 
     return f
 

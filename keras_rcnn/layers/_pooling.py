@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 import keras.engine.topology
 
 import keras_rcnn.backend
@@ -67,4 +69,4 @@ class RegionOfInterest(keras.engine.topology.Layer):
         return keras.backend.expand_dims(slices, axis=0)
 
     def compute_output_shape(self, input_shape):
-        return (1, input_shape[1][1], self.extent[0], self.extent[1], self.channels)
+        return 1, input_shape[1][1], self.extent[0], self.extent[1], self.channels
