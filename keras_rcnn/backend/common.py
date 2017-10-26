@@ -253,7 +253,7 @@ def softmax_classification(output, target, anchored=False, weights=None):
     target = keras.backend.reshape(target, [-1, classes])
     output = keras.backend.reshape(output, [-1, classes])
 
-    loss = focal_loss(target, output)
+    loss = keras.backend.categorical_crossentropy(target, output, from_logits=False)
 
     if anchored:
         if weights is not None:
