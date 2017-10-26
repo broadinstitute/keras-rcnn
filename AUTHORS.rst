@@ -10,8 +10,8 @@ Jane Hung <jyenhung@gmail.com> @jhung0
 
 Jihong Ju <daniel.jihong.ju@gmail.com> @jujihong
 
+Victor Kulikovv <kulikov.victor@gmail.com>
+
 Claire McQuin <mcquincl@gmail.com> @mcquin
 
 Mihai Morariu <mihaimorariu@gmail.com> @mihaimorariu
-
-Victor Kulikovv <kulikov.victor@gmail.com>
