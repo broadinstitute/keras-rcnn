@@ -100,6 +100,9 @@ def _train(classes, training_options=None):
                 "minimum_size": 16,
                 "stride": 16
             },
+            "object_detection": {
+
+            },
             "proposal_target": {
                 "fg_fraction": 0.5,
                 "fg_thresh": 0.7,
@@ -152,7 +155,9 @@ def _train(classes, training_options=None):
         deltas = keras_rcnn.layers.losses.RCNNRegressionLoss()([deltas, bounding_box_targets, labels_targets])
         scores = keras_rcnn.layers.losses.RCNNClassificationLoss()([scores, labels_targets])
 
-        return [all_anchors, deltas, proposals, scores]
+        bounding_boxes, scores = keras_rcnn.layers.ObjectDetection()([proposals, deltas, scores, metadata])
+
+        return [bounding_boxes, proposals, scores]
 
     return f
 
