@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 import keras.backend
 import tensorflow
 
@@ -15,12 +17,8 @@ def gather_nd(params, indices):
     return tensorflow.gather_nd(params, indices)
 
 
-def matmul(a, b, transpose_a=False, transpose_b=False, adjoint_a=False,
-           adjoint_b=False, a_is_sparse=False, b_is_sparse=False):
-    return tensorflow.matmul(a, b, transpose_a=transpose_a,
-                             transpose_b=transpose_b, adjoint_a=adjoint_a,
-                             adjoint_b=adjoint_b, a_is_sparse=a_is_sparse,
-                             b_is_sparse=b_is_sparse)
+def matmul(a, b, transpose_a=False, transpose_b=False, adjoint_a=False, adjoint_b=False, a_is_sparse=False, b_is_sparse=False):
+    return tensorflow.matmul(a, b, transpose_a=transpose_a, transpose_b=transpose_b, adjoint_a=adjoint_a, adjoint_b=adjoint_b, a_is_sparse=a_is_sparse, b_is_sparse=b_is_sparse)
 
 
 # TODO: emulate NumPy semantics
@@ -57,23 +55,18 @@ def scatter_add_tensor(ref, indices, updates, name=None):
     :return: Same as ref. Returned as a convenience for operations that want
     to use the updated values after the update is done.
     """
-    with tensorflow.name_scope(name, 'scatter_add_tensor',
-                               [ref, indices, updates]) as scope:
+    with tensorflow.name_scope(name, 'scatter_add_tensor', [ref, indices, updates]) as scope:
         ref = tensorflow.convert_to_tensor(ref, name='ref')
 
         indices = tensorflow.convert_to_tensor(indices, name='indices')
 
         updates = tensorflow.convert_to_tensor(updates, name='updates')
 
-        ref_shape = tensorflow.shape(ref, out_type=indices.dtype,
-                                     name='ref_shape')
+        ref_shape = tensorflow.shape(ref, out_type=indices.dtype, name='ref_shape')
 
-        scattered_updates = tensorflow.scatter_nd(indices, updates, ref_shape,
-                                                  name='scattered_updates')
+        scattered_updates = tensorflow.scatter_nd(indices, updates, ref_shape, name='scattered_updates')
 
-        with tensorflow.control_dependencies([tensorflow.assert_equal(
-                ref_shape,
-                tensorflow.shape(scattered_updates, out_type=indices.dtype))]):
+        with tensorflow.control_dependencies([tensorflow.assert_equal(ref_shape, tensorflow.shape(scattered_updates, out_type=indices.dtype))]):
             output = tensorflow.add(ref, scattered_updates, name=scope)
 
         return output
@@ -91,10 +84,7 @@ def where(condition, x=None, y=None):
 
 
 def non_maximum_suppression(boxes, scores, maximum, threshold=0.5):
-    return tensorflow.image.non_max_suppression(boxes=boxes,
-                                                iou_threshold=threshold,
-                                                max_output_size=maximum,
-                                                scores=scores)
+    return tensorflow.image.non_max_suppression(boxes=boxes, iou_threshold=threshold, max_output_size=maximum, scores=scores)
 
 
 def crop_and_resize(image, boxes, size):

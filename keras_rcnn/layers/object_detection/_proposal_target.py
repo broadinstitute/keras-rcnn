@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 import keras.backend
 import keras.engine
 import tensorflow
@@ -106,46 +108,28 @@ class ProposalTarget(keras.layers.Layer):
         labels = self.set_label_background(labels)
 
         # Compute bounding-box regression targets for an image.
-        gt_boxes = keras.backend.gather(gt_boxes,
-                                        keras.backend.gather(
-                                                gt_assignment, keep_inds
-                                                )
-                                        )
+        gt_boxes = keras.backend.gather(gt_boxes, keras.backend.gather(gt_assignment, keep_inds))
         bbox_targets = self.get_bbox_targets(rois, labels, gt_boxes)
 
         return rois, labels, bbox_targets
 
     def set_label_background(self, labels):
         # Clamp labels for the background RoIs to 0
-        update_indices = keras.backend.arange(self.fg_rois_per_this_image,
-                                              keras.backend.shape(labels)[0])
+        update_indices = keras.backend.arange(self.fg_rois_per_this_image, keras.backend.shape(labels)[0])
         update_indices_0 = keras.backend.reshape(update_indices, (-1, 1))
-        update_indices_1 = keras_rcnn.backend.where(
-            keras.backend.equal(keras.backend.gather(labels, update_indices),
-                                1))[:, 1]
-        update_indices_1 = keras.backend.reshape(
-            keras.backend.cast(update_indices_1, 'int32'), (-1, 1))
+        update_indices_1 = keras_rcnn.backend.where(keras.backend.equal(keras.backend.gather(labels, update_indices), 1))[:, 1]
+        update_indices_1 = keras.backend.reshape(keras.backend.cast(update_indices_1, 'int32'), (-1, 1))
 
         # By first removing the label
-        update_indices = keras.backend.concatenate(
-            [update_indices_0, update_indices_1], axis=1)
-        inverse_labels = keras_rcnn.backend.gather_nd(labels,
-                                                      update_indices) * -1
-        labels = keras_rcnn.backend.scatter_add_tensor(labels, update_indices,
-                                                       inverse_labels)
+        update_indices = keras.backend.concatenate([update_indices_0, update_indices_1], axis=1)
+        inverse_labels = keras_rcnn.backend.gather_nd(labels, update_indices) * -1
+        labels = keras_rcnn.backend.scatter_add_tensor(labels, update_indices, inverse_labels)
 
         # And then making the label = background
-        update_indices = keras.backend.concatenate(
-            [update_indices_0, keras.backend.zeros_like(update_indices_0)],
-            axis=1)
-        inverse_labels = keras_rcnn.backend.gather_nd(labels,
-                                                      update_indices) * -1
+        update_indices = keras.backend.concatenate([update_indices_0, keras.backend.zeros_like(update_indices_0)], axis=1)
+        inverse_labels = keras_rcnn.backend.gather_nd(labels, update_indices) * -1
 
-        labels = keras_rcnn.backend.scatter_add_tensor(
-            labels,
-            update_indices,
-            inverse_labels + keras.backend.ones_like(inverse_labels)
-        )
+        labels = keras_rcnn.backend.scatter_add_tensor(labels, update_indices, inverse_labels + keras.backend.ones_like(inverse_labels))
         return labels
 
     def compute_output_shape(self, input_shape):
@@ -172,25 +156,19 @@ class ProposalTarget(keras.layers.Layer):
         # Guard against the case when an image has fewer than fg_rois_per_image
         # foreground RoIs
         fg_rois_per_image = keras.backend.cast(self.fg_rois_per_image, 'int32')
-        self.fg_rois_per_this_image = keras.backend.minimum(fg_rois_per_image,
-                                                       keras.backend.shape(
-                                                           fg_inds)[0])
+        self.fg_rois_per_this_image = keras.backend.minimum(fg_rois_per_image, keras.backend.shape(fg_inds)[0])
 
         # Sample foreground regions without replacement
         fg_inds = self.sample_indices(fg_inds, self.fg_rois_per_this_image)
 
-
         # Select background RoIs as those within [BG_THRESH_LO, BG_THRESH_HI)
-        bg_inds = keras_rcnn.backend.where(
-            (max_overlaps < self.bg_thresh_hi) & (max_overlaps >= self.bg_thresh_lo))
+        bg_inds = keras_rcnn.backend.where((max_overlaps < self.bg_thresh_hi) & (max_overlaps >= self.bg_thresh_lo))
 
         # Compute number of background RoIs to take from this image (guarding
         # against there being fewer than desired)
         bg_rois_per_this_image = keras.backend.cast(self.rois_per_image, 'int32') - self.fg_rois_per_this_image
         bg_rois_per_this_image = keras.backend.cast(bg_rois_per_this_image, 'int32')
-        bg_rois_per_this_image = keras.backend.minimum(bg_rois_per_this_image,
-                                                       keras.backend.shape(
-                                                           bg_inds)[0])
+        bg_rois_per_this_image = keras.backend.minimum(bg_rois_per_this_image, keras.backend.shape(bg_inds)[0])
 
         # Sample background regions without replacement
         bg_inds = self.sample_indices(bg_inds, bg_rois_per_this_image)
@@ -205,14 +183,9 @@ class ProposalTarget(keras.layers.Layer):
             return keras.backend.reshape(indices, (-1,))
 
         def sample(indices, size):
-            return keras_rcnn.backend.shuffle(
-                keras.backend.reshape(indices, (-1,)))[:size]
+            return keras_rcnn.backend.shuffle(keras.backend.reshape(indices, (-1,)))[:size]
 
-        return keras.backend.switch(keras.backend.shape(indices)[0] > 0,
-                                       lambda: no_sample(indices),
-                                       lambda: sample(indices,
-                                                      threshold))
-
+        return keras.backend.switch(keras.backend.shape(indices)[0] > 0, lambda: no_sample(indices), lambda: sample(indices, threshold))
 
 
 def get_bbox_regression_labels(labels, bbox_target_data):
@@ -229,8 +202,7 @@ def get_bbox_regression_labels(labels, bbox_target_data):
 
     n = keras.backend.shape(bbox_target_data)[0]
 
-    bbox_targets = tensorflow.zeros((n, 4 * num_classes),
-                                    dtype=keras.backend.floatx())
+    bbox_targets = tensorflow.zeros((n, 4 * num_classes), dtype=keras.backend.floatx())
 
     inds = keras.backend.reshape(keras_rcnn.backend.where(clss > 0), (-1,))
 
@@ -241,8 +213,7 @@ def get_bbox_regression_labels(labels, bbox_target_data):
     ii = keras.backend.expand_dims(inds)
     ii = keras.backend.tile(ii, [4, 1])
 
-    aa = keras.backend.expand_dims(
-        keras.backend.concatenate([start, start + 1, start + 2, start + 3], 0))
+    aa = keras.backend.expand_dims(keras.backend.concatenate([start, start + 1, start + 2, start + 3], 0))
     aa = keras.backend.cast(aa, dtype='int64')
 
     indices = keras.backend.concatenate([ii, aa], 1)
@@ -252,7 +223,6 @@ def get_bbox_regression_labels(labels, bbox_target_data):
     updates = keras.backend.reshape(updates, (-1,))
 
     # bbox_targets are 0
-    bbox_targets = keras_rcnn.backend.scatter_add_tensor(bbox_targets, indices,
-                                                         updates)
+    bbox_targets = keras_rcnn.backend.scatter_add_tensor(bbox_targets, indices, updates)
 
     return bbox_targets

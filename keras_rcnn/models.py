@@ -1,13 +1,4 @@
-import keras.backend
-import keras.engine
-import keras.layers
-
-import keras_rcnn.backend
-import keras_rcnn.classifiers
-import keras_rcnn.datasets.malaria
-import keras_rcnn.layers
-import keras_rcnn.preprocessing
-
+# -*- coding: utf-8 -*-
 
 import keras.backend
 import keras.engine
