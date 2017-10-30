@@ -11,10 +11,16 @@ class RCNNClassificationLoss(keras.layers.Layer):
     def __init__(self, **kwargs):
         super(RCNNClassificationLoss, self).__init__(**kwargs)
 
-    def call(self, inputs, training=None, **kwargs):
+    def call(self, inputs, **kwargs):
         output, target = inputs
 
-        loss = keras.backend.in_train_phase(lambda: self.compute_classification_loss(output, target), keras.backend.variable(0), training=training)
+        def no_loss():
+            return 0.0
+        
+        def calculate_loss():
+            return self.compute_classification_loss(output, target)
+        
+        loss = tensorflow.cond(keras.backend.not_equal(keras.backend.shape(output)[1], keras.backend.shape(target)[1]), no_loss, calculate_loss)
 
         self.add_loss(loss, inputs)
 
@@ -39,7 +45,13 @@ class RCNNRegressionLoss(keras.layers.Layer):
     def call(self, inputs, training=None, **kwargs):
         output, target, labels_target = inputs
 
-        loss = keras.backend.in_train_phase(lambda: self.compute_regression_loss(output, target, labels_target), keras.backend.variable(0), training=training)
+        def no_loss():
+            return 0.0
+        
+        def calculate_loss():
+            return self.compute_regression_loss(output, target, labels_target)
+        
+        loss = tensorflow.cond(keras.backend.not_equal(keras.backend.shape(output)[1], keras.backend.shape(target)[1]), no_loss, calculate_loss)
 
         self.add_loss(loss, inputs)
 
