@@ -42,7 +42,7 @@ class RCNNRegressionLoss(keras.layers.Layer):
     def __init__(self, **kwargs):
         super(RCNNRegressionLoss, self).__init__(**kwargs)
 
-    def call(self, inputs, training=None, **kwargs):
+    def call(self, inputs, **kwargs):
         output, target, labels_target = inputs
 
         def no_loss():
