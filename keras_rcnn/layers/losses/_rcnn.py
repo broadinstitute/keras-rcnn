@@ -14,7 +14,7 @@ class RCNNClassificationLoss(keras.layers.Layer):
     def call(self, inputs, training=None, **kwargs):
         output, target = inputs
 
-        loss = keras.backend.in_train_phase(lambda: self.compute_classification_loss(output, target), keras.backend.variable(0), training=training)
+        loss = keras.backend.in_test_phase(keras.backend.variable(0), lambda: self.compute_classification_loss(output, target), training=training)
 
         self.add_loss(loss, inputs)
 
@@ -39,7 +39,7 @@ class RCNNRegressionLoss(keras.layers.Layer):
     def call(self, inputs, training=None, **kwargs):
         output, target, labels_target = inputs
 
-        loss = keras.backend.in_train_phase(lambda: self.compute_regression_loss(output, target, labels_target), keras.backend.variable(0), training=training)
+        loss = keras.backend.in_test_phase(keras.backend.variable(0), lambda: self.compute_regression_loss(output, target, labels_target), training=training)
 
         self.add_loss(loss, inputs)
 
