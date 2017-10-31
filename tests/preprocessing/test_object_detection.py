@@ -5,6 +5,7 @@ import keras_rcnn.datasets.malaria
 import keras_rcnn.models
 import keras
 
+
 def test_scale_shape():
     min_size = 200
     max_size = 300
@@ -21,7 +22,8 @@ def test_scale_shape():
 
     assert numpy.isclose(scale, expected)
 
-class TestDebugObjectDetectionGenerator:
+
+class TestObjectDetectionGenerator:
     def test_flow(self):
 
         image = keras.layers.Input((448, 448, 3))
@@ -51,11 +53,8 @@ class TestDebugObjectDetectionGenerator:
             "rbc": 1,
             "not":2
         }
-        generator = keras_rcnn.preprocessing.DebugObjectDetectionGenerator()
-        training, test = keras_rcnn.datasets.malaria.load_data()
-        generator = generator.flow(training, classes)
-
         generator = keras_rcnn.preprocessing.ObjectDetectionGenerator()
+        training, test = keras_rcnn.datasets.malaria.load_data()
         generator = generator.flow(training, classes, target_shape=(448, 448), scale=1)
 
         optimizer = keras.optimizers.Adam(0.0001)

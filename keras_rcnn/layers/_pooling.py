@@ -38,6 +38,7 @@ class RegionOfInterest(keras.engine.topology.Layer):
         # convert regions from (x, y, w, h) to (x1, y1, x2, y2)
         boxes = keras.backend.cast(boxes, keras.backend.floatx())
 
+
         boxes = boxes / self.stride
 
         x1 = boxes[..., 0]

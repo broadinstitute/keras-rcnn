@@ -11,13 +11,14 @@ class TestObjectProposal:
 
         deltas = numpy.random.random((1, 14, 14, 9 * 4))
         scores = numpy.random.random((1, 14, 14, 9 * 2))
+        anchors = numpy.zeros((1, 14 * 14 * 9, 4)).astype('float32')
 
         deltas = keras.backend.variable(deltas)
         scores = keras.backend.variable(scores)
 
         object_proposal = keras_rcnn.layers.ObjectProposal()
 
-        object_proposal.call([metadata, deltas, scores])
+        object_proposal.call([metadata, deltas, scores, anchors])
 
 
 def test_filter_boxes():
