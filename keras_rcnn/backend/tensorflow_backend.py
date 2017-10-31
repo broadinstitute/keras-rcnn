@@ -91,12 +91,13 @@ def crop_and_resize(image, boxes, size):
     """Crop the image given boxes and resize with bilinear interplotation.
     # Parameters
     image: Input image of shape (1, image_height, image_width, depth)
-    boxes: Regions of interest of shape (1, num_boxes, 4),
+    boxes: Regions of interest of shape (num_boxes, 4),
     each row [y1, x1, y2, x2]
     size: Fixed size [h, w], e.g. [7, 7], for the output slices.
     # Returns
     4D Tensor (number of regions, slice_height, slice_width, channels)
     """
+
     box_ind = keras.backend.zeros_like(boxes, "int32")
     box_ind = box_ind[:, 0]
     box_ind = keras.backend.reshape(box_ind, [-1])

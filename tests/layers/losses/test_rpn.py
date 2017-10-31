@@ -8,6 +8,8 @@ import keras_rcnn.layers.object_detection._anchor_target as anchor_target
 
 
 def test_rpn_classification():
+    keras.backend.set_learning_phase(1)
+
     anchors = 9
 
     layer = keras_rcnn.layers.RPNClassificationLoss(anchors=anchors)
@@ -17,11 +19,11 @@ def test_rpn_classification():
     scores = keras.backend.variable(0.5 * numpy.ones((1, 14, 14, anchors * 2)))
 
     metadata = keras.backend.variable(numpy.array([[224, 224, 1]]))
+    anchors, rpn_labels, bounding_box_targets = \
+        keras_rcnn.layers.AnchorTarget()(
+            [scores, y_true, metadata])
 
-    labels, bbox_reg_targets = keras_rcnn.layers.AnchorTarget()(
-        [scores, y_true, metadata])
-
-    numpy.testing.assert_array_equal(layer.call([scores, labels]), scores)
+    numpy.testing.assert_array_equal(layer.call([scores, rpn_labels]), scores)
 
     assert len(layer.losses) == 1
 
@@ -31,6 +33,8 @@ def test_rpn_classification():
 
 
 def test_rpn_regression():
+    keras.backend.set_learning_phase(1)
+
     anchors = 9
 
     metadata = keras.backend.variable(numpy.array([[224, 224, 1]]))
@@ -53,11 +57,12 @@ def test_rpn_regression():
 
     expected_loss = 0
 
-    labels, bbox_reg_targets = keras_rcnn.layers.AnchorTarget()(
-        [scores, keras.backend.expand_dims(y_true, 0), metadata])
+    anchors, rpn_labels, bounding_box_targets = \
+        keras_rcnn.layers.AnchorTarget()(
+            [scores, keras.backend.expand_dims(y_true, 0), metadata])
 
     numpy.testing.assert_array_equal(
-        layer.call([deltas, bbox_reg_targets, labels]), deltas)
+        layer.call([deltas, bounding_box_targets, rpn_labels]), deltas)
 
     assert len(layer.losses) == 1
 
