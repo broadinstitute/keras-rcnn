@@ -44,19 +44,48 @@ class ObjectDetection(keras.engine.topology.Layer):
         other classes
         """
         def boxes():
-            proposals, deltas, _, metadata = x[0], x[1], x[2], x[3]
+            proposals, deltas, scores, metadata = x[0], x[1], x[2], x[3]
 
             proposals = keras.backend.reshape(proposals, (-1, 4))
 
             # unscale back to raw image space
+
             boxes = proposals / metadata[0][2]
-            
-            deltas = keras.backend.reshape(deltas, (keras.backend.shape(proposals)[0], -1))
+            num_objects = keras.backend.shape(proposals)[0]
+            deltas = keras.backend.reshape(deltas, (num_objects, -1))
 
             # Apply bounding-box regression deltas
             pred_boxes = keras_rcnn.backend.bbox_transform_inv(boxes, deltas)
 
             pred_boxes = keras_rcnn.backend.clip(pred_boxes, metadata[0][:2])
+
+            scores = keras.backend.reshape(scores, (num_objects, -1))
+
+            # Arg max
+            inds = keras.backend.expand_dims(keras.backend.arange(0, num_objects, dtype='int64'))
+            top_classes = keras.backend.expand_dims(keras.backend.argmax(scores, axis=1))
+            coordinate_0 = keras.backend.concatenate([inds, top_classes * 4], 1)
+            coordinate_1 = keras.backend.concatenate([inds, top_classes * 4 + 1], 1)
+            coordinate_2 = keras.backend.concatenate([inds, top_classes * 4 + 2], 1)
+            coordinate_3 = keras.backend.concatenate([inds, top_classes * 4 + 3], 1)
+
+            pred_boxes = keras_rcnn.backend.gather_nd(pred_boxes,
+                                         keras.backend.reshape(
+                                             keras.backend.concatenate([
+                                                 coordinate_0,
+                                                 coordinate_1,
+                                                 coordinate_2,
+                                                 coordinate_3
+                                             ], 1),
+                                             (-1, 2)
+                                         ))
+            pred_boxes = keras.backend.reshape(pred_boxes, (-1, 4))
+
+            max_scores = keras.backend.max(scores, axis=1)
+
+            nms_indices = keras_rcnn.backend.non_maximum_suppression(boxes=pred_boxes, scores=max_scores, maximum=num_objects, threshold=0.7)
+
+            pred_boxes = keras.backend.gather(pred_boxes, nms_indices)
 
             return keras.backend.expand_dims(pred_boxes, 0)
         
