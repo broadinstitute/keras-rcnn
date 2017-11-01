@@ -23,7 +23,8 @@ def test_rpn_classification():
         keras_rcnn.layers.AnchorTarget()(
             [scores, y_true, metadata])
 
-    numpy.testing.assert_array_equal(layer.call([scores, rpn_labels]), scores)
+    result = layer.call([scores, rpn_labels])
+    numpy.testing.assert_array_equal(keras.backend.eval(result), keras.backend.eval(keras.backend.reshape(scores, (1, -1, 2))))
 
     assert len(layer.losses) == 1
 

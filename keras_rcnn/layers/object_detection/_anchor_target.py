@@ -58,8 +58,9 @@ class AnchorTarget(keras.layers.Layer):
 
         gt_boxes = gt_boxes[0]
 
-        # TODO: Fix usage of batch index
-        rr, cc, total_anchors = keras.backend.int_shape(deltas)[1:]
+        rr = keras.backend.shape(deltas)[1]
+        cc = keras.backend.shape(deltas)[2]
+        total_anchors = keras.backend.shape(deltas)[3]
         total_anchors = rr * cc * total_anchors // 2
 
         # 1. Generate proposals from bbox deltas and shifted anchors
@@ -268,12 +269,12 @@ def unmap(data, count, inds_inside, fill=0):
     size count) """
 
     if keras.backend.ndim(data) == 1:
-        ret = keras.backend.ones((count,), dtype=keras.backend.floatx()) * fill
+        ret = tensorflow.ones((count,), dtype=keras.backend.floatx()) * fill
 
         inds_nd = keras.backend.expand_dims(inds_inside)
     else:
-        ret = (count,) + keras.backend.int_shape(data)[1:]
-        ret = keras.backend.ones(ret, dtype=keras.backend.floatx()) * fill
+        ret = (count, keras.backend.shape(data)[1])
+        ret = tensorflow.ones(ret, dtype=keras.backend.floatx()) * fill
 
         data = keras.backend.transpose(data)
         data = keras.backend.reshape(data, (-1,))

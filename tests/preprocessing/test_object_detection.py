@@ -26,7 +26,7 @@ def test_scale_shape():
 class TestObjectDetectionGenerator:
     def test_flow(self):
 
-        image = keras.layers.Input((448, 448, 3))
+        image = keras.layers.Input((None, None, 3))
         training_options = {
             "anchor_target": {
                 "allowed_border": 0,
