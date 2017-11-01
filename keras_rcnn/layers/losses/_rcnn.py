@@ -83,7 +83,7 @@ class RCNNRegressionLoss(keras.layers.Layer):
         indices_3 = keras.backend.concatenate([indices_r, indices_c * 4 + 3], 1)
         indices = keras.backend.concatenate([indices_0, indices_1, indices_2, indices_3], 0)
         updates = keras.backend.ones_like(indices, dtype=keras.backend.floatx())
-        labels = keras_rcnn.backend.scatter_add_tensor(keras.backend.zeros_like(output), indices, updates[:, 0])
+        labels = keras_rcnn.backend.scatter_add_tensor(keras.backend.zeros_like(output, dtype='float32'), indices, updates[:, 0])
         output = output * labels
 
         inside_mul = inside_weights * keras.backend.abs(output - target)
