@@ -21,20 +21,20 @@ def test_rcnn_classification():
 
 
 def test_rcnn_regression():
+    keras.backend.set_learning_phase(1)
     num_classes = 5
     layer = keras_rcnn.layers.losses.RCNNRegressionLoss()
 
-    deltas = 1.0 * numpy.zeros((1, 91, 4 * num_classes))
-    target = 1.0 * numpy.zeros((1, 91, 4 * num_classes))
-
-    classes = numpy.random.choice(range(0, num_classes), (91))
-    labels_target = numpy.zeros((1, 91, num_classes))
-    labels_target[0, numpy.arange(91), classes] = 1
-    labels_target = keras.backend.variable(labels_target)
+    deltas = numpy.zeros((1, 91, 4 * num_classes), dtype="float32")
+    target = numpy.zeros((1, 91, 4 * num_classes), dtype="float32")
+    labels_target = numpy.zeros((1, 91, num_classes), dtype="float32")
+    labels_target[:, :, 1] = 1
 
     expected_loss = 0
 
-    numpy.testing.assert_array_equal(layer.call([deltas, target, labels_target]), deltas)
+    numpy.testing.assert_array_equal(layer.call([deltas,
+                                                target,
+                                                labels_target]), deltas)
 
     assert len(layer.losses) == 1
 
@@ -55,18 +55,14 @@ def test_rcnn_regression():
     target = numpy.expand_dims(target, 0)
     target = keras.backend.variable(target)
 
-    labels_target = numpy.array([[1, 0, 0],
-                                 [0, 0, 1],
-                                 [1, 0, 0],
-                                 [0, 1, 0],
-                                 [0, 0, 1]])
-    labels_target = numpy.expand_dims(labels_target, 0)
-    labels_target = keras.backend.variable(labels_target)
+    labels_target = numpy.zeros((1, 5, 3), dtype="float32")
+    labels_target[:, :, 1] = 1
 
-    output = layer.call([deltas, target, labels_target])
-    numpy.testing.assert_array_equal(output, deltas)
+    numpy.testing.assert_array_equal(layer.call([deltas,
+                                                target,
+                                                labels_target]), deltas)
 
-    # expected_loss = 52.625
-    assert len(layer.losses) == 2
-    keras.backend.eval(layer.losses[1])
-    # assert numpy.isclose(keras.backend.eval(layer.losses[1]), expected_loss)
+    expected_loss = 4.205409
+
+    numpy.testing.assert_almost_equal(keras.backend.eval(layer.losses[1]),
+                                      expected_loss)

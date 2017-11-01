@@ -28,9 +28,9 @@ def test_label():
     result1 = keras.backend.eval(argmax_overlaps_inds)
     result2 = keras.backend.eval(bbox_labels)
 
-    assert result1.shape == (84,)
+    assert result1.shape == (376,)
 
-    assert result2.shape == (84,)
+    assert result2.shape == (376,)
 
     assert numpy.max(result2) <= 1
 
@@ -42,9 +42,9 @@ def test_label():
     result1 = keras.backend.eval(argmax_overlaps_inds)
     result2 = keras.backend.eval(bbox_labels)
 
-    assert result1.shape == (84,)
+    assert result1.shape == (376,)
 
-    assert result2.shape == (84,)
+    assert result2.shape == (376,)
 
     assert numpy.max(result2) <= 1
 
@@ -57,9 +57,9 @@ def test_label():
     result1 = keras.backend.eval(argmax_overlaps_inds)
     result2 = keras.backend.eval(bbox_labels)
 
-    assert result1.shape == (84,)
+    assert result1.shape == (376,)
 
-    assert result2.shape == (84,)
+    assert result2.shape == (376,)
 
     assert numpy.max(result2) <= 1
 
@@ -150,9 +150,9 @@ def test_overlapping():
     max_overlaps = keras.backend.eval(max_overlaps)
     gt_argmax_overlaps_inds = keras.backend.eval(gt_argmax_overlaps_inds)
 
-    assert a.shape == (84,)
+    assert a.shape == (376,)
 
-    assert max_overlaps.shape == (84,)
+    assert max_overlaps.shape == (376,)
 
     assert gt_argmax_overlaps_inds.shape == (91,)
 
@@ -202,8 +202,8 @@ def test_inside_image():
 
     inds_inside = keras.backend.eval(inds_inside)
 
-    assert inds_inside.shape == (84,)
+    assert inds_inside.shape == (376,)
 
     all_inside_anchors = keras.backend.eval(all_inside_anchors)
 
-    assert all_inside_anchors.shape == (84, 4)
+    assert all_inside_anchors.shape == (376, 4)

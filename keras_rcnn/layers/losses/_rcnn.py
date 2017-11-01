@@ -73,15 +73,21 @@ class RCNNRegressionLoss(keras.layers.Layer):
         target = target[:, :, 4:]
         labels_target = labels_target[:, :, 1:]
 
-        # mask out output values where class is different from targetrcnn loss function
-        a = keras.backend.cast(keras_rcnn.backend.where(keras.backend.equal(labels_target, 1)), 'int32')
+        # mask out output values where class is different from targetrcnn loss
+        # function
+        a = keras_rcnn.backend.where(keras.backend.equal(labels_target, 1))
+        a = keras.backend.cast(a, 'int32')
+
         indices_r = a[:, :2]
         indices_c = a[:, 2:]
         indices_0 = keras.backend.concatenate([indices_r, indices_c * 4], 1)
         indices_1 = keras.backend.concatenate([indices_r, indices_c * 4 + 1], 1)
         indices_2 = keras.backend.concatenate([indices_r, indices_c * 4 + 2], 1)
         indices_3 = keras.backend.concatenate([indices_r, indices_c * 4 + 3], 1)
-        indices = keras.backend.concatenate([indices_0, indices_1, indices_2, indices_3], 0)
+        indices = keras.backend.concatenate([indices_0,
+                                            indices_1,
+                                            indices_2,
+                                            indices_3], 0)
         updates = keras.backend.ones_like(indices, dtype=keras.backend.floatx())
         labels = keras_rcnn.backend.scatter_add_tensor(keras.backend.zeros_like(output, dtype='float32'), indices, updates[:, 0])
         output = output * labels
