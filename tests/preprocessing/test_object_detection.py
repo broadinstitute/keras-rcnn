@@ -51,10 +51,9 @@ class TestDebugObjectDetectionGenerator:
             "rbc": 1,
             "not":2
         }
-        generator = keras_rcnn.preprocessing.DebugObjectDetectionGenerator()
-        training, test = keras_rcnn.datasets.malaria.load_data()
-        generator = generator.flow(training, classes)
 
+        training, test = keras_rcnn.datasets.malaria.load_data()
+        
         generator = keras_rcnn.preprocessing.ObjectDetectionGenerator()
         generator = generator.flow(training, classes, target_shape=(448, 448), scale=1)
 

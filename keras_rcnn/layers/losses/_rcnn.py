@@ -15,7 +15,7 @@ class RCNNClassificationLoss(keras.layers.Layer):
         output, target = inputs
 
         def no_loss():
-            return 0.0
+            return keras.backend.constant(0.0)
         
         def calculate_loss():
             return self.compute_classification_loss(output, target)
@@ -46,7 +46,7 @@ class RCNNRegressionLoss(keras.layers.Layer):
         output, target, labels_target = inputs
 
         def no_loss():
-            return 0.0
+            return keras.backend.constant(0.0)
         
         def calculate_loss():
             return self.compute_regression_loss(output, target, labels_target)
