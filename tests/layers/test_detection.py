@@ -31,10 +31,12 @@ class TestDetection:
                         [ 17.50393092,  16.43268724,  32.89606908,  34.]])
         expected = numpy.expand_dims(expected, 0)
 
-        numpy.testing.assert_approx_equal(expected.sum(), keras.backend.eval(boxes).sum(), 3)
+        boxes = keras.backend.eval(boxes)
+        classes = keras.backend.eval(classes)
 
-        assert keras.backend.eval(boxes).shape == expected.shape
-        assert keras.backend.eval(classes).shape[:2] == keras.backend.eval(
-            boxes).shape[:2]
+        numpy.testing.assert_approx_equal(expected.sum(), boxes.sum(), 3)
 
-        assert keras.backend.eval(classes).shape[-1] == num_classes
+        assert boxes.shape == expected.shape
+        assert classes.shape[:2] == boxes.shape[:2]
+
+        assert classes.shape[-1] == num_classes
