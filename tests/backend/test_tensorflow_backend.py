@@ -6,6 +6,28 @@ import keras_rcnn.backend.tensorflow_backend
 import keras_rcnn.backend.common
 
 
+def test_transpose():
+    x = numpy.arange(4).reshape((2, 2))
+
+    target = numpy.transpose(x)
+
+    output = keras_rcnn.backend.transpose(x)
+
+    output = keras.backend.eval(output)
+
+    numpy.testing.assert_array_equal(target, output)
+
+    x = numpy.ones((1, 2, 3))
+
+    target = numpy.transpose(x, (1, 0, 2))
+
+    output = keras_rcnn.backend.transpose(x, [1, 0, 2])
+
+    output = keras.backend.eval(output)
+
+    numpy.testing.assert_array_equal(target, output)
+
+
 def test_shuffle():
     x = keras.backend.variable(numpy.random.random((10,)))
 
