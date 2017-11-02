@@ -4,6 +4,13 @@ import keras.backend
 import tensorflow
 
 
+def transpose(x, axes=None):
+    """
+    Permute the dimensions of an array.
+    """
+    return tensorflow.transpose(x, axes)
+
+
 def shuffle(x):
     """
     Modify a sequence by shuffling its contents. This function only shuffles
