@@ -207,3 +207,86 @@ def test_inside_image():
     all_inside_anchors = keras.backend.eval(all_inside_anchors)
 
     assert all_inside_anchors.shape == (376, 4)
+
+
+def test_inside_and_outside_weights_1():
+    anchors = numpy.array(
+        [[30, 20, 50, 30],
+         [10, 15, 20, 25],
+         [ 5, 15, 20, 22]]
+    )
+
+    anchors = keras.backend.constant(anchors)
+
+    subsample = keras.backend.constant([1, 0, 1])
+
+    positive_weight = -1.0
+
+    proposed_inside_weights = [1.0, 0.5, 0.7, 1.0]
+
+    target_inside_weights = numpy.array(
+        [[1.0, 0.5, 0.7, 1.0],
+         [0.0, 0.0, 0.0, 0.0],
+         [1.0, 0.5, 0.7, 1.0]]
+    )
+
+    target_inside_weights = keras.backend.constant(target_inside_weights)
+
+    target_outside_weights = keras.backend.ones_like(anchors, dtype=keras.backend.floatx())
+    target_outside_weights /= target_outside_weights
+
+    output_inside_weights, output_outside_weights = anchor_target.inside_and_outside_weights(anchors, subsample, positive_weight, proposed_inside_weights)
+
+    target_inside_weights = keras.backend.eval(target_inside_weights)
+    output_inside_weights = keras.backend.eval(output_inside_weights)
+
+    numpy.testing.assert_array_equal(target_inside_weights, output_inside_weights)
+
+    target_outside_weights = keras.backend.eval(target_outside_weights)
+    output_outside_weights = keras.backend.eval(output_outside_weights)
+
+    numpy.testing.assert_array_equal(target_outside_weights, output_outside_weights)
+
+
+def test_inside_and_outside_weights_2():
+    anchors = numpy.array(
+        [[30, 20, 50, 30],
+         [10, 15, 20, 25],
+         [ 5, 15, 20, 22]]
+    )
+
+    anchors = keras.backend.constant(anchors)
+
+    subsample = keras.backend.constant([1, 0, 1])
+
+    positive_weight = 0.6
+
+    proposed_inside_weights = [1.0, 0.5, 0.7, 1.0]
+
+    target_inside_weights = numpy.array(
+        [[1.0, 0.5, 0.7, 1.0],
+         [0.0, 0.0, 0.0, 0.0],
+         [1.0, 0.5, 0.7, 1.0]]
+    )
+
+    target_inside_weights = keras.backend.constant(target_inside_weights)
+
+    target_outside_weights = numpy.array(
+        [[0.3, 0.3, 0.3, 0.3],
+         [0.4, 0.4, 0.4, 0.4],
+         [0.3, 0.3, 0.3, 0.3]]
+    )
+
+    target_outside_weights = keras.backend.constant(target_outside_weights)
+
+    output_inside_weights, output_outside_weights = anchor_target.inside_and_outside_weights(anchors, subsample, positive_weight, proposed_inside_weights)
+
+    target_inside_weights = keras.backend.eval(target_inside_weights)
+    output_inside_weights = keras.backend.eval(output_inside_weights)
+
+    numpy.testing.assert_array_equal(target_inside_weights, output_inside_weights)
+
+    target_outside_weights = keras.backend.eval(target_outside_weights)
+    output_outside_weights = keras.backend.eval(output_outside_weights)
+
+    numpy.testing.assert_array_equal(target_outside_weights, output_outside_weights)
