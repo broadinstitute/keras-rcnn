@@ -15,7 +15,7 @@ class RCNNClassificationLoss(keras.layers.Layer):
         output, target = inputs
 
         def no_loss():
-            return 0.0
+            return keras.backend.constant(0.0)
         
         def calculate_loss():
             return self.compute_classification_loss(output, target)
@@ -46,7 +46,7 @@ class RCNNRegressionLoss(keras.layers.Layer):
         output, target, labels_target = inputs
 
         def no_loss():
-            return 0.0
+            return keras.backend.constant(0.0)
         
         def calculate_loss():
             return self.compute_regression_loss(output, target, labels_target)
@@ -89,7 +89,7 @@ class RCNNRegressionLoss(keras.layers.Layer):
                                             indices_2,
                                             indices_3], 0)
         updates = keras.backend.ones_like(indices, dtype=keras.backend.floatx())
-        labels = keras_rcnn.backend.scatter_add_tensor(keras.backend.zeros_like(output), indices, updates[:, 0])
+        labels = keras_rcnn.backend.scatter_add_tensor(keras.backend.zeros_like(output, dtype='float32'), indices, updates[:, 0])
         output = output * labels
 
         inside_mul = inside_weights * keras.backend.abs(output - target)

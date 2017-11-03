@@ -131,11 +131,10 @@ def _train(classes, training_options=None):
             positive_overlap=training_options["anchor_target"]["positive_overlap"]
         )([scores, bounding_boxes, metadata])
 
-        scores_reshaped = keras.layers.Reshape((-1, 2))(scores)
-        scores_reshaped = keras.layers.Activation("softmax")(scores_reshaped)
+        scores = keras.layers.Activation("softmax")(scores)
 
         deltas = keras_rcnn.layers.RPNRegressionLoss(9)([deltas, bounding_box_targets, rpn_labels])
-        scores = keras_rcnn.layers.RPNClassificationLoss(9)([scores_reshaped, rpn_labels])
+        scores = keras_rcnn.layers.RPNClassificationLoss(9)([scores, rpn_labels])
 
         proposals_ = keras_rcnn.layers.ObjectProposal(
             maximum_proposals=training_options["object_proposal"]["maximum_proposals"],

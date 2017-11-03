@@ -43,7 +43,7 @@ class ObjectDetection(keras.engine.topology.Layer):
         note the box only corresponds to the most probable class, not the
         other classes
         """
-        def boxes():
+        def detections(num_output):
             proposals, deltas, scores, metadata = x[0], x[1], x[2], x[3]
 
             proposals = keras.backend.reshape(proposals, (-1, 4))
@@ -87,11 +87,13 @@ class ObjectDetection(keras.engine.topology.Layer):
 
             pred_boxes = keras.backend.gather(pred_boxes, nms_indices)
 
-            return keras.backend.expand_dims(pred_boxes, 0)
-        
-        bounding_boxes = keras.backend.in_train_phase(x[1], lambda: boxes(), training=training)
+            scores = keras.backend.gather(scores, nms_indices)
 
-        scores = x[2]
+            detections = [keras.backend.expand_dims(pred_boxes, 0), keras.backend.expand_dims(scores, 0)]
+            return detections[num_output]
+        
+        bounding_boxes = keras.backend.in_train_phase(x[1], lambda: detections(0), training=training)
+        scores = keras.backend.in_train_phase(x[2], lambda: detections(1), training=training)
 
         return [bounding_boxes, scores]
 

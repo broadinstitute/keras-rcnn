@@ -45,9 +45,9 @@ def test_rcnn_regression():
                           [5, 2, 0, 0, 2, 0, 7, 8, 1, 5, 2, 10],
                           [0, 0, 0, 0, 5, 3, 13, 4, 0, 0, 0, 0],
                           [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]])
-    deltas = numpy.expand_dims(deltas, 0)
+    deltas = 1.0 * numpy.expand_dims(deltas, 0)
     deltas = keras.backend.variable(deltas)
-    target = numpy.array([[0, 0, 0, 0, 3, 4, 5, 6, 0, 0, 0, 0],
+    target = 1.0 * numpy.array([[0, 0, 0, 0, 3, 4, 5, 6, 0, 0, 0, 0],
                           [0, 0, 0, 0, 7, 3, 5, 6, 0, 0, 0, 0],
                           [0, 0, 0, 0, 0, 0, 0, 0, 1, 5, 2, 10],
                           [0, 0, 0, 0, 5, 3, 13, 4, 0, 0, 0, 0],
