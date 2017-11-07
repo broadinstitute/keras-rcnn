@@ -92,7 +92,7 @@ class ObjectDetection(keras.engine.topology.Layer):
             detections = [keras.backend.expand_dims(pred_boxes, 0), keras.backend.expand_dims(scores, 0)]
             return detections[num_output]
         
-        bounding_boxes = keras.backend.in_train_phase(x[1], lambda: detections(0), training=training)
+        bounding_boxes = keras.backend.in_train_phase(x[0], lambda: detections(0), training=training)
         scores = keras.backend.in_train_phase(x[2], lambda: detections(1), training=training)
 
         return [bounding_boxes, scores]
