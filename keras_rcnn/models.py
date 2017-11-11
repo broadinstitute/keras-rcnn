@@ -57,7 +57,7 @@ def _extract_proposals(options=None):
         convolution_3x3 = keras.layers.Conv2D(512, name="convolution_3x3", **options)(inputs)
 
         deltas = keras.layers.Conv2D(9 * 4, (1, 1), activation="linear", kernel_initializer="zero", name="deltas")(convolution_3x3)
-        scores = keras.layers.Conv2D(9 * 2, (1, 1), kernel_initializer="uniform", name="scores")(convolution_3x3)
+        scores = keras.layers.Conv2D(9, (1, 1), activation="sigmoid", kernel_initializer="uniform", name="scores")(convolution_3x3)
 
         return [deltas, scores]
 
@@ -130,8 +130,6 @@ def _train(classes, training_options=None):
             negative_overlap=training_options["anchor_target"]["negative_overlap"],
             positive_overlap=training_options["anchor_target"]["positive_overlap"]
         )([scores, bounding_boxes, metadata])
-
-        scores = keras.layers.Activation("softmax")(scores)
 
         deltas = keras_rcnn.layers.RPNRegressionLoss(9)([deltas, bounding_box_targets, rpn_labels])
         scores = keras_rcnn.layers.RPNClassificationLoss(9)([scores, rpn_labels])
