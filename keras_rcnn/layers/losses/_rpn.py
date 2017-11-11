@@ -14,7 +14,6 @@ class RPNClassificationLoss(keras.layers.Layer):
 
     def call(self, inputs, **kwargs):
         output, target = inputs
-        output = keras.backend.reshape(output, [1, -1, 2])
 
         loss = self.compute_loss(output, target)
 
@@ -24,14 +23,15 @@ class RPNClassificationLoss(keras.layers.Layer):
 
     @staticmethod
     def compute_loss(output, target):
-
+        output = keras.backend.reshape(output, [1, -1])
+        
         condition = keras.backend.not_equal(target, -1)
 
         indices = keras_rcnn.backend.where(condition)
 
         output = keras_rcnn.backend.gather_nd(output, indices)
         target = keras_rcnn.backend.gather_nd(target, indices)
-        loss = keras.backend.sparse_categorical_crossentropy(target, output)
+        loss = keras.backend.binary_crossentropy(target, output)
         loss = keras.backend.mean(loss)
 
         return loss
