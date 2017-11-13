@@ -6,6 +6,32 @@ import keras.layers
 import keras_rcnn.backend
 
 
+class RPN(keras.layers.Layer):
+    def __init__(self, anchors, **kwargs):
+        self.anchors = anchors
+
+        super(RPN, self).__init__(**kwargs)
+
+    def call(self, inputs, **kwargs):
+        scores_output, scores_target = inputs
+
+        classification_loss = self.compute_classification_loss(scores_output, scores_target)
+
+        regression_loss = self.compute_regression_loss(scores_output, scores_target)
+
+        loss = classification_loss + regression_loss
+
+        self.add_loss(loss)
+
+        return scores_output
+
+    def compute_classification_loss(self, output, target):
+        pass
+
+    def compute_regression_loss(self, output, target):
+        pass
+
+
 class RPNClassificationLoss(keras.layers.Layer):
     def __init__(self, anchors, **kwargs):
         self.anchors = anchors
@@ -15,6 +41,8 @@ class RPNClassificationLoss(keras.layers.Layer):
     def call(self, inputs, **kwargs):
         output, target = inputs
 
+        output = keras.backend.reshape(output, (1, -1))
+
         loss = self.compute_loss(output, target)
 
         self.add_loss(loss, inputs)
@@ -23,8 +51,6 @@ class RPNClassificationLoss(keras.layers.Layer):
 
     @staticmethod
     def compute_loss(output, target):
-        output = keras.backend.reshape(output, [1, -1])
-        
         condition = keras.backend.not_equal(target, -1)
 
         indices = keras_rcnn.backend.where(condition)
@@ -49,6 +75,8 @@ class RPNRegressionLoss(keras.layers.Layer):
     def call(self, inputs, **kwargs):
         output, target, labels = inputs
 
+        output = keras.backend.reshape(output, (1, -1, 4))
+
         loss = self.compute_loss(output, target, labels)
 
         self.add_loss(loss, inputs)
@@ -58,8 +86,6 @@ class RPNRegressionLoss(keras.layers.Layer):
     @staticmethod
     def compute_loss(output, target, labels):
         # Robust L1 Loss
-        output = keras.backend.reshape(output, [1, -1, 4])
-
         condition = keras.backend.not_equal(labels, -1)
 
         indices = keras_rcnn.backend.where(condition)
