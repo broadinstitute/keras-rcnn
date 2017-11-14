@@ -28,6 +28,9 @@ class RCNNClassificationLoss(keras.layers.Layer):
 
     @staticmethod
     def compute_classification_loss(output, target):
+        output = keras.backend.cast(output, keras.backend.floatx())
+        target = keras.backend.cast(target, keras.backend.floatx())
+
         loss = keras_rcnn.backend.softmax_classification(output, target, anchored=True)
 
         loss = keras.backend.mean(loss)
