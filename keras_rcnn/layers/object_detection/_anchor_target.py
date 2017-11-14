@@ -63,7 +63,7 @@ class AnchorTarget(keras.layers.Layer):
         rr = keras.backend.shape(deltas)[1]
         cc = keras.backend.shape(deltas)[2]
         total_anchors = keras.backend.shape(deltas)[3]
-        total_anchors = rr * cc * total_anchors // 2
+        total_anchors = rr * cc * total_anchors
 
         # 1. Generate proposals from bbox deltas and shifted anchors
         all_anchors = keras_rcnn.backend.shift((rr, cc), self.stride)
