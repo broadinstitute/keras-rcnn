@@ -19,8 +19,13 @@ class RCNNClassificationLoss(keras.layers.Layer):
         
         def calculate_loss():
             return self.compute_classification_loss(output, target)
-        
-        loss = tensorflow.cond(keras.backend.not_equal(keras.backend.shape(output)[1], keras.backend.shape(target)[1]), no_loss, calculate_loss)
+
+        x = keras.backend.shape(output)[1]
+        y = keras.backend.shape(target)[1]
+
+        predicate = keras.backend.not_equal(x, y)
+
+        loss = tensorflow.cond(predicate, no_loss, calculate_loss)
 
         self.add_loss(loss, inputs)
 
@@ -28,9 +33,6 @@ class RCNNClassificationLoss(keras.layers.Layer):
 
     @staticmethod
     def compute_classification_loss(output, target):
-        output = keras.backend.cast(output, keras.backend.floatx())
-        target = keras.backend.cast(target, keras.backend.floatx())
-
         loss = keras_rcnn.backend.softmax_classification(output, target, anchored=True)
 
         loss = keras.backend.mean(loss)
@@ -53,8 +55,13 @@ class RCNNRegressionLoss(keras.layers.Layer):
         
         def calculate_loss():
             return self.compute_regression_loss(output, target, labels_target)
-        
-        loss = tensorflow.cond(keras.backend.not_equal(keras.backend.shape(output)[1], keras.backend.shape(target)[1]), no_loss, calculate_loss)
+
+        x = keras.backend.shape(output)[1]
+        y = keras.backend.shape(target)[1]
+
+        predicate = keras.backend.not_equal(x, y)
+
+        loss = tensorflow.cond(predicate, no_loss, calculate_loss)
 
         self.add_loss(loss, inputs)
 
@@ -74,6 +81,7 @@ class RCNNRegressionLoss(keras.layers.Layer):
         # only consider positive classes
         output = output[:, :, 4:]
         target = target[:, :, 4:]
+
         labels_target = labels_target[:, :, 1:]
 
         # mask out output values where class is different from targetrcnn loss
@@ -81,16 +89,18 @@ class RCNNRegressionLoss(keras.layers.Layer):
         a = keras_rcnn.backend.where(keras.backend.equal(labels_target, 1))
         a = keras.backend.cast(a, 'int32')
 
-        indices_r = a[:, :2]
-        indices_c = a[:, 2:]
-        indices_0 = keras.backend.concatenate([indices_r, indices_c * 4], 1)
-        indices_1 = keras.backend.concatenate([indices_r, indices_c * 4 + 1], 1)
-        indices_2 = keras.backend.concatenate([indices_r, indices_c * 4 + 2], 1)
-        indices_3 = keras.backend.concatenate([indices_r, indices_c * 4 + 3], 1)
-        indices = keras.backend.concatenate([indices_0,
-                                            indices_1,
-                                            indices_2,
-                                            indices_3], 0)
+        rr = a[:, :2]
+        cc = a[:, 2:]
+
+        indices = [
+            keras.backend.concatenate([rr, cc * 4 + 0], 1),
+            keras.backend.concatenate([rr, cc * 4 + 1], 1),
+            keras.backend.concatenate([rr, cc * 4 + 2], 1),
+            keras.backend.concatenate([rr, cc * 4 + 3], 1)
+        ]
+
+        indices = keras.backend.concatenate(indices, 0)
+
         updates = keras.backend.ones_like(indices, dtype=keras.backend.floatx())
         labels = keras_rcnn.backend.scatter_add_tensor(keras.backend.zeros_like(output, dtype='float32'), indices, updates[:, 0])
 
