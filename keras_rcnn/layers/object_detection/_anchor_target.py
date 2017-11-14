@@ -54,15 +54,15 @@ class AnchorTarget(keras.layers.Layer):
         super(AnchorTarget, self).build(input_shape)
 
     def call(self, inputs, **kwargs):
-        deltas, gt_boxes, metadata = inputs
+        scores, gt_boxes, metadata = inputs
 
         metadata = metadata[0, :]  # keras.backend.int_shape(image)[1:]
 
         gt_boxes = gt_boxes[0]
 
-        rr = keras.backend.shape(deltas)[1]
-        cc = keras.backend.shape(deltas)[2]
-        total_anchors = keras.backend.shape(deltas)[3]
+        rr = keras.backend.shape(scores)[1]
+        cc = keras.backend.shape(scores)[2]
+        total_anchors = keras.backend.shape(scores)[3]
         total_anchors = rr * cc * total_anchors
 
         # 1. Generate proposals from bbox deltas and shifted anchors
