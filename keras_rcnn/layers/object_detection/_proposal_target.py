@@ -29,7 +29,7 @@ class ProposalTarget(keras.layers.Layer):
     [(None, None, 4), (None, None, classes), (None, None, 4)]
     """
 
-    def __init__(self, fg_fraction=0.5, fg_thresh=0.7, bg_thresh_hi=0.5, bg_thresh_lo=0.1, batchsize=256, num_images=1, **kwargs):
+    def __init__(self, fg_fraction=0.25, fg_thresh=0.5, bg_thresh_hi=0.5, bg_thresh_lo=0.1, batchsize=256, num_images=1, **kwargs):
         self.fg_fraction = fg_fraction
         self.fg_thresh = fg_thresh
         self.bg_thresh_hi = bg_thresh_hi
@@ -73,7 +73,7 @@ class ProposalTarget(keras.layers.Layer):
             return keras.backend.expand_dims(sample_outputs[i], 0)
 
         rois = keras.backend.in_train_phase(lambda: propose(0), inputs[0], training=training)
-        labels = keras.backend.in_train_phase(lambda: propose(1), inputs[1], training=training)
+        labels = keras.backend.in_train_phase(lambda: propose(1), keras.backend.cast(inputs[1], 'int64'), training=training)
         bbox_targets = keras.backend.in_train_phase(lambda: propose(2), keras.backend.zeros_like(inputs[2]), training=training)
 
         return [rois, labels, bbox_targets]
@@ -88,6 +88,8 @@ class ProposalTarget(keras.layers.Layer):
 
         gt_labels is in one hot form
         """
+        num_classes = keras.backend.shape(gt_labels)[1]
+        gt_labels = keras.backend.argmax(gt_labels, axis=1)
 
         # overlaps: (rois x gt_boxes)
         # finds the overlapping regions between the predicted regions of interests and ground truth bounding boxes
@@ -109,27 +111,19 @@ class ProposalTarget(keras.layers.Layer):
 
         # Compute bounding-box regression targets for an image.
         gt_boxes = keras.backend.gather(gt_boxes, keras.backend.gather(gt_assignment, keep_inds))
-        bbox_targets = self.get_bbox_targets(rois, labels, gt_boxes)
+        bbox_targets = self.get_bbox_targets(rois, gt_boxes, labels, num_classes)
 
         return rois, labels, bbox_targets
 
     def set_label_background(self, labels):
         # Clamp labels for the background RoIs to 0
         update_indices = keras.backend.arange(self.fg_rois_per_this_image, keras.backend.shape(labels)[0])
-        update_indices_0 = keras.backend.reshape(update_indices, (-1, 1))
-        update_indices_1 = keras_rcnn.backend.where(keras.backend.equal(keras.backend.gather(labels, update_indices), 1))[:, 1]
-        update_indices_1 = keras.backend.reshape(keras.backend.cast(update_indices_1, 'int32'), (-1, 1))
+        update_indices = keras.backend.reshape(update_indices, (-1, 1))
 
-        # By first removing the label
-        update_indices = keras.backend.concatenate([update_indices_0, update_indices_1], axis=1)
+        # By making the label = background
         inverse_labels = keras_rcnn.backend.gather_nd(labels, update_indices) * -1
         labels = keras_rcnn.backend.scatter_add_tensor(labels, update_indices, inverse_labels)
 
-        # And then making the label = background
-        update_indices = keras.backend.concatenate([update_indices_0, keras.backend.zeros_like(update_indices_0)], axis=1)
-        inverse_labels = keras_rcnn.backend.gather_nd(labels, update_indices) * -1
-
-        labels = keras_rcnn.backend.scatter_add_tensor(labels, update_indices, inverse_labels + keras.backend.ones_like(inverse_labels))
         return labels
 
     def compute_output_shape(self, input_shape):
@@ -139,13 +133,13 @@ class ProposalTarget(keras.layers.Layer):
     def compute_mask(self, inputs, mask=None):
         return [None, None, None]
 
-    def get_bbox_targets(self, rois, labels, gt_boxes):
+    def get_bbox_targets(self, rois, gt_boxes, labels, num_classes):
         gt_boxes = keras.backend.cast(gt_boxes, keras.backend.floatx())
         targets = keras_rcnn.backend.bbox_transform(
             rois,
             gt_boxes
         )
-        return get_bbox_regression_labels(labels, targets)
+        return get_bbox_regression_labels(targets, labels, num_classes)
 
 
     def get_fg_bg_rois(self, max_overlaps):
@@ -188,27 +182,24 @@ class ProposalTarget(keras.layers.Layer):
         return keras.backend.switch(keras.backend.shape(indices)[0] > 0, lambda: no_sample(indices), lambda: sample(indices, threshold))
 
 
-def get_bbox_regression_labels(labels, bbox_target_data):
+def get_bbox_regression_labels(bbox_target_data, labels, num_classes):
     """Bounding-box regression targets (bbox_target_data) are stored in a
-    form N x (tx, ty, tw, th), labels N x num_classes
+    form N x (tx, ty, tw, th), labels N
     This function expands those targets into the 4-of-4*K representation used
     by the network (i.e. only one class has non-zero targets).
     Returns:
-        bbox_target (ndarray): N x 4K blob of regression targets
+        bbox_target: N x 4K blob of regression targets
     """
-    num_classes = keras.backend.shape(labels)[-1]
-
-    clss = keras.backend.reshape(keras.backend.argmax(labels, axis=-1), (-1,))
 
     n = keras.backend.shape(bbox_target_data)[0]
 
     bbox_targets = tensorflow.zeros((n, 4 * num_classes), dtype=keras.backend.floatx())
 
-    inds = keras.backend.reshape(keras_rcnn.backend.where(clss > 0), (-1,))
+    inds = keras.backend.reshape(keras_rcnn.backend.where(labels > 0), (-1,))
 
-    cls = keras.backend.gather(clss, inds)
+    labels = keras.backend.gather(labels, inds)
 
-    start = 4 * cls
+    start = 4 * labels
 
     ii = keras.backend.expand_dims(inds)
     ii = keras.backend.tile(ii, [4, 1])
@@ -222,7 +213,6 @@ def get_bbox_regression_labels(labels, bbox_target_data):
     updates = keras.backend.transpose(updates)
     updates = keras.backend.reshape(updates, (-1,))
 
-    # bbox_targets are 0
     bbox_targets = keras_rcnn.backend.scatter_add_tensor(bbox_targets, indices, updates)
 
     return bbox_targets
