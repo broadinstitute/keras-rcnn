@@ -4,4 +4,8 @@ from ._mask_rcnn import RCNNMaskLoss
 
 from ._rcnn import RCNNClassificationLoss, RCNNRegressionLoss
 
-from ._rpn import RPNClassificationLoss, RPNRegressionLoss
+from ._rpn import (
+    RPNClassificationLoss,
+    RPNRegressionLoss,
+    RPN
+)

@@ -3,7 +3,8 @@ from .losses import (
     RCNNMaskLoss,
     RCNNRegressionLoss,
     RPNClassificationLoss,
-    RPNRegressionLoss
+    RPNRegressionLoss,
+    RPN
 )
 
 from .object_detection import (AnchorTarget, ObjectProposal, ProposalTarget)

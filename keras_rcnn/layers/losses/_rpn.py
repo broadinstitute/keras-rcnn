@@ -13,23 +13,70 @@ class RPN(keras.layers.Layer):
         super(RPN, self).__init__(**kwargs)
 
     def call(self, inputs, **kwargs):
-        scores_output, scores_target = inputs
+        output_bounding_boxes, target_bounding_boxes, output_scores, target_scores = inputs
 
-        classification_loss = self.compute_classification_loss(scores_output, scores_target)
+        output_scores = keras.backend.reshape(output_scores, (1, -1))
 
-        regression_loss = self.compute_regression_loss(scores_output, scores_target)
+        classification_loss = self.compute_classification_loss(output_scores, target_scores)
+
+        output_bounding_boxes = keras.backend.reshape(output_bounding_boxes, (1, -1, 4))
+
+        regression_loss = self.compute_regression_loss(output_bounding_boxes, target_bounding_boxes, output_scores)
 
         loss = classification_loss + regression_loss
 
         self.add_loss(loss)
 
-        return scores_output
+        return [output_bounding_boxes, output_scores]
 
-    def compute_classification_loss(self, output, target):
-        pass
+    @staticmethod
+    def compute_classification_loss(output, target):
+        condition = keras.backend.not_equal(target, -1)
 
-    def compute_regression_loss(self, output, target):
-        pass
+        indices = keras_rcnn.backend.where(condition)
+
+        output = keras_rcnn.backend.gather_nd(output, indices)
+        target = keras_rcnn.backend.gather_nd(target, indices)
+
+        loss = keras.backend.binary_crossentropy(target, output)
+        loss = keras.backend.mean(loss)
+
+        return loss
+
+    @staticmethod
+    def compute_regression_loss(output, target, labels):
+        condition = keras.backend.not_equal(labels, -1)
+
+        indices = keras_rcnn.backend.where(condition)
+
+        output = keras_rcnn.backend.gather_nd(output, indices)
+        target = keras_rcnn.backend.gather_nd(target, indices)
+        labels = keras_rcnn.backend.gather_nd(labels, indices)
+
+        condition = keras.backend.greater(labels, 0)
+
+        x = keras.backend.zeros_like(labels) + 1
+        y = keras.backend.zeros_like(labels)
+
+        p_star_i = keras_rcnn.backend.where(condition, x, y)
+
+        p_star_i = keras.backend.expand_dims(p_star_i, 0)
+
+        output = keras.backend.expand_dims(output, 0)
+        target = keras.backend.expand_dims(target, 0)
+
+        a_y = keras_rcnn.backend.smooth_l1(output, target, anchored=True)
+
+        a = p_star_i * a_y
+
+        a = keras.backend.sum(a)
+
+        # Divided by anchor overlaps
+        b = keras.backend.sum(p_star_i + keras.backend.epsilon())
+
+        loss = 1.0 * (a / b)
+
+        return loss
 
 
 class RPNClassificationLoss(keras.layers.Layer):
