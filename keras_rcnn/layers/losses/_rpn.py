@@ -78,6 +78,13 @@ class RPN(keras.layers.Layer):
 
         return loss
 
+    def get_config(self):
+        configuration = {
+            "anchors": self.anchors
+        }
+
+        return {**super(RPN, self).get_config(), **configuration}
+
 
 class RPNClassificationLoss(keras.layers.Layer):
     def __init__(self, anchors, **kwargs):

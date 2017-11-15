@@ -7,6 +7,31 @@ import tensorflow
 import keras_rcnn.backend
 
 
+class RCNN(keras.layers.Layer):
+    def __init__(self, **kwargs):
+        super(RCNN, self).__init__(**kwargs)
+
+    def call(self, inputs, **kwargs):
+        output_deltas, target_deltas, output_scores, target_scores = inputs
+
+        loss = 0.0
+
+        self.add_loss(loss, inputs)
+
+        return [output_deltas, output_scores]
+
+    def compute_output_shape(self, input_shape):
+        return input_shape[0]
+
+    @staticmethod
+    def compute_classification_loss(output, target):
+        pass
+
+    @staticmethod
+    def compute_regression_loss(output, target):
+        pass
+
+
 class RCNNClassificationLoss(keras.layers.Layer):
     def __init__(self, **kwargs):
         super(RCNNClassificationLoss, self).__init__(**kwargs)

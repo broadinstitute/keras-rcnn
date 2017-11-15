@@ -107,6 +107,17 @@ class AnchorTarget(keras.layers.Layer):
         # unfortunately this is required
         return 3 * [None]
 
+    def get_config(self):
+        configuration = {
+            "allowed_border": self.allowed_border,
+            "clobber_positives": self.clobber_positives,
+            "negative_overlap": self.negative_overlap,
+            "positive_overlap": self.positive_overlap,
+            "stride": self.stride
+        }
+
+        return {**super(AnchorTarget, self).get_config(), **configuration}
+
 
 def balance(labels):
     """

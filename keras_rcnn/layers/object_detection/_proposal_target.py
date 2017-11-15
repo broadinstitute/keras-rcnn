@@ -78,6 +78,18 @@ class ProposalTarget(keras.layers.Layer):
 
         return [rois, labels, bbox_targets]
 
+    def get_config(self):
+        configuration = {
+            "fg_fraction": self.fg_fraction,
+            "fg_thresh": self.fg_thresh,
+            "bg_thresh_hi": self.bg_thresh_hi,
+            "bg_thresh_lo": self.bg_thresh_lo,
+            "batchsize": self.batchsize,
+            "num_images": self.num_images
+        }
+
+        return {**super(ProposalTarget, self).get_config(), **configuration}
+
     def sample_rois(self, all_rois, gt_boxes, gt_labels):
         """
         Generate a random sample of RoIs comprising foreground and background

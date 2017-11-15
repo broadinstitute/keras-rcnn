@@ -91,6 +91,15 @@ class ObjectProposal(keras.engine.topology.Layer):
     def compute_output_shape(self, input_shape):
         return None, None, 4
 
+    def get_config(self):
+        configuration = {
+            "maximum_proposals": self.maximum_proposals,
+            "minimum_size": self.minimum_size,
+            "stride": self.stride
+        }
+
+        return {**super(ObjectProposal, self).get_config(), **configuration}
+
 
 def filter_boxes(proposals, minimum):
     """

@@ -38,7 +38,6 @@ class RegionOfInterest(keras.engine.topology.Layer):
         # convert regions from (x, y, w, h) to (x1, y1, x2, y2)
         boxes = keras.backend.cast(boxes, keras.backend.floatx())
 
-
         boxes = boxes / self.stride
 
         x1 = boxes[..., 0]
@@ -71,3 +70,11 @@ class RegionOfInterest(keras.engine.topology.Layer):
 
     def compute_output_shape(self, input_shape):
         return 1, input_shape[1][1], self.extent[0], self.extent[1], self.channels
+
+    def get_config(self):
+        configuration = {
+            "extent": self.extent,
+            "stride": self.stride
+        }
+
+        return {**super(RegionOfInterest, self).get_config(), **configuration}
