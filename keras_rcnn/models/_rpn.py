@@ -158,7 +158,7 @@ class RPN(keras.models.Model):
 
         anchors, rpn_labels, bounding_box_targets = keras_rcnn.layers.AnchorTarget()([scores, bounding_boxes, metadata])
 
-        deltas, scores = keras_rcnn.layers.RPN(9)([deltas, bounding_box_targets, scores, rpn_labels])
+        deltas, scores = keras_rcnn.layers.RPN()([deltas, bounding_box_targets, scores, rpn_labels])
 
         proposals = keras_rcnn.layers.ObjectProposal()([metadata, deltas, scores, anchors])
 
