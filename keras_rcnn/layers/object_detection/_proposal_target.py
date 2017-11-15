@@ -70,10 +70,10 @@ class ProposalTarget(keras.layers.Layer):
 
             sample_outputs = self.sample_rois(proposals, bounding_boxes, labels)
 
-            return keras.backend.expand_dims(sample_outputs[i], 0)
+            return keras.backend.cast(keras.backend.expand_dims(sample_outputs[i], 0), sample_outputs[i].dtype)
 
         rois = keras.backend.in_train_phase(lambda: propose(0), inputs[0], training=training)
-        labels = keras.backend.in_train_phase(lambda: propose(1), keras.backend.cast(inputs[1], 'int64'), training=training)
+        labels = keras.backend.in_train_phase(lambda: propose(1), inputs[1], training=training)
         bbox_targets = keras.backend.in_train_phase(lambda: propose(2), keras.backend.zeros_like(inputs[2]), training=training)
 
         return [rois, labels, bbox_targets]
@@ -125,6 +125,7 @@ class ProposalTarget(keras.layers.Layer):
         gt_boxes = keras.backend.gather(gt_boxes, keras.backend.gather(gt_assignment, keep_inds))
         bbox_targets = self.get_bbox_targets(rois, gt_boxes, labels, num_classes)
 
+        labels = keras.backend.one_hot(labels, num_classes)
         return rois, labels, bbox_targets
 
     def set_label_background(self, labels):
