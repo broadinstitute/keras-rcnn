@@ -7,7 +7,7 @@ import keras_rcnn.backend
 
 
 class RPN(keras.layers.Layer):
-    def __init__(self, anchors, **kwargs):
+    def __init__(self, anchors=9, **kwargs):
         self.anchors = anchors
 
         super(RPN, self).__init__(**kwargs)
