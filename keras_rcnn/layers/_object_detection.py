@@ -63,22 +63,16 @@ class ObjectDetection(keras.engine.topology.Layer):
 
             # Arg max
             inds = keras.backend.expand_dims(keras.backend.arange(0, num_objects, dtype='int64'))
+
             top_classes = keras.backend.expand_dims(keras.backend.argmax(scores, axis=1))
+
             coordinate_0 = keras.backend.concatenate([inds, top_classes * 4], 1)
             coordinate_1 = keras.backend.concatenate([inds, top_classes * 4 + 1], 1)
             coordinate_2 = keras.backend.concatenate([inds, top_classes * 4 + 2], 1)
             coordinate_3 = keras.backend.concatenate([inds, top_classes * 4 + 3], 1)
 
-            pred_boxes = keras_rcnn.backend.gather_nd(pred_boxes,
-                                         keras.backend.reshape(
-                                             keras.backend.concatenate([
-                                                 coordinate_0,
-                                                 coordinate_1,
-                                                 coordinate_2,
-                                                 coordinate_3
-                                             ], 1),
-                                             (-1, 2)
-                                         ))
+            pred_boxes = keras_rcnn.backend.gather_nd(pred_boxes, keras.backend.reshape(keras.backend.concatenate([coordinate_0, coordinate_1, coordinate_2, coordinate_3], 1), (-1, 2)))
+
             pred_boxes = keras.backend.reshape(pred_boxes, (-1, 4))
 
             max_scores = keras.backend.max(scores, axis=1)
@@ -90,9 +84,11 @@ class ObjectDetection(keras.engine.topology.Layer):
             scores = keras.backend.gather(scores, nms_indices)
 
             detections = [keras.backend.expand_dims(pred_boxes, 0), keras.backend.expand_dims(scores, 0)]
+
             return detections[num_output]
         
         bounding_boxes = keras.backend.in_train_phase(x[0], lambda: detections(0), training=training)
+
         scores = keras.backend.in_train_phase(x[2], lambda: detections(1), training=training)
 
         return [bounding_boxes, scores]

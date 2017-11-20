@@ -12,5 +12,4 @@ def load_data():
     accompanied by bounding boxes that capture each cell’s location and
     corresponding class labels that describe each cell’s phenotype.
     """
-
     return keras_rcnn.datasets.load_data("malaria")

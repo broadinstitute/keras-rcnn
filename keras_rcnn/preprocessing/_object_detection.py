@@ -7,131 +7,149 @@ import skimage.io
 import skimage.transform
 
 
-def scale_size(size, min_size, max_size):
-    """
-    Rescales a given image size such that the larger axis is
-    no larger than max_size and the smallest axis is as close
-    as possible to min_size.
-    """
-    assert (len(size) == 2)
-
-    scale = min_size / numpy.min(size)
-
-    # Prevent the biggest axis from being larger than max_size.
-    if numpy.round(scale * numpy.max(size)) > max_size:
-        scale = max_size / numpy.max(size)
-
-    rows, cols = size
-    rows *= scale
-    cols *= scale
-
-    return (int(rows), int(cols)), scale
-
-
 class DictionaryIterator(keras.preprocessing.image.Iterator):
     def __init__(
             self,
             dictionary,
             classes,
             target_shape,
-            scale,
-            ox,
-            oy,
             generator,
             batch_size=1,
+            seed=None,
             shuffle=False,
-            seed=None
     ):
+        # We assume the user didn’t provide a background class so it’s
+        # pushed onto the “0” position of the classes list:
+        classes.insert(0, "background")
+
+        # Create a class dictionary by zipping the classes with
+        # corresponding indices, e.g.
+        #
+        #   {
+        #       "background": 0,
+        #       "aeroplane": 1,
+        #       "bicycle": 2,
+        #       …
+        #   }
+        indices = [index for index in range(0, len(classes) + 1)]
+
+        self.classes = dict(zip(classes, indices))
+
+        self.count = len(dictionary)
+
         self.dictionary = dictionary
-        self.classes = classes
+
         self.generator = generator
 
-        assert (len(self.dictionary) != 0)
+        rr, cc, _ = target_shape
 
-        cols, rows, channels = dictionary[0]["shape"]
-        self.image_shape = (rows, cols, channels)
-        self.scale = scale
-        self.ox = ox
-        self.oy = oy
-        if target_shape is None:
-            self.target_shape, self.scale = scale_size(self.image_shape[0:2], numpy.min(self.image_shape[:2]), numpy.max(self.image_shape[:2]))
+        shapes = sum([image["shape"][:2] for image in dictionary], [])
 
-            self.target_shape = self.target_shape + (self.image_shape[2],)
-        else:
-            self.target_shape = target_shape + (self.image_shape[2],)
+        self.maximum = max(max(shapes), max([rr, cc]))
 
-        # Metadata needs to be computed only once.
-        rows, cols, channels = self.target_shape
+        self.minimum = max(min(shapes), min([rr, cc]))
 
-        self.metadata = numpy.array([[rows, cols, self.scale]])
+        self.target_shape = target_shape
 
-        super(DictionaryIterator, self).__init__(len(self.dictionary), batch_size, shuffle, seed)
+        args = [self.count, batch_size, shuffle, seed]
+
+        super(DictionaryIterator, self).__init__(*args)
+
+    def rescale(self, image):
+        rr, cc, _ = image.shape
+
+        scale = self.minimum / numpy.min([rr, cc])
+
+        maximum_side = numpy.max([rr, cc])
+
+        if maximum_side * scale > self.maximum:
+            scale = self.maximum / maximum_side
+
+        image = skimage.transform.rescale(image, scale, mode="reflect")
+
+        return image, scale
 
     def next(self):
-        # Lock indexing to prevent race conditions.
         with self.lock:
             selection, _, batch_size = next(self.index_generator)
 
-        # Labels has num_classes + 1 elements, since 0 is reserved for
-        # background.
-        num_classes = len(self.classes)
-        images = numpy.zeros((batch_size,) + self.target_shape, dtype=keras.backend.floatx())
-        boxes = numpy.zeros((batch_size, 0, 4), dtype=keras.backend.floatx())
-        labels = numpy.zeros((batch_size, 0, num_classes + 1), dtype=numpy.uint8)
+        bounding_boxes = numpy.zeros((batch_size, 0, 4))
+
+        classes = numpy.zeros((batch_size, 0))
+
+        images = numpy.zeros((batch_size,) + self.target_shape)
+
+        metadata = numpy.zeros((batch_size, 3))
 
         for batch_index, image_index in enumerate(selection):
-            count = 0
-            while count == 0:
-                path = self.dictionary[image_index]["filename"]
-                image = skimage.io.imread(path)
+            pathname = self.dictionary[image_index]["filename"]
 
-                #crop
-                if self.ox is None:
-                    offset_x = numpy.random.randint(0, self.image_shape[1]-self.target_shape[1]+1)
-                else:
-                    offset_x = self.ox
+            image = skimage.io.imread(pathname)
 
-                if self.oy is None:
-                    offset_y = numpy.random.randint(0, self.image_shape[0] - self.target_shape[0] + 1)
-                else:
-                    offset_y = self.oy
-                image = image[offset_y:self.target_shape[0]+offset_y, offset_x:self.target_shape[1]+offset_x, :]
+            image, scale = self.rescale(image)
 
-                # Copy image to batch blob.
-                images[batch_index] = skimage.transform.rescale(image, scale=self.scale, mode="reflect")
+            rr, cc, channels = image.shape
 
-                # Set ground truth boxes.
-                for i, b in enumerate(self.dictionary[image_index]["boxes"]):
-                    if b["class"] not in self.classes:
-                        raise Exception(
-                            "Class {} not found in '{}'.".format(b["class"], self.classes))
+            images[batch_index, :rr, :cc, :channels] = image
 
-                    x1 = int(b["x1"]) - offset_x
-                    x2 = int(b["x2"]) - offset_x
-                    y1 = int(b["y1"]) - offset_y
-                    y2 = int(b["y2"]) - offset_y
-                    if x2 == image.shape[1]:
-                        x2 -= 1
-                    if y2 == image.shape[0]:
-                        y2 -= 1
+            metadata[batch_index] = [rr, cc, scale]
 
-                    if x1 >= 0 and x2 < image.shape[1] and y1 >= 0 and y2 < image.shape[0]:
-                        count += 1
+            instances = self.dictionary[image_index]["boxes"]
 
-                        box = [x1, y1, x2, y2]
-                        boxes = numpy.append(boxes, [[box]], axis=1)
+            for instance_index, instance in enumerate(instances):
+                x1 = int(instance["x1"])
+                x2 = int(instance["x2"])
+                y1 = int(instance["y1"])
+                y2 = int(instance["y2"])
 
-                        # Store the labels in one-hot form.
-                        label = [0] * (num_classes + 1)
-                        label[self.classes[b["class"]]] = 1
-                        labels = numpy.append(labels, [[label]], axis=1)
+                # If $x_maximum$ is equal to the image’s width, subtract
+                # $x_maximum$ by 1.
+                if x2 == image.shape[1]:
+                    x2 -= 1
 
-            # Scale the ground truth boxes to the selected image scale.
-            boxes[batch_index, :, :4] *= self.scale
+                # Likewise, if $y_maximum$ is equal to the image’s height,
+                # subtract $y_maximum$ by 1.
+                if y2 == image.shape[0]:
+                    y2 -= 1
 
-        return [boxes, images, labels, self.metadata], None
+                box = [x1, y1, x2, y2]
+
+                bounding_boxes = numpy.append(bounding_boxes, [[box]], axis=1)
+
+                class_index = self.classes[instance["class"]]
+
+                classes = numpy.append(classes, [class_index])
+
+            bounding_boxes[batch_index, :, :4] *= scale
+
+            classes = keras.utils.to_categorical(classes, 22)
+
+            classes = numpy.expand_dims(classes, 0)
+
+        return [bounding_boxes, images, classes, metadata], None
+
+
+class ImageSegmentationGenerator:
+    def flow(self):
+        pass
 
 
 class ObjectDetectionGenerator:
-    def flow(self, dictionary, classes, target_shape=None, scale=None, ox=None, oy=None):
-        return DictionaryIterator(dictionary, classes, target_shape, scale, ox, oy, self)
+    def flow(
+            self,
+            dictionary,
+            classes,
+            target_shape,
+            batch_size=1,
+            seed=None,
+            shuffle=True
+    ):
+        return DictionaryIterator(
+            batch_size=batch_size,
+            classes=classes,
+            dictionary=dictionary,
+            generator=self,
+            seed=seed,
+            shuffle=shuffle,
+            target_shape=target_shape
+        )
