@@ -53,28 +53,25 @@ class ProposalTarget(keras.layers.Layer):
 
         # labels (class1, class2, ... , num_classes)
         # Include ground-truth boxes in the set of candidate rois
-        def propose(i):
-            proposals, labels, bounding_boxes = inputs
+        proposals, labels, bounding_boxes = inputs
 
-            proposals = keras.backend.concatenate((proposals, bounding_boxes), 
-                                                  axis=1)
+        proposals = keras.backend.concatenate((proposals, bounding_boxes),
+                                              axis=1)
 
-            # Sample rois with classification labels and bounding box regression
-            # targets
+        # Sample rois with classification labels and bounding box regression
+        # targets
 
-            # TODO: Fix usage of batch index
-            batch_index = 0
-            proposals = proposals[batch_index, :, :]
-            bounding_boxes = bounding_boxes[batch_index, :, :]
-            labels = labels[batch_index, :, :]
+        # TODO: Fix usage of batch index
+        batch_index = 0
+        proposals = proposals[batch_index, :, :]
+        bounding_boxes = bounding_boxes[batch_index, :, :]
+        labels = labels[batch_index, :, :]
 
-            sample_outputs = self.sample_rois(proposals, bounding_boxes, labels)
+        sample_outputs = self.sample_rois(proposals, bounding_boxes, labels)
 
-            return keras.backend.cast(keras.backend.expand_dims(sample_outputs[i], 0), sample_outputs[i].dtype)
-
-        rois = keras.backend.in_train_phase(lambda: propose(0), inputs[0], training=training)
-        labels = keras.backend.in_train_phase(lambda: propose(1), inputs[1], training=training)
-        bbox_targets = keras.backend.in_train_phase(lambda: propose(2), keras.backend.zeros_like(inputs[2]), training=training)
+        rois = keras.backend.expand_dims(sample_outputs[0], 0)
+        labels = keras.backend.expand_dims(sample_outputs[1], 0)
+        bbox_targets = keras.backend.expand_dims(sample_outputs[2], 0)
 
         return [rois, labels, bbox_targets]
 
