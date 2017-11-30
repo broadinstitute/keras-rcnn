@@ -2,6 +2,7 @@
 
 import keras.backend
 import keras.engine.topology
+import tensorflow
 
 import keras_rcnn.backend
 
@@ -21,7 +22,9 @@ class ObjectDetection(keras.engine.topology.Layer):
 
     """
 
-    def __init__(self, **kwargs):
+    def __init__(self, padding=300, **kwargs):
+        self.padding = padding
+
         super(ObjectDetection, self).__init__(**kwargs)
 
     def build(self, input_shape):
@@ -43,6 +46,7 @@ class ObjectDetection(keras.engine.topology.Layer):
         note the box only corresponds to the most probable class, not the
         other classes
         """
+
         def detections(num_output):
             proposals, deltas, scores, metadata = x[0], x[1], x[2], x[3]
 
@@ -63,22 +67,16 @@ class ObjectDetection(keras.engine.topology.Layer):
 
             # Arg max
             inds = keras.backend.expand_dims(keras.backend.arange(0, num_objects, dtype='int64'))
+
             top_classes = keras.backend.expand_dims(keras.backend.argmax(scores, axis=1))
+
             coordinate_0 = keras.backend.concatenate([inds, top_classes * 4], 1)
             coordinate_1 = keras.backend.concatenate([inds, top_classes * 4 + 1], 1)
             coordinate_2 = keras.backend.concatenate([inds, top_classes * 4 + 2], 1)
             coordinate_3 = keras.backend.concatenate([inds, top_classes * 4 + 3], 1)
 
-            pred_boxes = keras_rcnn.backend.gather_nd(pred_boxes,
-                                         keras.backend.reshape(
-                                             keras.backend.concatenate([
-                                                 coordinate_0,
-                                                 coordinate_1,
-                                                 coordinate_2,
-                                                 coordinate_3
-                                             ], 1),
-                                             (-1, 2)
-                                         ))
+            pred_boxes = keras_rcnn.backend.gather_nd(pred_boxes, keras.backend.reshape(keras.backend.concatenate([coordinate_0, coordinate_1, coordinate_2, coordinate_3], 1), (-1, 2)))
+
             pred_boxes = keras.backend.reshape(pred_boxes, (-1, 4))
 
             max_scores = keras.backend.max(scores, axis=1)
@@ -89,10 +87,20 @@ class ObjectDetection(keras.engine.topology.Layer):
 
             scores = keras.backend.gather(scores, nms_indices)
 
-            detections = [keras.backend.expand_dims(pred_boxes, 0), keras.backend.expand_dims(scores, 0)]
+            pred_boxes = keras.backend.expand_dims(pred_boxes, 0)
+
+            scores = keras.backend.expand_dims(scores, 0)
+
+            pred_boxes = self.pad(pred_boxes, self.padding)
+
+            scores = self.pad(scores, self.padding)
+
+            detections = [pred_boxes, scores]
+
             return detections[num_output]
-        
+
         bounding_boxes = keras.backend.in_train_phase(x[0], lambda: detections(0), training=training)
+
         scores = keras.backend.in_train_phase(x[2], lambda: detections(1), training=training)
 
         return [bounding_boxes, scores]
@@ -102,3 +110,16 @@ class ObjectDetection(keras.engine.topology.Layer):
 
     def compute_mask(self, inputs, mask=None):
         return 2 * [None]
+
+    @staticmethod
+    def pad(x, padding):
+        detections = keras.backend.int_shape(x)[1]
+
+        if padding > detections:
+            difference = padding - detections
+        else:
+            difference = 0
+
+        paddings = ((0, 0), (0, difference), (0, 0))
+
+        return tensorflow.pad(x, paddings, mode="constant")
