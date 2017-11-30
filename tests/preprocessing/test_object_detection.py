@@ -56,7 +56,7 @@ class TestObjectDetectionGenerator:
 
         generator = keras_rcnn.preprocessing.ObjectDetectionGenerator()
         training, test = keras_rcnn.datasets.malaria.load_data()
-        generator = generator.flow(training, classes, target_shape=(448, 448), scale=1)
+        generator = generator.flow(training, classes, target_size=(448, 448), scale=1)
 
         optimizer = keras.optimizers.Adam(0.0001)
 
