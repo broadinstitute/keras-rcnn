@@ -113,12 +113,11 @@ class ObjectDetection(keras.engine.topology.Layer):
 
     @staticmethod
     def pad(x, padding):
-        detections = keras.backend.int_shape(x)[1]
+        detections = keras.backend.shape(x)[1]
 
-        if padding > detections:
-            difference = padding - detections
-        else:
-            difference = 0
+        difference = padding - detections
+
+        difference = keras.backend.max([0, difference])
 
         paddings = ((0, 0), (0, difference), (0, 0))
 
