@@ -22,8 +22,8 @@ class ObjectDetection(keras.engine.topology.Layer):
 
     """
 
-    def __init__(self, detections=300, **kwargs):
-        self.detections = detections
+    def __init__(self, padding=300, **kwargs):
+        self.padding = padding
 
         super(ObjectDetection, self).__init__(**kwargs)
 
@@ -91,9 +91,9 @@ class ObjectDetection(keras.engine.topology.Layer):
 
             scores = keras.backend.expand_dims(scores, 0)
 
-            pred_boxes = self.pad(pred_boxes, self.detections)
+            pred_boxes = self.pad(pred_boxes, self.padding)
 
-            scores = self.pad(scores, self.detections)
+            scores = self.pad(scores, self.padding)
 
             detections = [pred_boxes, scores]
 
@@ -113,12 +113,11 @@ class ObjectDetection(keras.engine.topology.Layer):
 
     @staticmethod
     def pad(x, padding):
-        detections = keras.backend.int_shape(x)[1]
+        detections = keras.backend.shape(x)[1]
 
-        if padding > detections:
-            difference = padding - detections
-        else:
-            difference = 0
+        difference = padding - detections
+
+        difference = keras.backend.max([0, difference])
 
         paddings = ((0, 0), (0, difference), (0, 0))
 
