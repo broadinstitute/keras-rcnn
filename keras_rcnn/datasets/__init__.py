@@ -14,31 +14,30 @@ def load_data(name):
         origin=origin,
         untar=True
     )
-
+    image_path = os.path.join(pathname, "images")
+    
     filename = os.path.join(pathname, "training.json")
 
-    with open(filename) as data:
-        training = json.load(data)
+    training = get_file_data(filename, image_path)
 
     filename = os.path.join(pathname, "validation.json")
 
-    if os.path.exists(filename):
-        with open(filename) as data:
-            validation = json.load(data)
-    else:
-        validation = []
+    validation = get_file_data(filename, image_path)
 
     filename = os.path.join(pathname, "test.json")
 
-    with open(filename) as data:
-        test = json.load(data)
+    test = get_file_data(filename, image_path)
 
-    pathname = os.path.join(pathname, "images")
+    return training, validation, test
 
-    for dictionary in training:
-        dictionary["filename"] = os.path.join(pathname, dictionary["filename"])
-
-    for dictionary in test:
-        dictionary["filename"] = os.path.join(pathname, dictionary["filename"])
-
-    return training, test
+def get_file_data(filename, image_path):
+    if os.path.exists(filename):
+        with open(filename) as data:
+            partition = json.load(data)
+    else:
+        partition = []
+        
+    for dictionary in partition:
+        dictionary["filename"] = os.path.join(image_path, dictionary["filename"])
+    
+    return partition
