@@ -20,6 +20,14 @@ def load_data(name):
     with open(filename) as data:
         training = json.load(data)
 
+    filename = os.path.join(pathname, "validation.json")
+
+    if os.path.exists(filename):
+        with open(filename) as data:
+            validation = json.load(data)
+    else:
+        validation = []
+
     filename = os.path.join(pathname, "test.json")
 
     with open(filename) as data:
