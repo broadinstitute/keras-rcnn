@@ -48,7 +48,7 @@ class DictionaryIterator(keras.preprocessing.image.Iterator):
 
         assert (len(self.dictionary) != 0)
 
-        cols, rows, channels = dictionary[0]["shape"]
+        rows, cols, channels = dictionary[0]["shape"]
         self.image_shape = (rows, cols, channels)
         self.scale = scale
         self.ox = ox
@@ -57,6 +57,7 @@ class DictionaryIterator(keras.preprocessing.image.Iterator):
             self.target_shape, self.scale = scale_size(self.image_shape[0:2], numpy.min(self.image_shape[:2]), numpy.max(self.image_shape[:2]))
 
             self.target_shape = self.target_shape + (self.image_shape[2],)
+
         else:
             self.target_shape = target_shape + (self.image_shape[2],)
 
@@ -84,6 +85,8 @@ class DictionaryIterator(keras.preprocessing.image.Iterator):
             while count == 0:
                 path = self.dictionary[image_index]["filename"]
                 image = skimage.io.imread(path)
+                if image.ndim == 2:
+                    image = numpy.expand_dims(image, -1)
 
                 #crop
                 if self.ox is None:
@@ -103,8 +106,7 @@ class DictionaryIterator(keras.preprocessing.image.Iterator):
                 # Set ground truth boxes.
                 for i, b in enumerate(self.dictionary[image_index]["boxes"]):
                     if b["class"] not in self.classes:
-                        raise Exception(
-                            "Class {} not found in '{}'.".format(b["class"], self.classes))
+                        continue
 
                     x1 = int(b["x1"]) - offset_x
                     x2 = int(b["x2"]) - offset_x
