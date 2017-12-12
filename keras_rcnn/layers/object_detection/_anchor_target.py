@@ -35,10 +35,27 @@ class AnchorTarget(keras.layers.Layer):
 
         (samples, ), (samples, 4)
     """
+    def __init__(
+            self,
+            ratios=None,
+            scales=None,
+            allowed_border=0,
+            clobber_positives=False,
+            negative_overlap=0.3,
+            positive_overlap=0.7,
+            stride=16,
+            **kwargs
+    ):
+        if ratios is None:
+            ratios = [0.5, 1, 2]
 
-    def __init__(self, allowed_border=0, clobber_positives=False,
-                 negative_overlap=0.3, positive_overlap=0.7, stride=16,
-                 **kwargs):
+        if scales is None:
+            scales = [4, 8, 16]
+
+        self.ratios = ratios
+
+        self.scales = scales
+
         self.allowed_border = allowed_border
 
         self.clobber_positives = clobber_positives
@@ -65,8 +82,11 @@ class AnchorTarget(keras.layers.Layer):
         total_anchors = keras.backend.shape(scores)[3]
         total_anchors = rr * cc * total_anchors
 
+        # Create anchors
+        anchors = keras_rcnn.backend.anchor(ratios=self.ratios, scales=self.scales)
+
         # 1. Generate proposals from bbox deltas and shifted anchors
-        all_anchors = keras_rcnn.backend.shift((rr, cc), self.stride)
+        all_anchors = keras_rcnn.backend.shift(anchors, (rr, cc), self.stride)
 
         # only keep anchors inside the image
         inds_inside, anchors = inside_image(all_anchors, metadata,
