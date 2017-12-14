@@ -64,13 +64,13 @@ def intersection_over_union(target, output):
 
     return numpy.maximum(0.0, intersection / (union - intersection))
 
-def mean_average_precision(target, output, classes):
+def mean_average_precision(target, output, class_descriptions):
     """
 
     Args:
         target: ground truth
         output: prediction output
-        classes: list of class names
+        class_descriptions: list of class names, where class_descriptions['background'] = 0
 
     Returns: mean average precision
 
@@ -79,7 +79,9 @@ def mean_average_precision(target, output, classes):
 
     threshold = 0.5
 
-    for class_index, class_name in enumerate(["background", "rbc", "not"]):
+    for class_name in class_descriptions:
+
+        class_index = class_descriptions[class_name]
         if class_index == 0:
             continue
 
@@ -114,7 +116,13 @@ def mean_average_precision(target, output, classes):
 
         bounding_boxes = numpy.empty((0, 4))
 
+        tps = []
+        fps = []
         for output_index, (output_bounding_boxes, output_scores) in enumerate(zip(output[0], output[1])):
+
+            output_scores = output_scores[0, :, :]
+            output_bounding_boxes = output_bounding_boxes[0, :, :]
+
             image_indices = numpy.concatenate([image_indices, numpy.repeat(output_index, output_scores.shape[0])])
 
             scores = numpy.concatenate([scores, output_scores[:, class_index]], 0)
@@ -139,7 +147,7 @@ def mean_average_precision(target, output, classes):
 
                 instance_bounding_box = bounding_boxes[detection_index]
 
-                maximum_overlap_ratio = 1.0
+                maximum_overlap_ratio = .0
 
                 instance_target_bounding_boxes = instances["boxes"]
 
@@ -148,12 +156,11 @@ def mean_average_precision(target, output, classes):
                     instance_bounding_box = numpy.expand_dims(instance_bounding_box, 0)
 
                     overlap_ratios = intersection_over_union(instance_target_bounding_boxes, instance_bounding_box)
-
                     maximum_overlap_index = numpy.argmax(overlap_ratios)
-
-                    maximum_overlap_ratio = overlap_ratios[maximum_overlap_index]
+                    maximum_overlap_ratio = numpy.squeeze(overlap_ratios[maximum_overlap_index])
 
                 if maximum_overlap_ratio > threshold:
+
                     if not instances["difficult"][maximum_overlap_index]:
                         if not instances["detected"][maximum_overlap_index]:
                             tp[detection_index] = 1.0
@@ -163,10 +170,10 @@ def mean_average_precision(target, output, classes):
                             fp[detection_index] = 1.0
                 else:
                     fp[detection_index] = 1.0
+            tps.append(tp)
+            fps.append(fp)
 
         ap = average_precision(tp, fp, number_of_instances_per_class)
-
         aps.append(ap)
 
-    map = numpy.mean(aps)
-    return map
+    return numpy.mean(aps)
