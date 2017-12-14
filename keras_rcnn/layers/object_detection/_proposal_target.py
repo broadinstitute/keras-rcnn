@@ -69,7 +69,7 @@ class ProposalTarget(keras.layers.Layer):
 
         sample_outputs = self.sample_rois(proposals, bounding_boxes, labels)
 
-        rois = keras.backend.expand_dims(sample_outputs[0], 0)
+        rois = keras.backend.in_train_phase(keras.backend.expand_dims(sample_outputs[0], 0), inputs[0], training=training)
         labels = keras.backend.expand_dims(sample_outputs[1], 0)
         bbox_targets = keras.backend.expand_dims(sample_outputs[2], 0)
 
