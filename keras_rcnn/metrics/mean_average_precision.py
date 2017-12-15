@@ -46,8 +46,8 @@ def intersection_over_union(target, output):
     intersection_x2 = numpy.minimum(target_x2, numpy.transpose(output_x2))
     intersection_y2 = numpy.minimum(target_y2, numpy.transpose(output_y2))
 
-    intersection_cc = intersection_x2 - intersection_x1 + 1
-    intersection_rr = intersection_y2 - intersection_y1 + 1
+    intersection_cc = numpy.maximum(0, intersection_x2 - intersection_x1 + 1)
+    intersection_rr = numpy.maximum(0, intersection_y2 - intersection_y1 + 1)
 
     intersection = intersection_cc * intersection_rr
 
@@ -75,6 +75,18 @@ def mean_average_precision(target, output, class_descriptions):
     Returns: mean average precision
 
     """
+    output_bounding_boxes, output_all_scores = output
+
+    # NOTE: The image indices for each detection.
+
+    image_indices = numpy.reshape([index for index in range(len(output_all_scores)) for i in range(len(output_all_scores[index]))], output_all_scores.shape[:2])
+
+    # remove filler detections
+    filler = numpy.sum(output_all_scores, axis = -1) > 0
+    output_all_scores = output_all_scores[filler]
+    output_bounding_boxes = output_bounding_boxes[filler]
+    image_indices = image_indices[filler]
+
     aps = []
 
     threshold = 0.5
@@ -82,12 +94,15 @@ def mean_average_precision(target, output, class_descriptions):
     for class_name in class_descriptions:
 
         class_index = class_descriptions[class_name]
+
         if class_index == 0:
             continue
 
         detections_per_class = {}
 
         number_of_instances_per_class = 0
+
+        output_scores = output_all_scores[..., class_index]
 
         for index, target_image in enumerate(target):
             instances = [instance for instance in target_image["boxes"] if instance["class"] == class_name]
@@ -109,71 +124,46 @@ def mean_average_precision(target, output, class_descriptions):
                 "detected": detected
             }
 
-        # NOTE: The image indices for each detection.
-        image_indices = numpy.empty((0,))
 
-        scores = numpy.empty((0,))
+        # sort by score
+        sorted_indices = numpy.argsort(-output_scores)
+        bounding_boxes = output_bounding_boxes[sorted_indices]
+        image_indices = image_indices[sorted_indices]
 
-        bounding_boxes = numpy.empty((0, 4))
+        number_of_detections = len(image_indices)
+        tp = numpy.zeros(number_of_detections)
+        fp = numpy.zeros(number_of_detections)
 
-        tps = []
-        fps = []
-        for output_index, (output_bounding_boxes, output_scores) in enumerate(zip(output[0], output[1])):
+        for detection_index in range(number_of_detections):
 
-            output_scores = output_scores[0, :, :]
-            output_bounding_boxes = output_bounding_boxes[0, :, :]
+            instances = detections_per_class[image_indices[detection_index]]
+            instance_bounding_box = bounding_boxes[detection_index]
 
-            image_indices = numpy.concatenate([image_indices, numpy.repeat(output_index, output_scores.shape[0])])
+            maximum_overlap_ratio = 0.0
 
-            scores = numpy.concatenate([scores, output_scores[:, class_index]], 0)
+            instance_target_bounding_boxes = instances["boxes"]
 
-            bounding_boxes = numpy.concatenate([bounding_boxes, output_bounding_boxes], 0)
+            # If there’s a target bounding box:
 
-            # sort by score
-            sorted_indices = numpy.argsort(-scores)
+            if instance_target_bounding_boxes.size > 0:
+                instance_bounding_box = numpy.expand_dims(instance_bounding_box, 0)
 
-            bounding_boxes = bounding_boxes[sorted_indices]
+                overlap_ratios = intersection_over_union(instance_target_bounding_boxes, instance_bounding_box)
 
-            image_indices = image_indices[sorted_indices]
+                maximum_overlap_index = numpy.argmax(overlap_ratios)
 
-            # go down dets and mark TPs and FPs
-            number_of_detections = image_indices.size
+                maximum_overlap_ratio = numpy.squeeze(overlap_ratios[maximum_overlap_index])
 
-            tp = numpy.zeros(number_of_detections)
-            fp = numpy.zeros(number_of_detections)
+            if maximum_overlap_ratio > threshold:
 
-            for detection_index in range(number_of_detections):
-                instances = detections_per_class[image_indices[detection_index]]
-
-                instance_bounding_box = bounding_boxes[detection_index]
-
-                maximum_overlap_ratio = .0
-
-                instance_target_bounding_boxes = instances["boxes"]
-
-                # If there’s a target bounding box:
-                if instance_target_bounding_boxes.size > 0:
-                    instance_bounding_box = numpy.expand_dims(instance_bounding_box, 0)
-
-                    overlap_ratios = intersection_over_union(instance_target_bounding_boxes, instance_bounding_box)
-                    maximum_overlap_index = numpy.argmax(overlap_ratios)
-                    maximum_overlap_ratio = numpy.squeeze(overlap_ratios[maximum_overlap_index])
-
-                if maximum_overlap_ratio > threshold:
-
-                    if not instances["difficult"][maximum_overlap_index]:
-                        if not instances["detected"][maximum_overlap_index]:
-                            tp[detection_index] = 1.0
-
-                            instances["detected"][maximum_overlap_index] = 1
-                        else:
-                            fp[detection_index] = 1.0
-                else:
-                    fp[detection_index] = 1.0
-            tps.append(tp)
-            fps.append(fp)
-
+                if not instances["difficult"][maximum_overlap_index]:
+                    if not instances["detected"][maximum_overlap_index]:
+                        tp[detection_index] = 1.0
+                        instances["detected"][maximum_overlap_index] = 1
+                    else:
+                        fp[detection_index] = 1.0
+            else:
+                fp[detection_index] = 1.0
         ap = average_precision(tp, fp, number_of_instances_per_class)
         aps.append(ap)
-
-    return numpy.mean(aps)
+    return numpy.nanmean(aps)
