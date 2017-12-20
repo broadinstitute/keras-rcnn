@@ -133,7 +133,7 @@ class RCNNRegressionLoss(keras.layers.Layer):
 
         loss = outside_weights * smooth_l1_result
         epsilon = 1e-4
-        b = keras.backend.sum(epsilon + labels)
+        b = keras.backend.sum(epsilon + labels_target)
         loss = tensorflow.reduce_sum(loss) / b
 
         return loss
