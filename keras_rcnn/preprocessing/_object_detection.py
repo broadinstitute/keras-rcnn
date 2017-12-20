@@ -42,6 +42,8 @@ class DictionaryIterator(keras.preprocessing.image.Iterator):
             shuffle=False,
             seed=None
     ):
+        self.batch_size = batch_size
+
         self.dictionary = dictionary
         self.classes = classes
         self.generator = generator
@@ -71,14 +73,17 @@ class DictionaryIterator(keras.preprocessing.image.Iterator):
     def next(self):
         # Lock indexing to prevent race conditions.
         with self.lock:
-            selection, _, batch_size = next(self.index_generator)
+            selection = next(self.index_generator)
 
         # Labels has num_classes + 1 elements, since 0 is reserved for
         # background.
         num_classes = len(self.classes)
-        images = numpy.zeros((batch_size,) + self.target_shape, dtype=keras.backend.floatx())
-        boxes = numpy.zeros((batch_size, 0, 4), dtype=keras.backend.floatx())
-        labels = numpy.zeros((batch_size, 0, num_classes + 1), dtype=numpy.uint8)
+
+        images = numpy.zeros((self.batch_size,) + self.target_shape, dtype=keras.backend.floatx())
+
+        boxes = numpy.zeros((self.batch_size, 0, 4), dtype=keras.backend.floatx())
+
+        labels = numpy.zeros((self.batch_size, 0, num_classes + 1), dtype=numpy.uint8)
 
         for batch_index, image_index in enumerate(selection):
             count = 0
@@ -88,9 +93,9 @@ class DictionaryIterator(keras.preprocessing.image.Iterator):
                 if image.ndim == 2:
                     image = numpy.expand_dims(image, -1)
 
-                #crop
+                # crop
                 if self.ox is None:
-                    offset_x = numpy.random.randint(0, self.image_shape[1]-self.target_shape[1]+1)
+                    offset_x = numpy.random.randint(0, self.image_shape[1] - self.target_shape[1] + 1)
                 else:
                     offset_x = self.ox
 
@@ -98,7 +103,8 @@ class DictionaryIterator(keras.preprocessing.image.Iterator):
                     offset_y = numpy.random.randint(0, self.image_shape[0] - self.target_shape[0] + 1)
                 else:
                     offset_y = self.oy
-                image = image[offset_y:self.target_shape[0]+offset_y, offset_x:self.target_shape[1]+offset_x, :]
+
+                image = image[offset_y:self.target_shape[0] + offset_y, offset_x:self.target_shape[1] + offset_x, :]
 
                 # Copy image to batch blob.
                 images[batch_index] = skimage.transform.rescale(image, scale=self.scale, mode="reflect")
@@ -132,6 +138,9 @@ class DictionaryIterator(keras.preprocessing.image.Iterator):
             boxes[batch_index, :, :4] *= self.scale
 
         return [boxes, images, labels, self.metadata], None
+
+    def _get_batches_of_transformed_samples(self, index_array):
+        pass
 
 
 class ObjectDetectionGenerator:
