@@ -93,25 +93,28 @@ class RCNNRegressionLoss(keras.layers.Layer):
         return output
 
     @staticmethod
-    def compute_regression_loss(output, target, labels_target):
+    def compute_regression_loss(output, target_bounding_boxes, target_labels):
         """
-        Return the regression loss of Faster R-CNN.
+        Return the regression loss of Fast R-CNN.
         :return: A loss function for R-CNNs.
         """
+        # TODO: remove unneeded constants
         inside_weights = 1.0
         outside_weights = 1.0
+
         sigma = 1.0
         sigma2 = keras.backend.square(sigma)
 
+        # TODO: are we actually removing the negative boxes?
         # only consider positive classes
         output = output[:, :, 4:]
-        target = target[:, :, 4:]
+        target_bounding_boxes = target_bounding_boxes[:, :, 4:]
 
-        labels_target = labels_target[:, :, 1:]
+        target_labels = target_labels[:, :, 1:]
 
         # mask out output values where class is different from targetrcnn loss
         # function
-        a = keras_rcnn.backend.where(keras.backend.equal(labels_target, 1))
+        a = keras_rcnn.backend.where(keras.backend.equal(target_labels, 1))
         a = keras.backend.cast(a, 'int32')
 
         rr = a[:, :2]
@@ -129,7 +132,8 @@ class RCNNRegressionLoss(keras.layers.Layer):
         updates = keras.backend.ones_like(indices, dtype=keras.backend.floatx())
         labels = keras_rcnn.backend.scatter_add_tensor(keras.backend.zeros_like(output, dtype='float32'), indices, updates[:, 0])
 
-        inside_mul = inside_weights * keras.backend.abs(output - target) * labels
+        # TODO: refactor to use `keras_rcnn.backend.smooth_l1`:
+        inside_mul = inside_weights * keras.backend.abs(output - target_bounding_boxes) * labels
         smooth_l1_sign = keras.backend.cast(keras.backend.less(inside_mul, 1.0 / sigma2), keras.backend.floatx())
 
         smooth_l1_option1 = (inside_mul * inside_mul) * (0.5 * sigma2)

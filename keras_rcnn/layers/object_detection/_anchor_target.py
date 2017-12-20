@@ -53,6 +53,7 @@ class AnchorTarget(keras.layers.Layer):
     def build(self, input_shape):
         super(AnchorTarget, self).build(input_shape)
 
+    # TODO: should AnchorTarget only be enabled during training
     def call(self, inputs, **kwargs):
         scores, gt_boxes, metadata = inputs
 
