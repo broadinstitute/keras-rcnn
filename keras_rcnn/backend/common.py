@@ -248,7 +248,7 @@ def focal_loss(target, output, gamma=2):
     return loss
 
 
-def softmax_classification(output, target, anchored=False, weights=None):
+def softmax_classification(target, output, anchored=False, weights=None):
     classes = keras.backend.int_shape(output)[-1]
 
     target = keras.backend.reshape(target, [-1, classes])

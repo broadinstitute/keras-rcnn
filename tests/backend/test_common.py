@@ -288,10 +288,8 @@ def test_softmax_classification():
                [1.0, 1.0, 1.0, 0.0]]
 
     x = keras_rcnn.backend.softmax_classification(
-        keras.backend.variable(output),
-        keras.backend.variable(target),
-        weights=keras.backend.variable(weights)
-    )
+        keras.backend.variable(target), keras.backend.variable(output),
+        weights=keras.backend.variable(weights))
 
     output_y = numpy.reshape(output, [-1, 3])
     target_y = numpy.reshape(target, [-1, 3])
@@ -310,11 +308,8 @@ def test_softmax_classification():
     numpy.testing.assert_array_almost_equal(keras.backend.eval(x), y)
 
     x = keras_rcnn.backend.softmax_classification(
-        keras.backend.variable(output),
-        keras.backend.variable(target),
-        weights=keras.backend.variable(weights),
-        anchored=True
-    )
+        keras.backend.variable(target), keras.backend.variable(output),
+        anchored=True, weights=keras.backend.variable(weights))
 
     y = weights * numpy.reshape(_y, numpy.asarray(weights).shape)
     numpy.testing.assert_array_almost_equal(keras.backend.eval(x), y)
