@@ -129,7 +129,7 @@ class RCNNRegressionLoss(keras.layers.Layer):
         updates = keras.backend.ones_like(indices, dtype=keras.backend.floatx())
         labels = keras_rcnn.backend.scatter_add_tensor(keras.backend.zeros_like(output, dtype='float32'), indices, updates[:, 0])
 
-        smooth_l1_result = keras_rcnn.backend.smooth_l1(output, target, anchored=True, weights=labels)
+        smooth_l1_result = keras_rcnn.backend.smooth_l1(output * labels, target * labels, anchored=True)
 
         loss = outside_weights * smooth_l1_result
         epsilon = 1e-4
