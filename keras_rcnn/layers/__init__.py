@@ -2,8 +2,6 @@ from .losses import (
     RCNNClassificationLoss,
     RCNNMaskLoss,
     RCNNRegressionLoss,
-    RPNClassificationLoss,
-    RPNRegressionLoss,
     RPN
 )
 

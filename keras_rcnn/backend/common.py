@@ -194,6 +194,7 @@ def overlap(a, b):
     iw = keras.backend.minimum(keras.backend.expand_dims(a[:, 2], 1),
                                b[:, 2]) - keras.backend.maximum(
         keras.backend.expand_dims(a[:, 0], 1), b[:, 0]) + 1
+
     ih = keras.backend.minimum(keras.backend.expand_dims(a[:, 3], 1),
                                b[:, 3]) - keras.backend.maximum(
         keras.backend.expand_dims(a[:, 1], 1), b[:, 1]) + 1
