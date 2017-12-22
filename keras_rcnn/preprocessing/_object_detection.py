@@ -133,6 +133,9 @@ class DictionaryIterator(keras.preprocessing.image.Iterator):
 
         return [boxes, images, labels, self.metadata], None
 
+    def _get_batches_of_transformed_samples(self, index_array):
+        pass
+
 
 class ObjectDetectionGenerator:
     def flow(self, dictionary, classes, target_shape=None, scale=None, ox=None, oy=None):
