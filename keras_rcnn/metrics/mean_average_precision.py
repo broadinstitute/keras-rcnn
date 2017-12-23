@@ -128,15 +128,15 @@ def mean_average_precision(target, output, class_descriptions):
         # sort by score
         sorted_indices = numpy.argsort(-output_scores)
         bounding_boxes = output_bounding_boxes[sorted_indices]
-        image_indices = image_indices[sorted_indices]
+        sorted_image_indices = image_indices[sorted_indices]
 
-        number_of_detections = len(image_indices)
+        number_of_detections = len(sorted_image_indices)
         tp = numpy.zeros(number_of_detections)
         fp = numpy.zeros(number_of_detections)
 
         for detection_index in range(number_of_detections):
 
-            instances = detections_per_class[image_indices[detection_index]]
+            instances = detections_per_class[sorted_image_indices[detection_index]]
             instance_bounding_box = bounding_boxes[detection_index]
 
             maximum_overlap_ratio = 0.0
@@ -166,4 +166,4 @@ def mean_average_precision(target, output, class_descriptions):
                 fp[detection_index] = 1.0
         ap = average_precision(tp, fp, number_of_instances_per_class)
         aps.append(ap)
-    return numpy.nanmean(aps)
+    return numpy.nanmean(aps), aps
