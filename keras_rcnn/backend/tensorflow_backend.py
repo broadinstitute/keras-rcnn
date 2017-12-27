@@ -188,3 +188,7 @@ def unique(x, return_index=False):
         return y, indices
     else:
         return y
+
+
+def pad(x, pad_width, mode):
+    return tensorflow.pad(x, pad_width, mode)

@@ -15,33 +15,37 @@ class RCNN(keras.layers.Layer):
 
     @property
     def classification_loss(self):
-        loss = keras_rcnn.backend.softmax_classification(self.target_scores, self.output_scores, anchored=True)
+        epsilon = keras.backend.epsilon()
+
+        weights = keras.backend.sum(self.target_scores, axis=1)
+
+        weights = keras.backend.sum(self.target_scores) / keras.backend.maximum(weights, epsilon)
+
+        weights = 1.0 / (1 + keras.backend.exp(-weights))
+
+        weights = keras.backend.sum(self.target_scores * weights, axis=-1)
+
+        loss = keras_rcnn.backend.softmax_classification(self.output_scores, self.target_scores, anchored=True, weights=weights)
 
         return keras.backend.mean(loss)
 
     @property
     def regression_loss(self):
-        output = self.output_deltas
-        target_bounding_boxes = self.target_deltas
-        target_labels = self.target_scores
+        output_deltas = self.output_deltas[:, :, 4:]
+        target_deltas = self.target_deltas[:, :, 4:]
 
-        # TODO: remove unneeded constants
-        inside_weights = 1.0
-        outside_weights = 1.0
+        target_scores = self.target_scores[:, :, 1:]
 
-        sigma = 1.0
-        sigma2 = keras.backend.square(sigma)
+        weights = keras.backend.sum(target_scores, axis=1)
 
-        # TODO: are we actually removing the negative boxes?
-        # only consider positive classes
-        output = output[:, :, 4:]
-        target_bounding_boxes = target_bounding_boxes[:, :, 4:]
+        weights = keras.backend.sum(target_scores) / keras.backend.maximum(weights, keras.backend.epsilon())
 
-        target_labels = target_labels[:, :, 1:]
+        weights = 1.0 / (1 + keras.backend.exp(-weights))
 
         # mask out output values where class is different from targetrcnn loss
         # function
-        a = keras_rcnn.backend.where(keras.backend.equal(target_labels, 1))
+        a = keras_rcnn.backend.where(keras.backend.equal(target_scores, 1))
+
         a = keras.backend.cast(a, 'int32')
 
         rr = a[:, :2]
@@ -56,18 +60,18 @@ class RCNN(keras.layers.Layer):
 
         indices = keras.backend.concatenate(indices, 0)
 
-        updates = keras.backend.ones_like(indices, dtype=keras.backend.floatx())
+        weights = keras.backend.sum(target_scores * weights, axis=-1)
+        weights = keras_rcnn.backend.gather_nd(weights, rr)
 
-        labels = keras_rcnn.backend.scatter_add_tensor(keras.backend.zeros_like(output, dtype='float32'), indices, updates[:, 0])
+        weights = keras.backend.reshape(weights, (-1,))
 
-        smooth_l1_result = keras_rcnn.backend.smooth_l1(output * labels, target_bounding_boxes * labels, anchored=True)
+        updates = keras.backend.tile(weights, (4,))
 
-        loss = outside_weights * smooth_l1_result
-        epsilon = 1e-4
-        b = keras.backend.sum(epsilon + target_labels)
-        loss = tensorflow.reduce_sum(loss) / b
+        labels = keras_rcnn.backend.scatter_add_tensor(keras.backend.zeros_like(output_deltas, dtype='float32'), indices, updates)
 
-        return loss
+        loss = keras_rcnn.backend.smooth_l1(output_deltas * labels, target_deltas * labels, anchored=True)
+
+        return keras.backend.sum(loss) / keras.backend.maximum(keras.backend.epsilon(), target_scores)
 
     def call(self, inputs, **kwargs):
         target_deltas, target_scores, output_deltas, output_scores = inputs
@@ -162,14 +166,10 @@ class RPN(keras.layers.Layer):
 
         a = p_star_i * a_y
 
-        a = keras.backend.sum(a)
-
         # Divided by anchor overlaps
-        b = keras.backend.sum(p_star_i + keras.backend.epsilon())
-
         weight = 10.0
 
-        return weight * (a / b)
+        return weight * (keras.backend.sum(a) / keras.backend.maximum(keras.backend.epsilon(), p_star_i))
 
     def get_config(self):
         configuration = {
