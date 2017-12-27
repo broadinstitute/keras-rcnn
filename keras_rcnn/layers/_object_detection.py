@@ -8,30 +8,15 @@ import keras_rcnn.backend
 
 
 class ObjectDetection(keras.engine.topology.Layer):
-    """
-    Get final detections + labels by unscaling back to image space, applying
-    regression deltas, choosing box coordinates, and removing extra
-    detections via NMS
-
-    Arguments:
-        threshold: objects with maximum score less than threshold are thrown
-        out
-
-        test_nms: A float representing the threshold for deciding whether
-        boxes overlap too much with respect to IoU
-
-    """
-    def __init__(self, maximum=300, threshold=0.5, **kwargs):
-        self.maximum = maximum
-
-        self.threshold = threshold
+    def __init__(self, padding=300, **kwargs):
+        self.padding = padding
 
         super(ObjectDetection, self).__init__(**kwargs)
 
     def build(self, input_shape):
         super(ObjectDetection, self).build(input_shape)
 
-    def call(self, inputs, training=None, **kwargs):
+    def call(self, x, training=None, **kwargs):
         """
         # Inputs
         proposals: output of proposal target (1, N, 4)
@@ -47,65 +32,62 @@ class ObjectDetection(keras.engine.topology.Layer):
         note the box only corresponds to the most probable class, not the
         other classes
         """
-        def detections(num_output):
-            output_bounding_boxes, output_deltas, output_scores, target_metadata = inputs[0], inputs[1], inputs[2], inputs[3]
 
-            output_bounding_boxes = keras.backend.reshape(output_bounding_boxes, (-1, 4))
+        def detections(num_output):
+            proposals, deltas, scores, metadata = x[0], x[1], x[2], x[3]
+
+            proposals = keras.backend.reshape(proposals, (-1, 4))
 
             # unscale back to raw image space
 
-            num_objects = keras.backend.shape(output_bounding_boxes)[0]
-
-            output_bounding_boxes = output_bounding_boxes / target_metadata[0][2]
-
-            output_deltas = keras.backend.reshape(output_deltas, (num_objects, -1))
+            boxes = proposals / metadata[0][2]
+            num_objects = keras.backend.shape(proposals)[0]
+            deltas = keras.backend.reshape(deltas, (num_objects, -1))
 
             # Apply bounding-box regression deltas
-            output_bounding_boxes = keras_rcnn.backend.bbox_transform_inv(output_bounding_boxes, output_deltas)
+            pred_boxes = keras_rcnn.backend.bbox_transform_inv(boxes, deltas)
 
-            output_bounding_boxes = keras_rcnn.backend.clip(output_bounding_boxes, target_metadata[0][:2])
+            pred_boxes = keras_rcnn.backend.clip(pred_boxes, metadata[0][:2])
 
-            output_scores = keras.backend.reshape(output_scores, (num_objects, -1))
+            scores = keras.backend.reshape(scores, (num_objects, -1))
 
             # Arg max
-            indicies = keras.backend.expand_dims(keras.backend.arange(0, num_objects, dtype='int64'))
+            inds = keras.backend.expand_dims(keras.backend.arange(0, num_objects, dtype="int64"))
 
-            top_classes = keras.backend.expand_dims(keras.backend.argmax(output_scores, axis=1))
+            top_classes = keras.backend.expand_dims(keras.backend.argmax(scores, axis=1))
 
-            coordinates = [
-                keras.backend.concatenate([indicies, top_classes * 4], 1),
-                keras.backend.concatenate([indicies, top_classes * 4 + 1], 1),
-                keras.backend.concatenate([indicies, top_classes * 4 + 2], 1),
-                keras.backend.concatenate([indicies, top_classes * 4 + 3], 1)
-            ]
+            coordinate_0 = keras.backend.concatenate([inds, top_classes * 4], 1)
+            coordinate_1 = keras.backend.concatenate([inds, top_classes * 4 + 1], 1)
+            coordinate_2 = keras.backend.concatenate([inds, top_classes * 4 + 2], 1)
+            coordinate_3 = keras.backend.concatenate([inds, top_classes * 4 + 3], 1)
 
-            coordinates = keras.backend.reshape(keras.backend.concatenate(coordinates, 1), (-1, 2))
+            pred_boxes = keras_rcnn.backend.gather_nd(pred_boxes, keras.backend.reshape(keras.backend.concatenate([coordinate_0, coordinate_1, coordinate_2, coordinate_3], 1), (-1, 2)))
 
-            output_bounding_boxes = keras_rcnn.backend.gather_nd(output_bounding_boxes, coordinates)
+            pred_boxes = keras.backend.reshape(pred_boxes, (-1, 4))
 
-            output_bounding_boxes = keras.backend.reshape(output_bounding_boxes, (-1, 4))
+            max_scores = keras.backend.max(scores, axis=1)
 
-            output_scores = keras.backend.max(output_scores, axis=1)
+            nms_indices = keras_rcnn.backend.non_maximum_suppression(boxes=pred_boxes, scores=max_scores, maximum=num_objects, threshold=0.5)
 
-            nms_indices = keras_rcnn.backend.non_maximum_suppression(output_bounding_boxes, output_scores, maximum=num_objects, threshold=self.threshold)
+            pred_boxes = keras.backend.gather(pred_boxes, nms_indices)
 
-            output_bounding_boxes = keras.backend.gather(output_bounding_boxes, nms_indices)
+            scores = keras.backend.gather(scores, nms_indices)
 
-            output_bounding_boxes = keras.backend.expand_dims(output_bounding_boxes, 0)
+            pred_boxes = keras.backend.expand_dims(pred_boxes, 0)
 
-            output_bounding_boxes = self.pad(output_bounding_boxes)
+            scores = keras.backend.expand_dims(scores, 0)
 
-            output_scores = keras.backend.gather(output_scores, nms_indices)
+            pred_boxes = self.pad(pred_boxes, self.padding)
 
-            output_scores = keras.backend.expand_dims(output_scores, 0)
+            scores = self.pad(scores, self.padding)
 
-            output_scores = self.pad(output_scores)
+            detections = [pred_boxes, scores]
 
-            return [output_bounding_boxes, output_scores][num_output]
+            return detections[num_output]
 
-        bounding_boxes = keras.backend.in_train_phase(inputs[0], lambda: detections(0), training=training)
+        bounding_boxes = keras.backend.in_train_phase(x[0], lambda: detections(0), training=training)
 
-        scores = keras.backend.in_train_phase(inputs[2], lambda: detections(1), training=training)
+        scores = keras.backend.in_train_phase(x[2], lambda: detections(1), training=training)
 
         return [bounding_boxes, scores]
 
@@ -115,9 +97,14 @@ class ObjectDetection(keras.engine.topology.Layer):
     def compute_mask(self, inputs, mask=None):
         return 2 * [None]
 
-    def pad(self, x):
+    @staticmethod
+    def pad(x, padding):
         detections = keras.backend.shape(x)[1]
 
-        pad_width = ((0, 0), (0, (keras.backend.max([0, (self.maximum - detections)]))), (0, 0))
+        difference = padding - detections
 
-        return keras_rcnn.backend.pad(x, pad_width, "constant")
+        difference = keras.backend.max([0, difference])
+
+        paddings = ((0, 0), (0, difference), (0, 0))
+
+        return tensorflow.pad(x, paddings, mode="constant")
