@@ -111,7 +111,7 @@ class RPN(keras.layers.Layer):
         super(RPN, self).__init__(**kwargs)
 
     def call(self, inputs, **kwargs):
-        target_deltas, target_scores, output_deltas, output_scores = inputs
+        output_deltas, target_deltas, output_scores, target_scores = inputs
 
         self.target_deltas = target_deltas
         self.target_scores = target_scores
@@ -131,6 +131,8 @@ class RPN(keras.layers.Layer):
         condition = keras.backend.not_equal(self.target_scores, -1)
 
         indices = keras_rcnn.backend.where(condition)
+
+        indices = keras.backend.expand_dims(indices, 0)
 
         target = keras_rcnn.backend.gather_nd(self.target_scores, indices)
         output = keras_rcnn.backend.gather_nd(self.output_scores, indices)
