@@ -71,7 +71,7 @@ class RCNN(keras.layers.Layer):
 
         loss = keras_rcnn.backend.smooth_l1(output_deltas * labels, target_deltas * labels, anchored=True)
 
-        return keras.backend.sum(loss) / keras.backend.maximum(keras.backend.epsilon(), target_scores)
+        return keras.backend.sum(loss) / keras.backend.maximum(keras.backend.epsilon(), keras.backend.sum(target_scores))
 
     def call(self, inputs, **kwargs):
         target_deltas, target_scores, output_deltas, output_scores = inputs
@@ -83,6 +83,9 @@ class RCNN(keras.layers.Layer):
         self.output_scores = output_scores
 
         def backward():
+            print(keras.backend.int_shape(self.classification_loss))
+            print(keras.backend.int_shape(self.regression_loss))
+
             return self.classification_loss + self.regression_loss
 
         def forward():
@@ -102,6 +105,11 @@ class RCNN(keras.layers.Layer):
         self.add_loss(loss)
 
         return [output_deltas, output_scores]
+
+    def get_config(self):
+        configuration = {}
+
+        return {**super(RCNN, self).get_config(), **configuration}
 
 
 class RPN(keras.layers.Layer):
@@ -171,13 +179,11 @@ class RPN(keras.layers.Layer):
         # Divided by anchor overlaps
         weight = 10.0
 
-        return weight * (keras.backend.sum(a) / keras.backend.maximum(keras.backend.epsilon(), p_star_i))
+        return weight * (keras.backend.sum(a) / keras.backend.maximum(keras.backend.epsilon(), keras.backend.sum(p_star_i)))
 
     def get_config(self):
         configuration = {
             "anchors": self.anchors
         }
 
-        return {
-            **super(RPN, self).get_config(), **configuration
-        }
+        return {**super(RPN, self).get_config(), **configuration}
