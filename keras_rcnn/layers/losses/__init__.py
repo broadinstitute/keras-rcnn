@@ -83,9 +83,6 @@ class RCNN(keras.layers.Layer):
         self.output_scores = output_scores
 
         def backward():
-            print(keras.backend.int_shape(self.classification_loss))
-            print(keras.backend.int_shape(self.regression_loss))
-
             return self.classification_loss + self.regression_loss
 
         def forward():
