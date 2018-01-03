@@ -137,8 +137,8 @@ class ProposalTarget(keras.layers.Layer):
         return labels
 
     def compute_output_shape(self, input_shape):
-        num_classes = input_shape[2][2]
-        return [(1, None, 4), (1, None, num_classes), (1, None, 4)]
+        num_classes = input_shape[1][2]
+        return [(1, None, 4), (1, None, num_classes), (1, None, 4 * num_classes)]
 
     def compute_mask(self, inputs, mask=None):
         return [None, None, None]
