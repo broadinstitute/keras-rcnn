@@ -8,20 +8,6 @@ import keras_rcnn.backend
 
 
 class ObjectDetection(keras.engine.topology.Layer):
-    """
-    Get final detections + labels by unscaling back to image space, applying
-    regression deltas, choosing box coordinates, and removing extra
-    detections via NMS
-
-    Arguments:
-        threshold: objects with maximum score less than threshold are thrown
-        out
-
-        test_nms: A float representing the threshold for deciding whether
-        boxes overlap too much with respect to IoU
-
-    """
-
     def __init__(self, padding=300, **kwargs):
         self.padding = padding
 
@@ -66,7 +52,7 @@ class ObjectDetection(keras.engine.topology.Layer):
             scores = keras.backend.reshape(scores, (num_objects, -1))
 
             # Arg max
-            inds = keras.backend.expand_dims(keras.backend.arange(0, num_objects, dtype='int64'))
+            inds = keras.backend.expand_dims(keras.backend.arange(0, num_objects, dtype="int64"))
 
             top_classes = keras.backend.expand_dims(keras.backend.argmax(scores, axis=1))
 
@@ -81,7 +67,7 @@ class ObjectDetection(keras.engine.topology.Layer):
 
             max_scores = keras.backend.max(scores, axis=1)
 
-            nms_indices = keras_rcnn.backend.non_maximum_suppression(boxes=pred_boxes, scores=max_scores, maximum=num_objects, threshold=0.7)
+            nms_indices = keras_rcnn.backend.non_maximum_suppression(boxes=pred_boxes, scores=max_scores, maximum=num_objects, threshold=0.5)
 
             pred_boxes = keras.backend.gather(pred_boxes, nms_indices)
 
