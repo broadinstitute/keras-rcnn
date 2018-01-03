@@ -76,6 +76,9 @@ class DictionaryIterator(keras.preprocessing.image.Iterator):
         with self.lock:
             selection = next(self.index_generator)
 
+        return self._get_batches_of_transformed_samples(selection)
+
+    def _get_batches_of_transformed_samples(self, selection):
         # Labels has num_classes + 1 elements, since 0 is reserved for
         # background.
         num_classes = len(self.classes)
@@ -103,6 +106,7 @@ class DictionaryIterator(keras.preprocessing.image.Iterator):
                     offset_y = numpy.random.randint(0, self.image_shape[0] - self.target_shape[0] + 1)
                 else:
                     offset_y = self.oy
+
                 image = image[offset_y:self.target_shape[0] + offset_y, offset_x:self.target_shape[1] + offset_x, :]
 
                 # Copy image to batch blob.
@@ -140,9 +144,6 @@ class DictionaryIterator(keras.preprocessing.image.Iterator):
             boxes[batch_index, :, :4] *= self.scale
 
         return [boxes, images, labels, self.metadata], None
-
-    def _get_batches_of_transformed_samples(self, index_array):
-        pass
 
 
 class ObjectDetectionGenerator:
