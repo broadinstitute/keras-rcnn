@@ -142,7 +142,7 @@ def _whctrs(anchor):
     return w, h, x_ctr, y_ctr
 
 
-def shift(shape, stride):
+def shift(shape, stride, base_size=16, ratios=None, scales=None):
     """
     Produce shifted anchors based on shape of the map and stride size
     """
@@ -162,7 +162,7 @@ def shift(shape, stride):
 
     shifts = keras.backend.transpose(shifts)
 
-    anchors = keras_rcnn.backend.anchor()
+    anchors = keras_rcnn.backend.anchor(base_size=base_size, ratios=ratios, scales=scales)
 
     number_of_anchors = keras.backend.shape(anchors)[0]
 
