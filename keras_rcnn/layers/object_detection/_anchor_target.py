@@ -51,9 +51,20 @@ class AnchorTarget(keras.layers.Layer):
         self.base_size = base_size
         self.ratios = ratios
         self.scales = scales
+        
+        self._shifted_anchors = None
 
         super(AnchorTarget, self).__init__(**kwargs)
+    
+    @property
+    def shifted_anchors(self):
+        if self._shifted_anchors:
+            return self._shifted_anchors
+        else:
+            self._shifted_anchors = keras_rcnn.backend.shift((self.height, self.width), self.stride, self.base_size, self.ratios, self.scales)
 
+            return self._shifted_anchors
+        
     def build(self, input_shape):
         super(AnchorTarget, self).build(input_shape)
 
@@ -61,17 +72,17 @@ class AnchorTarget(keras.layers.Layer):
     def call(self, inputs, **kwargs):
         scores, gt_boxes, metadata = inputs
 
-        metadata = metadata[0, :]  # keras.backend.int_shape(image)[1:]
+        metadata = metadata[0, :] 
 
         gt_boxes = gt_boxes[0]
 
-        rr = keras.backend.shape(scores)[1]
-        cc = keras.backend.shape(scores)[2]
+        self.height = keras.backend.shape(scores)[1]
+        self.width = keras.backend.shape(scores)[2]
         total_anchors = keras.backend.shape(scores)[3]
-        total_anchors = rr * cc * total_anchors
+        total_anchors = self.height * self.width * total_anchors
 
         # 1. Generate proposals from bbox deltas and shifted anchors
-        all_anchors = keras_rcnn.backend.shift((rr, cc), self.stride, self.base_size, self.ratios, self.scales)
+        all_anchors = self.shifted_anchors
 
         # only keep anchors inside the image
         inds_inside, anchors = inside_image(all_anchors, metadata,
