@@ -67,9 +67,9 @@ class ProposalTarget(keras.layers.Layer):
         bounding_boxes = bounding_boxes[batch_index, :, :]
         labels = labels[batch_index, :, :]
 
-        sample_outputs = self.sample_rois(proposals, bounding_boxes, labels)
+        sample_outputs = self.sample_rois(proposals, bounding_boxes, labels, training)
 
-        rois = keras.backend.in_train_phase(keras.backend.expand_dims(sample_outputs[0], 0), inputs[0], training=training)
+        rois = keras.backend.expand_dims(sample_outputs[0], 0)
         labels = keras.backend.expand_dims(sample_outputs[1], 0)
         bbox_targets = keras.backend.expand_dims(sample_outputs[2], 0)
 
@@ -87,7 +87,7 @@ class ProposalTarget(keras.layers.Layer):
 
         return {**super(ProposalTarget, self).get_config(), **configuration}
 
-    def sample_rois(self, all_rois, gt_boxes, gt_labels):
+    def sample_rois(self, all_rois, gt_boxes, gt_labels, training=None):
         """
         Generate a random sample of RoIs comprising foreground and background
         examples.
@@ -107,21 +107,26 @@ class ProposalTarget(keras.layers.Layer):
         max_overlaps = keras.backend.max(overlaps, axis=1)
 
         # finds the ground truth labels corresponding to the ground truth boxes with greatest overlap for each predicted regions of interest
-        labels = keras.backend.gather(gt_labels, gt_assignment)
+        all_labels = keras.backend.gather(gt_labels, gt_assignment)
 
         # Select RoIs with given parameters for fg/bg objects
         keep_inds = self.get_fg_bg_rois(max_overlaps)
 
         # Select sampled values from various arrays:
-        labels = keras.backend.gather(labels, keep_inds)
+        labels = keras.backend.gather(all_labels, keep_inds)
         rois = keras.backend.gather(all_rois, keep_inds)
 
         labels = self.set_label_background(labels)
 
         # Compute bounding-box regression targets for an image.
+        all_boxes = keras.backend.gather(gt_boxes, gt_assignment)
         gt_boxes = keras.backend.gather(gt_boxes, keras.backend.gather(gt_assignment, keep_inds))
         bbox_targets = self.get_bbox_targets(rois, gt_boxes, labels, num_classes)
 
+        rois = keras.backend.in_train_phase(rois, all_rois, training=training)
+        labels = keras.backend.in_train_phase(labels, all_labels, training=training)
+        bbox_targets = keras.backend.in_train_phase(bbox_targets, self.get_bbox_targets(all_rois, all_boxes, all_labels, num_classes), training=training) 
+        
         labels = keras.backend.one_hot(labels, num_classes)
         return rois, labels, bbox_targets
 
