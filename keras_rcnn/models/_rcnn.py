@@ -28,33 +28,33 @@ class RCNN(keras.models.Model):
 
         target_bounding_boxes, target_image, target_labels, target_metadata = inputs
 
-        output_features = keras.layers.Conv2D(64, name="convolution_1_1", **options)(target_image)
-        output_features = keras.layers.Conv2D(64, name="convolution_1_2", **options)(output_features)
+        output_features = keras.layers.Conv2D(64, name='block1_conv1', **options)(target_image)
+        output_features = keras.layers.Conv2D(64, name='block1_conv2', **options)(output_features)
 
-        output_features = keras.layers.MaxPooling2D(strides=(2, 2), name="max_pooling_1")(output_features)
+        output_features = keras.layers.MaxPooling2D(strides=(2, 2), name='block1_pool')(output_features)
 
-        output_features = keras.layers.Conv2D(128, name="convolution_2_1", **options)(output_features)
-        output_features = keras.layers.Conv2D(128, name="convolution_2_2", **options)(output_features)
+        output_features = keras.layers.Conv2D(128, name='block2_conv1', **options)(output_features)
+        output_features = keras.layers.Conv2D(128, name='block2_conv2', **options)(output_features)
 
-        output_features = keras.layers.MaxPooling2D(strides=(2, 2), name="max_pooling_2")(output_features)
+        output_features = keras.layers.MaxPooling2D(strides=(2, 2), name='block2_pool')(output_features)
 
-        output_features = keras.layers.Conv2D(256, name="convolution_3_1", **options)(output_features)
-        output_features = keras.layers.Conv2D(256, name="convolution_3_2", **options)(output_features)
-        output_features = keras.layers.Conv2D(256, name="convolution_3_3", **options)(output_features)
-        output_features = keras.layers.Conv2D(256, name="convolution_3_4", **options)(output_features)
+        output_features = keras.layers.Conv2D(256, name='block3_conv1', **options)(output_features)
+        output_features = keras.layers.Conv2D(256, name='block3_conv2', **options)(output_features)
+        output_features = keras.layers.Conv2D(256, name='block3_conv3', **options)(output_features)
+        output_features = keras.layers.Conv2D(256, name='block3_conv4', **options)(output_features)
 
-        output_features = keras.layers.MaxPooling2D(strides=(2, 2), name="max_pooling_3")(output_features)
+        output_features = keras.layers.MaxPooling2D(strides=(2, 2), name='block3_pool')(output_features)
 
-        output_features = keras.layers.Conv2D(512, name="convolution_4_1", **options)(output_features)
-        output_features = keras.layers.Conv2D(512, name="convolution_4_2", **options)(output_features)
-        output_features = keras.layers.Conv2D(512, name="convolution_4_3", **options)(output_features)
-        output_features = keras.layers.Conv2D(512, name="convolution_4_4", **options)(output_features)
+        output_features = keras.layers.Conv2D(512, name='block4_conv1', **options)(output_features)
+        output_features = keras.layers.Conv2D(512, name='block4_conv2', **options)(output_features)
+        output_features = keras.layers.Conv2D(512, name='block4_conv3', **options)(output_features)
+        output_features = keras.layers.Conv2D(512, name='block4_conv4', **options)(output_features)
 
-        output_features = keras.layers.MaxPooling2D(strides=(2, 2), name="max_pooling_4")(output_features)
+        output_features = keras.layers.MaxPooling2D(strides=(2, 2), name='block4_pool')(output_features)
 
-        output_features = keras.layers.Conv2D(512, name="convolution_5_1", **options)(output_features)
-        output_features = keras.layers.Conv2D(512, name="convolution_5_2", **options)(output_features)
-        output_features = keras.layers.Conv2D(512, name="convolution_5_3", **options)(output_features)
+        output_features = keras.layers.Conv2D(512, name='block5_conv1', **options)(output_features)
+        output_features = keras.layers.Conv2D(512, name='block5_conv2', **options)(output_features)
+        output_features = keras.layers.Conv2D(512, name='block5_conv3', **options)(output_features)
 
         convolution_3x3 = keras.layers.Conv2D(512, name="convolution_3x3", **options)(output_features)
 
