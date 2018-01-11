@@ -25,7 +25,7 @@ class RCNN(keras.layers.Layer):
 
         weights = keras.backend.sum(self.target_scores * weights, axis=-1)
 
-        loss = keras_rcnn.backend.softmax_classification(self.output_scores, self.target_scores, anchored=True, weights=weights)
+        loss = keras_rcnn.backend.softmax_classification(self.target_scores, self.output_scores, anchored=True, weights=weights)
 
         return keras.backend.mean(loss)
 
@@ -82,23 +82,13 @@ class RCNN(keras.layers.Layer):
         self.output_deltas = output_deltas
         self.output_scores = output_scores
 
-        def backward():
-            return self.classification_loss + self.regression_loss
-
-        def forward():
-            return keras.backend.constant(0.0)
-
         target_deltas_x = keras.backend.shape(self.target_deltas)[1]
         target_scores_x = keras.backend.shape(self.target_scores)[1]
 
         output_deltas_y = keras.backend.shape(self.output_deltas)[1]
         output_scores_y = keras.backend.shape(self.output_scores)[1]
 
-        a = keras.backend.not_equal(target_deltas_x, output_deltas_y)
-        b = keras.backend.not_equal(target_scores_x, output_scores_y)
-
-        loss = tensorflow.cond(a, forward, backward)
-
+        loss = self.classification_loss + self.regression_loss
         self.add_loss(loss)
 
         return [output_deltas, output_scores]
