@@ -138,19 +138,19 @@ class RPN(keras.layers.Layer):
 
     @property
     def regression_loss(self):
-        condition = keras.backend.not_equal(self.output_scores, -1)
+        condition = keras.backend.not_equal(self.target_scores, -1)
 
         indices = keras_rcnn.backend.where(condition)
 
         output = keras_rcnn.backend.gather_nd(self.output_deltas, indices)
         target = keras_rcnn.backend.gather_nd(self.target_deltas, indices)
 
-        output_scores = keras_rcnn.backend.gather_nd(self.output_scores, indices)
+        target_scores = keras_rcnn.backend.gather_nd(self.target_scores, indices)
 
-        condition = keras.backend.greater(output_scores, 0)
+        condition = keras.backend.greater(target_scores, 0)
 
-        x = keras.backend.zeros_like(output_scores) + 1
-        y = keras.backend.zeros_like(output_scores)
+        x = keras.backend.zeros_like(target_scores) + 1
+        y = keras.backend.zeros_like(target_scores)
 
         p_star_i = keras_rcnn.backend.where(condition, x, y)
 
