@@ -146,8 +146,8 @@ def shift(shape, stride, base_size=16, ratios=None, scales=None):
     """
     Produce shifted anchors based on shape of the map and stride size
     """
-    shift_x = keras.backend.arange(0, shape[0]) * stride
-    shift_y = keras.backend.arange(0, shape[1]) * stride
+    shift_x = keras.backend.arange(0, shape[1]) * stride
+    shift_y = keras.backend.arange(0, shape[0]) * stride
 
     shift_x, shift_y = keras_rcnn.backend.meshgrid(shift_x, shift_y)
     shift_x = keras.backend.reshape(shift_x, [-1])
