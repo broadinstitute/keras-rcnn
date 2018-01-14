@@ -187,14 +187,8 @@ class ProposalTarget(keras.layers.Layer):
 
         return keep_inds
 
-    def sample_indices(self, indices, threshold):
-        def no_sample(indices):
-            return keras.backend.reshape(indices, (-1,))
-
-        def sample(indices, size):
-            return keras_rcnn.backend.shuffle(keras.backend.reshape(indices, (-1,)))[:size]
-
-        return keras.backend.switch(keras.backend.shape(indices)[0] > 0, lambda: no_sample(indices), lambda: sample(indices, threshold))
+    def sample_indices(self, indices, size):
+        return keras_rcnn.backend.shuffle(keras.backend.reshape(indices, (-1,)))[:size]
 
 
 def get_bbox_regression_labels(bbox_target_data, labels, num_classes):
