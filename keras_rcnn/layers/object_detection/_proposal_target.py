@@ -122,11 +122,7 @@ class ProposalTarget(keras.layers.Layer):
         all_boxes = keras.backend.gather(gt_boxes, gt_assignment)
         gt_boxes = keras.backend.gather(gt_boxes, keras.backend.gather(gt_assignment, keep_inds))
         bbox_targets = self.get_bbox_targets(rois, gt_boxes, labels, num_classes)
-
-        rois = keras.backend.in_train_phase(rois, all_rois, training=training)
-        labels = keras.backend.in_train_phase(labels, all_labels, training=training)
-        bbox_targets = keras.backend.in_train_phase(bbox_targets, self.get_bbox_targets(all_rois, all_boxes, all_labels, num_classes), training=training) 
-        
+     
         labels = keras.backend.one_hot(labels, num_classes)
         return rois, labels, bbox_targets
 
