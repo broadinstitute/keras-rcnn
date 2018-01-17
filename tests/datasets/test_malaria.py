@@ -4,7 +4,7 @@ import keras_rcnn.datasets.malaria
 
 
 def test_load_data():
-    training, test = keras_rcnn.datasets.malaria.load_data()
+    training, validation, test = keras_rcnn.datasets.malaria.load_data()
 
     assert os.path.exists(training[0]['filename'])
 

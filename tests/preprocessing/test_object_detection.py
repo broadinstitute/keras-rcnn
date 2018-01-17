@@ -25,41 +25,13 @@ def test_scale_shape():
 
 class TestObjectDetectionGenerator:
     def test_flow(self):
-
-        image = keras.layers.Input((None, None, 3))
-        training_options = {
-            "anchor_target": {
-                "allowed_border": 0,
-                "clobber_positives": False,
-                "negative_overlap": 0.3,
-                "positive_overlap": 0.7,
-            },
-            "object_proposal": {
-                "maximum_proposals": 500,
-                "minimum_size": 16,
-                "stride": 16
-            },
-            "proposal_target": {
-                "fg_fraction": 0.2,
-                "fg_thresh": 0.7,
-                "bg_thresh_hi": 0.5,
-                "bg_thresh_lo": 0.1,
-            }
-        }
-
-        model = keras_rcnn.models.RCNN(image, classes=3, training_options=training_options)
-
         classes = {
             "rbc": 1,
             "not":2
         }
 
+        training, _, _ = keras_rcnn.datasets.malaria.load_data()
+
         generator = keras_rcnn.preprocessing.ObjectDetectionGenerator()
-        training, test = keras_rcnn.datasets.malaria.load_data()
+
         generator = generator.flow(training, classes, target_shape=(448, 448), scale=1)
-
-        optimizer = keras.optimizers.Adam(0.0001)
-
-        model.compile(optimizer)
-
-        model.fit_generator(generator, 1, epochs=1)
