@@ -13,6 +13,8 @@ neural networks.
 Getting Started
 ---------------
 
+Let’s read:
+
 .. code:: python
 
     training, validation, test = keras_rcnn.datasets.malaria_phenotypes.load_data()
@@ -29,7 +31,7 @@ Getting Started
 
     validation_data = validation_data.flow(validation, classes)
 
-Let’s inspect our training data:
+and inspect our training data:
 
 .. code:: python
 
@@ -65,8 +67,7 @@ Let’s inspect our training data:
 
 .. image:: https://storage.googleapis.com/keras-rcnn-website/example.png
 
-
-Finally, we will create an RCNN instance:
+Let’s create an RCNN instance:
 
 .. code:: python
 
@@ -74,9 +75,7 @@ Finally, we will create an RCNN instance:
 
     model = keras_rcnn.models.RCNN(image, classes=len(classes) + 1)
 
-model.compile(optimizer)
-
-and pass our preferred optimizer to the compile method:
+and pass our preferred optimizer to the `compile` method:
 
 .. code:: python
 
@@ -84,7 +83,7 @@ and pass our preferred optimizer to the compile method:
 
     model.compile(optimizer)
 
-We’ll use the `fit_generator` method to train our network:
+Finally, let’s use the `fit_generator` method to train our network:
 
 .. code:: python
 
