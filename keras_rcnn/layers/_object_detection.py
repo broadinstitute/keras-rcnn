@@ -65,7 +65,7 @@ class ObjectDetection(keras.engine.topology.Layer):
 
             pred_boxes = keras.backend.reshape(pred_boxes, (-1, 4))
 
-            max_scores = keras.backend.max(scores, axis=1)
+            max_scores = keras.backend.max(scores[:, 1:], axis=1)
 
             nms_indices = keras_rcnn.backend.non_maximum_suppression(boxes=pred_boxes, scores=max_scores, maximum=num_objects, threshold=0.5)
 

@@ -1,21 +1,10 @@
 after_script:
   - codecov
 before_install:
-  - pip install tensorflow
-cache:
-  directories:
-    - $HOME/.cache/pip
-    - $HOME/.keras/datasets
-deploy:
-  on:
-    distributions: sdist bdist_wheel
-    tags: true
-  password:
-    secure: DobqdpjbXARYUE+CKj3BeQichq3iMIPzl7q9tpjdsTYlSucFfUokTaWn2iH1X6qlUGafYbou/5TPPmR8NV1Qe4ZbiMj+545WrxvoCubg1Nju+zY+f4zgBd/VUD4wWX5P1lLKWwLbYGtfgf/3z69jewFu/LmFmJphnWcAiXdpSLT0rvNvVSvaLhx8FoczbIRR2TFOCttU6k/qyi50It2m3m6sLhDoCpFk7Sx6fO1G9CDyFE34qDPXu3uilgki+y5fes/j0kVK4XKgXuCw9oa7j/qA1Kt+GJ40YJMRz0wIixI1Di4Ti+cNBe0XApXYi3BqwQAakWjWY23U79zEKa0YPHcWo1Q3czSH3Q9Jndyc6xbZkIbW+4leSejzxo/h0zkokO7rprs8kswnlilK16gv5oou4BUQPWb0shz+f+gLIEGuwv9PSpM+yDB36GenexnIrvH0hE2Slm29BIa+3bM2Pm925hzyS2qJ/26I2z+aeyam9TtBYLOre58r5b0jMpFozPwnTu3GDIgaSSJ0Lzp5PmOLJWPuwEjfEoAV4Q/sz9PSlRgnaYmdIo/9oDECOAzxo8kGgDX4/EO8ZxC8lOscWNhp7GrVGUAHrxHD+UKFCS8vCYOTHWBL9OreqsaYemNJKxjeJh31PzaeAjY9Cu6XIKv3AxFwmBktJHr9pVqpvsg=
-  provider: pypi
-  user: '0x00b1'
-dist: trusty
-install: pip install --editable .[test]
+  - pip3 install tensorflow
+install: pip3 install --editable .[test]
 language: python
+python:
+  - "3.6"
 script:
-  - pytest tests/ --cov keras_rcnn/ --pep8
+  - pytest
