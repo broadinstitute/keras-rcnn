@@ -29,7 +29,7 @@ class ProposalTarget(keras.layers.Layer):
     [(None, None, 4), (None, None, classes), (None, None, 4)]
     """
 
-    def __init__(self, fg_fraction=0.25, fg_thresh=0.5, bg_thresh_hi=0.5, bg_thresh_lo=0.1, batchsize=256, num_images=1, **kwargs):
+    def __init__(self, fg_fraction=0.5, fg_thresh=0.5, bg_thresh_hi=0.5, bg_thresh_lo=0.1, batchsize=32, num_images=1, **kwargs):
         self.fg_fraction = fg_fraction
         self.fg_thresh = fg_thresh
         self.bg_thresh_hi = bg_thresh_hi
@@ -154,7 +154,7 @@ class ProposalTarget(keras.layers.Layer):
             rois,
             gt_boxes
         )
-        return get_bbox_regression_labels(targets, labels, num_classes)
+        return self.get_bbox_regression_labels(targets, labels, num_classes)
 
 
     def get_fg_bg_rois(self, max_overlaps):
@@ -191,37 +191,37 @@ class ProposalTarget(keras.layers.Layer):
         return keras_rcnn.backend.shuffle(keras.backend.reshape(indices, (-1,)))[:size]
 
 
-def get_bbox_regression_labels(bbox_target_data, labels, num_classes):
-    """Bounding-box regression targets (bbox_target_data) are stored in a
-    form N x (tx, ty, tw, th), labels N
-    This function expands those targets into the 4-of-4*K representation used
-    by the network (i.e. only one class has non-zero targets).
-    Returns:
-        bbox_target: N x 4K blob of regression targets
-    """
+    def get_bbox_regression_labels(self, bbox_target_data, labels, num_classes):
+        """Bounding-box regression targets (bbox_target_data) are stored in a
+        form N x (tx, ty, tw, th), labels N
+        This function expands those targets into the 4-of-4*K representation used
+        by the network (i.e. only one class has non-zero targets).
+        Returns:
+            bbox_target: N x 4K blob of regression targets
+        """
 
-    n = keras.backend.shape(bbox_target_data)[0]
+        n = keras.backend.shape(bbox_target_data)[0]
 
-    bbox_targets = tensorflow.zeros((n, 4 * num_classes), dtype=keras.backend.floatx())
+        bbox_targets = tensorflow.zeros((n, 4 * num_classes), dtype=keras.backend.floatx())
 
-    inds = keras.backend.reshape(keras_rcnn.backend.where(labels > 0), (-1,))
+        inds = keras.backend.reshape(keras_rcnn.backend.where(labels > 0), (-1,))
 
-    labels = keras.backend.gather(labels, inds)
+        labels = keras.backend.gather(labels, inds)
 
-    start = 4 * labels
+        start = 4 * labels
 
-    ii = keras.backend.expand_dims(inds)
-    ii = keras.backend.tile(ii, [4, 1])
+        ii = keras.backend.expand_dims(inds)
+        ii = keras.backend.tile(ii, [4, 1])
 
-    aa = keras.backend.expand_dims(keras.backend.concatenate([start, start + 1, start + 2, start + 3], 0))
-    aa = keras.backend.cast(aa, dtype='int64')
+        aa = keras.backend.expand_dims(keras.backend.concatenate([start, start + 1, start + 2, start + 3], 0))
+        aa = keras.backend.cast(aa, dtype='int64')
 
-    indices = keras.backend.concatenate([ii, aa], 1)
+        indices = keras.backend.concatenate([ii, aa], 1)
 
-    updates = keras.backend.gather(bbox_target_data, inds)
-    updates = keras.backend.transpose(updates)
-    updates = keras.backend.reshape(updates, (-1,))
+        updates = keras.backend.gather(bbox_target_data, inds)
+        updates = keras.backend.transpose(updates)
+        updates = keras.backend.reshape(updates, (-1,))
 
-    bbox_targets = keras_rcnn.backend.scatter_add_tensor(bbox_targets, indices, updates)
+        bbox_targets = keras_rcnn.backend.scatter_add_tensor(bbox_targets, indices, updates)
 
-    return bbox_targets
+        return bbox_targets
