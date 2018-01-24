@@ -31,8 +31,21 @@ class TestProposalTarget:
 #         proposal_target.call([proposals, labels, bounding_boxes])
 
 
-    # def test_get_config(self):
-    #     pass
+    def test_get_config(self):
+        p = keras_rcnn.layers.ProposalTarget(fg_fraction=0.2,
+                                             fg_thresh=0.5,
+                                             bg_thresh_hi=0.5,
+                                             bg_thresh_lo=0.1,
+                                             batchsize=33,
+                                             num_images=1)
+        config = p.get_config()
+        assert config['fg_fraction'] == 0.2
+        assert config['batchsize'] == 33
+        assert config['fg_thresh'] == 0.5
+        assert config['bg_thresh_hi'] == 0.5
+        assert config['bg_thresh_lo'] == 0.1
+        assert config['num_images'] == 1
+
 
     # def test_sample_rois(self):
     #     proposal_target = keras_rcnn.layers.ProposalTarget(
