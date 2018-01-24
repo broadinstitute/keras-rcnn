@@ -7,9 +7,11 @@ import keras_rcnn.layers.object_detection._proposal_target as proposal_target
 
 
 class TestProposalTarget:
-#
-#     def test_build(self):
-#         pass
+
+    def test_build(self):
+        p = keras_rcnn.layers.ProposalTarget()
+        input_shape = [(1, 10, 4), (1, 10, 3), (1, 10, 4)]
+        p.build(input_shape)
 
 
 #     def test_call(self):
