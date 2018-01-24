@@ -369,10 +369,37 @@ class TestProposalTarget:
         result = p.compute_mask(inputs)
         result == [None, None, None]
 
-#
-#     def test_get_bbox_targets(self):
-#         pass
-#
+
+    def test_get_bbox_targets(self):
+        p = keras_rcnn.layers.ProposalTarget()
+
+        rois = numpy.array([[0, 14.4, 30.1, 99.], [40., 3.2, 55.5, 33.7], [30.7, 1.2, 66.5, 23.8], [50.7, 50.2, 86.5, 63.8]])
+        gt_boxes = numpy.array([[3., 20., 22., 100.], [40., 3., 55., 33.], [30., 1., 66., 24.], [15., 18., 59., 59.]])
+        gt_boxes = keras.backend.cast(gt_boxes, dtype=keras.backend.floatx())
+        num_classes = 4
+        labels = numpy.array([1, 1, 2, 1])
+
+        bbox_targets = p.get_bbox_targets(rois, gt_boxes, labels, num_classes)
+        bbox_targets = keras.backend.eval(bbox_targets)
+        expected = numpy.array([
+            [ 0.        ,  0.        ,  0.        ,  0.        ,
+              -0.08471760797342194, 0.039007092198581526, -0.46008619258838973, -0.05590763193829595,
+              0.        ,  0.        , 0.        ,  0.        ,
+              0.        ,  0.        ,  0.        , 0.        ],
+            [ 0.        ,  0.        ,  0.        ,  0.        ,
+              -0.016129032258064516, -0.014754098360655828, -0.03278982282299084, -0.016529301951210697,
+              0.        ,  0.        , 0.        ,  0.        ,
+              0.        ,  0.        ,  0.        , 0.        ],
+            [ 0.        ,  0.        ,  0.        ,  0.        ,
+              0.        , 0.        ,  0.        ,  0.        ,
+              -0.01675977653631289, 0.0, 0.0055710450494554295, 0.017544309650909525,
+              0.        ,  0.        ,  0.        , 0.        ],
+            [ 0.        ,  0.        ,  0.        ,  0.        ,
+              -0.88268156424581, -1.3602941176470593, 0.20624174051160657, 1.103502273962302,
+              0.        ,  0.        ,  0.        ,  0.        ,
+              0.        ,  0.        ,  0.        ,  0.        ]])
+        numpy.testing.assert_array_almost_equal(bbox_targets, expected)
+
 
     def test_get_fg_bg_rois(self):
         #1
