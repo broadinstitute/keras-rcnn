@@ -32,6 +32,8 @@ class ProposalTarget(keras.layers.Layer):
         :param background_threshold:
         :param maximum_proposals:
         """
+        self._batch_size = None
+
         self.foreground = foreground
 
         self.foreground_threshold = foreground_threshold
@@ -41,7 +43,24 @@ class ProposalTarget(keras.layers.Layer):
 
         super(ProposalTarget, self).__init__(**kwargs)
 
+    @property
+    def batch_size(self):
+        if self._batch_size:
+            return self._batch_size
+        else:
+            self._batch_size = 1
+
+            return self._batch_size
+
+    @batch_size.setter
+    def batch_size(self, x):
+        self._batch_size = x
+
     def build(self, input_shape):
+        self.rois_per_image = self.maximum_proposals / self.batch_size
+        self.fg_rois_per_image = keras.backend.round(self.foreground * self.rois_per_image)
+        self.fg_rois_per_this_image = None
+
         super(ProposalTarget, self).build(input_shape)
 
     def call(self, inputs, training=None):
@@ -53,12 +72,6 @@ class ProposalTarget(keras.layers.Layer):
         # labels (class1, class2, ... , num_classes)
         # Include ground-truth boxes in the set of candidate rois
         proposals, labels, bounding_boxes = inputs
-
-        batch_size = keras.backend.shape(proposals)[0]
-
-        rois_per_image = self.maximum_proposals / batch_size
-        fg_rois_per_image = keras.backend.round(self.foreground * rois_per_image)
-        self.fg_rois_per_this_image = None
 
         proposals = keras.backend.in_train_phase(
             x=keras.backend.concatenate((proposals, bounding_boxes), axis=1),
@@ -86,7 +99,7 @@ class ProposalTarget(keras.layers.Layer):
             return proposals, tensorflow.zeros((N, number_of_classes)), tensorflow.zeros((N, number_of_coordinates))
 
         sample_outputs = keras.backend.switch(condition,
-                                              lambda: self.sample(proposals, bounding_boxes, labels, fg_rois_per_image, rois_per_image),
+                                              lambda: self.sample(proposals, bounding_boxes, labels),
                                               lambda: test(proposals, bounding_boxes, labels))
 
         rois = keras.backend.expand_dims(sample_outputs[0], 0)
@@ -105,7 +118,7 @@ class ProposalTarget(keras.layers.Layer):
 
         return {**super(ProposalTarget, self).get_config(), **configuration}
 
-    def sample(self, proposals, true_bounding_boxes, true_labels, fg_rois_per_image, rois_per_image, training=None):
+    def sample(self, proposals, true_bounding_boxes, true_labels, training=None):
         """
         Generate a random sample of RoIs comprising foreground and background
         examples.
@@ -132,9 +145,9 @@ class ProposalTarget(keras.layers.Layer):
         # Select proposals with given parameters for fg/bg objects
         # TODO: rename `find_foreground_and_background_proposal_indices`
         # TODO: rename `foreground_and_background_proposal_indices`
-        fg_rois_per_image = keras.backend.cast(fg_rois_per_image, 'int32')
+        self.fg_rois_per_image = keras.backend.cast(self.fg_rois_per_image, 'int32')
 
-        foreground_and_background_proposal_indices = self.find_foreground_and_background_proposal_indices(maximum_intersection_over_union, fg_rois_per_image, rois_per_image)
+        foreground_and_background_proposal_indices = self.find_foreground_and_background_proposal_indices(maximum_intersection_over_union)
 
         # Select sampled values from various arrays:
         sampled_labels = keras.backend.gather(all_labels, foreground_and_background_proposal_indices)
@@ -163,7 +176,10 @@ class ProposalTarget(keras.layers.Layer):
 
     def compute_output_shape(self, input_shape):
         num_classes = input_shape[1][2]
-        return [(1, None, 4), (1, None, num_classes), (1, None, 4 * num_classes)]
+
+        self.batch_size = input_shape[0][0]
+
+        return [(self.batch_size, None, 4), (self.batch_size, None, num_classes), (self.batch_size, None, 4 * num_classes)]
 
     def compute_mask(self, inputs, mask=None):
         return [None, None, None]
@@ -176,13 +192,13 @@ class ProposalTarget(keras.layers.Layer):
         )
         return self.get_bbox_regression_labels(targets, labels, num_classes)
 
-    def find_foreground_and_background_proposal_indices(self, max_overlaps, fg_rois_per_image, rois_per_image):
+    def find_foreground_and_background_proposal_indices(self, max_overlaps):
         # Select foreground RoIs as those with >= FG_THRESH overlap
         fg_inds = keras_rcnn.backend.where((max_overlaps <= self.foreground_threshold[1]) & (max_overlaps >= self.foreground_threshold[0]))
 
         # Guard against the case when an image has fewer than fg_rois_per_image
         # foreground RoIs
-        self.fg_rois_per_this_image = keras.backend.minimum(fg_rois_per_image, keras.backend.shape(fg_inds)[0])
+        self.fg_rois_per_this_image = keras.backend.minimum(self.fg_rois_per_image, keras.backend.shape(fg_inds)[0])
 
         # Sample foreground regions without replacement
         fg_inds = self.sample_indices(fg_inds, self.fg_rois_per_this_image)
@@ -192,7 +208,7 @@ class ProposalTarget(keras.layers.Layer):
 
         # Compute number of background RoIs to take from this image (guarding
         # against there being fewer than desired)
-        bg_rois_per_this_image = keras.backend.cast(rois_per_image, 'int32') - self.fg_rois_per_this_image
+        bg_rois_per_this_image = keras.backend.cast(self.rois_per_image, 'int32') - self.fg_rois_per_this_image
         bg_rois_per_this_image = keras.backend.cast(bg_rois_per_this_image, 'int32')
         bg_rois_per_this_image = keras.backend.minimum(bg_rois_per_this_image, keras.backend.shape(bg_inds)[0])
 
