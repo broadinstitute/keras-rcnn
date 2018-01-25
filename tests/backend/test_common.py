@@ -113,7 +113,7 @@ def test_overlap():
     ])
     y = keras.backend.variable(y)
 
-    overlapping = keras_rcnn.backend.common.overlap(x, y)
+    overlapping = keras_rcnn.backend.common.intersection_over_union(x, y)
 
     overlapping = keras.backend.eval(overlapping)
 

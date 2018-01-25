@@ -236,13 +236,13 @@ class TestProposalTarget:
         max_overlaps = keras.backend.max(overlaps, axis=1)
         fg_fraction = 0.5
         batchsize = 3
-        p = keras_rcnn.layers.ProposalTarget(fg_fraction=fg_fraction,
-                                             fg_thresh=0.5,
+        p = keras_rcnn.layers.ProposalTarget(foreground=fg_fraction,
+                                             foreground_threshold=0.5,
                                              bg_thresh_hi=0.5,
                                              bg_thresh_lo=0.1,
-                                             batchsize=batchsize,
+                                             maximum_proposals=batchsize,
                                              num_images=1)
-        keep_inds = p.get_fg_bg_rois(max_overlaps)
+        keep_inds = p.find_foreground_and_background_proposal_indices(max_overlaps)
         keep_inds = keras.backend.eval(keep_inds)
         expected_fg = numpy.array([2, 3, 4, 5, 7, 8])
         count_fg = 0
