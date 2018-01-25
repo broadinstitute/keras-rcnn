@@ -179,37 +179,38 @@ def shift(shape, stride, base_size=16, ratios=None, scales=None):
     return shifted_anchors
 
 
-def overlap(a, b):
+def intersection_over_union(output, target):
     """
     Parameters
     ----------
-    a: (N, 4) ndarray of float
-    b: (K, 4) ndarray of float
+    output: (N, 4) ndarray of float
+    target: (K, 4) ndarray of float
+
     Returns
     -------
     overlaps: (N, K) ndarray of overlap between boxes and query_boxes
     """
-    area = (b[:, 2] - b[:, 0] + 1) * (b[:, 3] - b[:, 1] + 1)
+    intersection_area = (target[:, 2] - target[:, 0] + 1) * (target[:, 3] - target[:, 1] + 1)
 
-    iw = keras.backend.minimum(keras.backend.expand_dims(a[:, 2], 1),
-                               b[:, 2]) - keras.backend.maximum(
-        keras.backend.expand_dims(a[:, 0], 1), b[:, 0]) + 1
+    intersection_c_minimum = keras.backend.minimum(keras.backend.expand_dims(output[:, 2], 1), target[:, 2])
+    intersection_c_maximum = keras.backend.maximum(keras.backend.expand_dims(output[:, 0], 1), target[:, 0])
 
-    ih = keras.backend.minimum(keras.backend.expand_dims(a[:, 3], 1),
-                               b[:, 3]) - keras.backend.maximum(
-        keras.backend.expand_dims(a[:, 1], 1), b[:, 1]) + 1
+    intersection_r_minimum = keras.backend.minimum(keras.backend.expand_dims(output[:, 3], 1), target[:, 3])
+    intersection_r_maximum = keras.backend.maximum(keras.backend.expand_dims(output[:, 1], 1), target[:, 1])
 
-    iw = keras.backend.maximum(iw, 0)
-    ih = keras.backend.maximum(ih, 0)
+    intersection_c = intersection_c_minimum - intersection_c_maximum + 1
+    intersection_r = intersection_r_minimum - intersection_r_maximum + 1
 
-    ua = keras.backend.expand_dims(
-        (a[:, 2] - a[:, 0] + 1) * (a[:, 3] - a[:, 1] + 1), 1) + area - iw * ih
+    intersection_c = keras.backend.maximum(intersection_c, 0)
+    intersection_r = keras.backend.maximum(intersection_r, 0)
 
-    ua = keras.backend.maximum(ua, 0.0001)
+    union_area = keras.backend.expand_dims((output[:, 2] - output[:, 0] + 1) * (output[:, 3] - output[:, 1] + 1), 1) + intersection_area - intersection_c * intersection_r
 
-    intersection = iw * ih
+    union_area = keras.backend.maximum(union_area, keras.backend.epsilon())
 
-    return intersection / ua
+    intersection_area = intersection_c * intersection_r
+
+    return intersection_area / union_area
 
 
 def smooth_l1(output, target, anchored=False, weights=None):
