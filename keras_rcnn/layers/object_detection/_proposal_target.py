@@ -76,7 +76,18 @@ class ProposalTarget(keras.layers.Layer):
         bounding_boxes = bounding_boxes[batch_index, :, :]
         labels = labels[batch_index, :, :]
 
-        sample_outputs = self.sample(proposals, bounding_boxes, labels, training)
+        # TODO: Fix hack
+        condition = keras.backend.not_equal(keras.backend.sum(bounding_boxes), 0)
+
+        def test(proposals, gt_boxes, gt_labels):
+            N = keras.backend.shape(proposals)[0]
+            num_classes = keras.backend.shape(gt_labels)[1]
+            num_c = 4 * num_classes
+            return proposals, tensorflow.zeros((N, num_classes)), tensorflow.zeros((N,num_c))
+
+        sample_outputs = keras.backend.switch(condition,
+                                              lambda: self.sample(proposals, bounding_boxes, labels),
+                                              lambda: test(proposals, bounding_boxes, labels))
 
         rois = keras.backend.expand_dims(sample_outputs[0], 0)
         labels = keras.backend.expand_dims(sample_outputs[1], 0)
