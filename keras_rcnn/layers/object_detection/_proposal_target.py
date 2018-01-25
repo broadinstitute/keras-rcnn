@@ -67,7 +67,17 @@ class ProposalTarget(keras.layers.Layer):
         bounding_boxes = bounding_boxes[batch_index, :, :]
         labels = labels[batch_index, :, :]
 
-        sample_outputs = self.sample_rois(proposals, bounding_boxes, labels, training)
+        # TODO: Fix hack
+        condition = keras.backend.not_equal(keras.backend.sum(bounding_boxes), 0)
+        def test(proposals, gt_boxes, gt_labels):
+            N = keras.backend.shape(proposals)[0]
+            num_classes = keras.backend.shape(gt_labels)[1]
+            num_c = 4 * num_classes
+            return proposals, tensorflow.zeros((N, num_classes)), tensorflow.zeros((N,num_c))
+
+        sample_outputs = keras.backend.switch(condition,
+                                              lambda: self.sample_rois(proposals, bounding_boxes, labels),
+                                              lambda: test(proposals, bounding_boxes, labels))
 
         rois = keras.backend.expand_dims(sample_outputs[0], 0)
         labels = keras.backend.expand_dims(sample_outputs[1], 0)
@@ -119,14 +129,9 @@ class ProposalTarget(keras.layers.Layer):
         labels = self.set_label_background(labels)
 
         # Compute bounding-box regression targets for an image.
-        all_boxes = keras.backend.gather(gt_boxes, gt_assignment)
         gt_boxes = keras.backend.gather(gt_boxes, keras.backend.gather(gt_assignment, keep_inds))
         bbox_targets = self.get_bbox_targets(rois, gt_boxes, labels, num_classes)
 
-        rois = keras.backend.in_train_phase(rois, all_rois, training=training)
-        labels = keras.backend.in_train_phase(labels, all_labels, training=training)
-        bbox_targets = keras.backend.in_train_phase(bbox_targets, self.get_bbox_targets(all_rois, all_boxes, all_labels, num_classes), training=training) 
-        
         labels = keras.backend.one_hot(labels, num_classes)
         return rois, labels, bbox_targets
 
