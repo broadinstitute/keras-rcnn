@@ -2,6 +2,7 @@ import keras.backend
 import keras.utils
 import numpy
 
+import keras_rcnn.backend
 import keras_rcnn.layers
 import keras_rcnn.layers.object_detection._proposal_target as proposal_target
 
@@ -204,14 +205,7 @@ class TestProposalTarget:
 
 
     def test_sample_rois(self):
-        proposal_target = keras_rcnn.layers.ProposalTarget(
-                fg_fraction=0.5,
-                fg_thresh=0.5,
-                bg_thresh_hi=0.5,
-                bg_thresh_lo=0.1,
-                batchsize=8,
-                num_images=1
-        )
+        proposal_target = keras_rcnn.layers.ProposalTarget()
         all_rois = numpy.array([
             [  50.71208954,   70.44628143,   90.61702728,   99.66291046],
             [  55.45672607,   67.94913483,   86.19535828,   98.13130951],
@@ -379,15 +373,16 @@ class TestProposalTarget:
         gt_labels = numpy.array([[0, 1, 0], [0, 0, 1]])
         gt_labels = keras.backend.cast(gt_labels, keras.backend.floatx())
 
-        rois, labels, bbox_targets = proposal_target.sample_rois(all_rois, gt_boxes, gt_labels)
+        rois_per_image = 2 * 4
+        fg_rois_per_image = 4
+        rois, labels, bbox_targets = proposal_target.sample(all_rois, gt_boxes, gt_labels, fg_rois_per_image, rois_per_image)
 
         pred = keras_rcnn.backend.bbox_transform_inv(rois, bbox_targets)
 
-        # pred = keras.backend.eval(pred)
-        # gt_boxes = keras.backend.eval(gt_boxes)
-        # labels = keras.backend.eval(labels)
-        # bbox_targets = keras.backend.eval(bbox_targets)
-        # evaluated = keras.backend.eval(keras.backend.variable([gt_boxes, labels, bbox_targets]))
+        pred = keras.backend.eval(pred)
+        gt_boxes = keras.backend.eval(gt_boxes)
+        labels = keras.backend.eval(labels)
+        bbox_targets = keras.backend.eval(bbox_targets)
 
         classes = numpy.argmax(labels, -1)
 
@@ -397,12 +392,11 @@ class TestProposalTarget:
         label = classes[1]
         assert numpy.array_equal(pred[1][4*label : 4*label+4], gt_boxes[0]) or numpy.array_equal(pred[1][4*label : 4*label+4], gt_boxes[1])
 
-        # assert labels.shape == (8, 3)
-        # assert labels[4:, 0].sum() == 4
-        # assert labels[:4, 1:].sum() == 4
-        # assert bbox_targets[4:].sum() == 0
-        # assert bbox_targets[:4, :4].sum() == 0
-
+        assert labels.shape == (8, 3)
+        assert labels[4:, 0].sum() == 4
+        assert labels[:4, 1:].sum() == 4
+        assert bbox_targets[4:].sum() == 0
+        assert bbox_targets[:4, :4].sum() == 0
 
     def test_set_label_background(self):
         p = keras_rcnn.layers.ProposalTarget(
