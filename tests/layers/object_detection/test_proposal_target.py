@@ -365,7 +365,6 @@ def test_find_foreground_and_background_proposal_indices():
     assert keep_inds[2] in expected_bg, keep_inds
     assert len(keep_inds) == 3
 
-
     #2
     batchsize = 8
     p = keras_rcnn.layers.ProposalTarget(maximum_proposals=batchsize)
@@ -384,6 +383,55 @@ def test_find_foreground_and_background_proposal_indices():
     assert keep_inds[5] in expected_bg
     assert len(keep_inds) == 6
 
+    #3
+    batchsize = 16
+    p = keras_rcnn.layers.ProposalTarget(maximum_proposals=batchsize)
+    keep_inds = p.find_foreground_and_background_proposal_indices(max_overlaps)
+    keep_inds = keras.backend.eval(keep_inds)
+    expected_fg = numpy.array([2, 3, 4, 5, 7, 8])
+    expected_bg = numpy.array([1, 6])
+
+    fg_rois = numpy.minimum(int(numpy.round(fg_fraction * batchsize)), len(expected_fg))
+    bg_rois = numpy.minimum(batchsize - fg_rois, len(expected_bg))
+    assert keep_inds[0] in expected_fg
+    assert keep_inds[1] in expected_fg
+    assert keep_inds[2] in expected_fg
+    assert keep_inds[3] in expected_fg
+    assert keep_inds[4] in expected_fg
+    assert keep_inds[5] in expected_fg
+    assert keep_inds[6] in expected_bg
+    assert keep_inds[7] in expected_bg
+    assert len(keep_inds) == 8
+
+    #4
+    overlaps = numpy.array([
+    [0.2, 0.0, 0.0, 0.0],
+    [0.4, 0.0, 0.1, 0.2],
+    [0.0, 0.5, 0.0, 0.0],
+    [0.0, 1.0, 0.0, 0.0],
+    [0.2, 0.1, 0.6, 0.7],
+    [0.0, 0.0, 0.9, 0.0],
+    [0.01, 0.1, 0.2, 0.3],
+    [0.0, 0.0, 0.5, 1.0],
+    [0.3, 0.0, 0.0, 1.0]
+    ])
+    max_overlaps = keras.backend.max(overlaps, axis=1)
+    batchsize = 6
+    p = keras_rcnn.layers.ProposalTarget(maximum_proposals=batchsize)
+    keep_inds = p.find_foreground_and_background_proposal_indices(max_overlaps)
+    keep_inds = keras.backend.eval(keep_inds)
+    expected_fg = numpy.array([2, 3, 4, 5, 7, 8])
+    expected_bg = numpy.array([0, 1, 6])
+
+    fg_rois = numpy.minimum(int(numpy.round(fg_fraction * batchsize)), len(expected_fg))
+    bg_rois = numpy.minimum(batchsize - fg_rois, len(expected_bg))
+    assert keep_inds[0] in expected_fg
+    assert keep_inds[1] in expected_fg
+    assert keep_inds[2] in expected_fg
+    assert keep_inds[3] in expected_bg
+    assert keep_inds[4] in expected_bg
+    assert keep_inds[5] in expected_bg
+    assert len(keep_inds) == 6
 
 def test_sample_indices():
     p = keras_rcnn.layers.ProposalTarget()
