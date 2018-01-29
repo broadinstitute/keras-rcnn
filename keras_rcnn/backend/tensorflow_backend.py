@@ -140,7 +140,7 @@ def crop_and_resize(image, boxes, size):
     box_ind = box_ind[:, 0]
     box_ind = keras.backend.reshape(box_ind, [-1])
 
-    boxes = keras.backend.reshape(boxes, [-1, 4])
+    boxes = keras.backend.cast(keras.backend.reshape(boxes, [-1, 4]),'float32')
 
     return tensorflow.image.crop_and_resize(image, boxes, box_ind, size)
 

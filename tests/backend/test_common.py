@@ -161,8 +161,7 @@ def test_scale_enum():
     expected = numpy.array(
         [[0, 0, 0, 0], [-0.5, -0.5, 0.5, 0.5], [-1., -1., 1., 1.]])
     numpy.testing.assert_array_equal(results, expected)
-    anchor = keras.backend.cast(
-        numpy.expand_dims(numpy.array([2, 3, 100, 100]), 0), 'float32')
+    anchor = numpy.expand_dims(numpy.array([2, 3, 100, 100]), 0)
     anchor = keras.backend.variable(anchor)
     results = keras_rcnn.backend.common._scale_enum(anchor, scales)
     results = keras.backend.eval(results)
