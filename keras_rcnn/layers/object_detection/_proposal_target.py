@@ -41,6 +41,11 @@ class ProposalTarget(keras.layers.Layer):
 
         self.maximum_proposals = maximum_proposals
 
+        self.rois_per_image = self.maximum_proposals / self.batch_size
+        self.fg_rois_per_image = keras.backend.cast(self.foreground * self.rois_per_image, 'int32')
+
+        self.fg_rois_per_this_image = None
+
         super(ProposalTarget, self).__init__(**kwargs)
 
     @property
@@ -57,10 +62,6 @@ class ProposalTarget(keras.layers.Layer):
         self._batch_size = x
 
     def build(self, input_shape):
-        self.rois_per_image = self.maximum_proposals / self.batch_size
-        self.fg_rois_per_image = keras.backend.round(self.foreground * self.rois_per_image)
-        self.fg_rois_per_this_image = None
-
         super(ProposalTarget, self).build(input_shape)
 
     def call(self, inputs, training=None):
@@ -118,7 +119,7 @@ class ProposalTarget(keras.layers.Layer):
 
         return {**super(ProposalTarget, self).get_config(), **configuration}
 
-    def sample(self, proposals, true_bounding_boxes, true_labels, training=None):
+    def sample(self, proposals, true_bounding_boxes, true_labels):
         """
         Generate a random sample of RoIs comprising foreground and background
         examples.
@@ -145,7 +146,6 @@ class ProposalTarget(keras.layers.Layer):
         # Select proposals with given parameters for fg/bg objects
         # TODO: rename `find_foreground_and_background_proposal_indices`
         # TODO: rename `foreground_and_background_proposal_indices`
-        self.fg_rois_per_image = keras.backend.cast(self.fg_rois_per_image, 'int32')
 
         foreground_and_background_proposal_indices = self.find_foreground_and_background_proposal_indices(maximum_intersection_over_union)
 
@@ -254,6 +254,7 @@ class ProposalTarget(keras.layers.Layer):
         updates = keras.backend.transpose(updates)
         updates = keras.backend.reshape(updates, (-1,))
 
+        updates = keras.backend.cast(updates, keras.backend.floatx())
         bbox_targets = keras_rcnn.backend.scatter_add_tensor(bbox_targets, indices, updates)
 
         return bbox_targets
