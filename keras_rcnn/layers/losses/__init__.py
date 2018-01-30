@@ -24,31 +24,16 @@ class RCNN(keras.layers.Layer):
         output_deltas = self.output_deltas[:, :, 4:]
         target_deltas = self.target_deltas[:, :, 4:]
 
-        target_scores = self.target_scores[:, :, 1:]
-
         # mask out output values where class is different from targetrcnn loss
         # function
-        a = keras_rcnn.backend.where(keras.backend.equal(target_scores, 1))
+        mask = self.target_scores
 
-        a = keras.backend.cast(a, 'int32')
-
-        rr = a[:, :2]
-        cc = a[:, 2:]
-
-        indices = [
-            keras.backend.concatenate([rr, cc * 4 + 0], 1),
-            keras.backend.concatenate([rr, cc * 4 + 1], 1),
-            keras.backend.concatenate([rr, cc * 4 + 2], 1),
-            keras.backend.concatenate([rr, cc * 4 + 3], 1)
-        ]
-
-        indices = keras.backend.concatenate(indices, 0)
-
-        updates = keras.backend.ones_like(indices, dtype=keras.backend.floatx())
-
-        labels = keras_rcnn.backend.scatter_add_tensor(keras.backend.zeros_like(output_deltas, dtype='float32'), indices, updates[:, 0])
+        labels = keras.backend.repeat_elements(mask, 4, -1)
+        labels = labels[:, :, 4:]
 
         loss = keras_rcnn.backend.smooth_l1(output_deltas * labels, target_deltas * labels, anchored=True)
+
+        target_scores = self.target_scores[:, :, 1:]
 
         return keras.backend.sum(loss) / keras.backend.maximum(keras.backend.epsilon(), keras.backend.sum(target_scores))
 

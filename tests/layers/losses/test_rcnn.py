@@ -7,14 +7,14 @@ class TestRCNN():
     def test_call(self):
         classes = 3
 
-        scores = numpy.random.choice(range(classes), (10,))
+        scores = numpy.random.choice(range(classes), (2,))
 
-        target_deltas = keras.backend.ones((1, 10, 4 * classes))
+        target_deltas = keras.backend.ones((1, 2, 4 * classes))
         target_scores = keras.utils.to_categorical(scores)
         target_scores = keras.backend.expand_dims(target_scores, 0)
         target_scores = keras.backend.cast(target_scores, keras.backend.floatx())
 
-        output_deltas = keras.backend.ones((1, 10, 4 * classes))
+        output_deltas = keras.backend.ones((1, 2, 4 * classes))
         output_scores = keras.utils.to_categorical(scores)
         output_scores = keras.backend.expand_dims(output_scores, 0)
         output_scores = keras.backend.cast(output_scores, keras.backend.floatx())
