@@ -15,17 +15,7 @@ class RCNN(keras.layers.Layer):
 
     @property
     def classification_loss(self):
-        epsilon = keras.backend.epsilon()
-
-        weights = keras.backend.sum(self.target_scores, axis=1)
-
-        weights = keras.backend.sum(self.target_scores) / keras.backend.maximum(weights, epsilon)
-
-        weights = 1.0 / (1 + keras.backend.exp(-weights))
-
-        weights = keras.backend.sum(self.target_scores * weights, axis=-1)
-
-        loss = keras_rcnn.backend.softmax_classification(self.target_scores, self.output_scores, anchored=True, weights=weights)
+        loss = keras_rcnn.backend.softmax_classification(self.target_scores, self.output_scores, anchored=True)
 
         return keras.backend.mean(loss)
 
