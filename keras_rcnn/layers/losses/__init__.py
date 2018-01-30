@@ -26,12 +26,6 @@ class RCNN(keras.layers.Layer):
 
         target_scores = self.target_scores[:, :, 1:]
 
-        weights = keras.backend.sum(target_scores, axis=1)
-
-        weights = keras.backend.sum(target_scores) / keras.backend.maximum(weights, keras.backend.epsilon())
-
-        weights = 1.0 / (1 + keras.backend.exp(-weights))
-
         # mask out output values where class is different from targetrcnn loss
         # function
         a = keras_rcnn.backend.where(keras.backend.equal(target_scores, 1))
@@ -50,14 +44,9 @@ class RCNN(keras.layers.Layer):
 
         indices = keras.backend.concatenate(indices, 0)
 
-        weights = keras.backend.sum(target_scores * weights, axis=-1)
-        weights = keras_rcnn.backend.gather_nd(weights, rr)
+        updates = keras.backend.ones_like(indices, dtype=keras.backend.floatx())
 
-        weights = keras.backend.reshape(weights, (-1,))
-
-        updates = keras.backend.tile(weights, (4,))
-
-        labels = keras_rcnn.backend.scatter_add_tensor(keras.backend.zeros_like(output_deltas, dtype='float32'), indices, updates)
+        labels = keras_rcnn.backend.scatter_add_tensor(keras.backend.zeros_like(output_deltas, dtype='float32'), indices, updates[:, 0])
 
         loss = keras_rcnn.backend.smooth_l1(output_deltas * labels, target_deltas * labels, anchored=True)
 
@@ -72,13 +61,8 @@ class RCNN(keras.layers.Layer):
         self.output_deltas = output_deltas
         self.output_scores = output_scores
 
-        target_deltas_x = keras.backend.shape(self.target_deltas)[1]
-        target_scores_x = keras.backend.shape(self.target_scores)[1]
-
-        output_deltas_y = keras.backend.shape(self.output_deltas)[1]
-        output_scores_y = keras.backend.shape(self.output_scores)[1]
-
         loss = self.classification_loss + self.regression_loss
+
         self.add_loss(loss)
 
         return [output_deltas, output_scores]
