@@ -34,4 +34,4 @@ class TestObjectDetectionGenerator:
 
         generator = keras_rcnn.preprocessing.ObjectDetectionGenerator()
 
-        generator = generator.flow(training, classes, target_shape=(448, 448), scale=1)
+        generator = generator.flow_from_dictionary(training, classes, target_shape=(448, 448), scale=1)
