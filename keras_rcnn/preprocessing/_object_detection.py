@@ -7,7 +7,7 @@ import skimage.io
 import skimage.transform
 
 
-def find_scale(image, minimum=256, maximum=512):
+def find_scale(image, minimum=512, maximum=512):
     (rows, cols, _) = image.shape
 
     smallest_side = min(rows, cols)
@@ -35,6 +35,8 @@ class DictionaryIterator(keras.preprocessing.image.Iterator):
             batch_size=1,
             color_mode="rgb",
             data_format=None,
+            minimum=256,
+            maximum=512,
             seed=None,
             shuffle=False
     ):
@@ -168,6 +170,12 @@ class DictionaryIterator(keras.preprocessing.image.Iterator):
                 maximum_c = bounding_box["bounding_box"]["maximum"]["c"]
                 maximum_r = bounding_box["bounding_box"]["maximum"]["r"]
 
+                minimum_c *= scale
+                minimum_r *= scale
+
+                maximum_c *= scale
+                maximum_r *= scale
+
                 if maximum_c == image.shape[1]:
                     maximum_c -= 1
 
@@ -186,11 +194,6 @@ class DictionaryIterator(keras.preprocessing.image.Iterator):
                         batch_index,
                         bounding_box_index
                     ] = target_bounding_box
-
-                    target_bounding_boxes[
-                        batch_index,
-                        bounding_box_index
-                    ] *= scale
 
                     target_mask = numpy.zeros(self.target_size)
 
