@@ -3,11 +3,12 @@
 import keras.preprocessing.image
 import numpy
 import skimage.color
+import skimage.exposure
 import skimage.io
 import skimage.transform
 
 
-def find_scale(image, minimum=512, maximum=512):
+def find_scale(image, minimum=1024, maximum=1024):
     (rows, cols, _) = image.shape
 
     smallest_side = min(rows, cols)
@@ -23,6 +24,22 @@ def find_scale(image, minimum=512, maximum=512):
         scale = maximum / largest_side
 
     return scale
+
+
+def flip_axis(image, axis):
+    image = numpy.asarray(image).swapaxes(axis, 0)
+    image = image[::-1, ...]
+    image = image.swapaxes(0, axis)
+
+    return image
+
+
+def flip_bounding_boxes_horizontally(bounding_boxes):
+    pass
+
+
+def flip_bounding_boxes_vertically(bounding_boxes):
+    pass
 
 
 class DictionaryIterator(keras.preprocessing.image.Iterator):
@@ -132,6 +149,8 @@ class DictionaryIterator(keras.preprocessing.image.Iterator):
 
             image = self.generator.standardize(image)
 
+            image = self.generator.random_transform(image)
+
             c = image.shape[0]
             r = image.shape[1]
 
@@ -175,12 +194,6 @@ class DictionaryIterator(keras.preprocessing.image.Iterator):
 
                 maximum_c *= scale
                 maximum_r *= scale
-
-                if maximum_c == image.shape[1]:
-                    maximum_c -= 1
-
-                if maximum_r == image.shape[0]:
-                    maximum_r -= 1
 
                 if minimum_c >= 0 and minimum_r >= 0 and maximum_c < r and maximum_r < c:
                     target_bounding_box = [
@@ -235,9 +248,11 @@ class ObjectDetectionGenerator:
     def __init__(
             self,
             data_format=None,
+            horizontal_flip=False,
             preprocessing_function=None,
             rescale=False,
-            samplewise_center=False
+            samplewise_center=False,
+            vertical_flip=False
     ):
         if data_format is None:
             data_format = keras.backend.image_data_format()
@@ -247,11 +262,15 @@ class ObjectDetectionGenerator:
 
         self.data_format = data_format
 
+        self.horizontal_flip = horizontal_flip
+
         self.preprocessing_function = preprocessing_function
 
         self.rescale = rescale
 
         self.samplewise_center = samplewise_center
+
+        self.vertical_flip = vertical_flip
 
     def flow_from_dictionary(
             self,
@@ -274,6 +293,30 @@ class ObjectDetectionGenerator:
             seed
         )
 
+    def random_transform(self, image, seed=None):
+        if seed is not None:
+            numpy.random.seed(seed)
+
+        horizontal_flip = False
+
+        if self.horizontal_flip:
+            if numpy.random.random() < 0.5:
+                horizontal_flip = True
+
+        vertical_flip = False
+
+        if self.vertical_flip:
+            if numpy.random.random() < 0.5:
+                vertical_flip = True
+
+        if horizontal_flip:
+            image = flip_axis(image, 1)
+
+        if vertical_flip:
+            image = flip_axis(image, 0)
+
+        return image
+
     def standardize(self, image):
         if self.preprocessing_function:
             image = self.preprocessing_function(image)
@@ -283,5 +326,7 @@ class ObjectDetectionGenerator:
 
         if self.samplewise_center:
             image -= numpy.mean(image, keepdims=True)
+
+        image = skimage.exposure.rescale_intensity(image, out_range=(0.0, 1.0))
 
         return image
