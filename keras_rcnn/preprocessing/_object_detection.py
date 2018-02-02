@@ -8,40 +8,6 @@ import skimage.io
 import skimage.transform
 
 
-def find_scale(image, minimum=1024, maximum=1024):
-    (rows, cols, _) = image.shape
-
-    smallest_side = min(rows, cols)
-
-    # rescale the image so the smallest side is min_side
-    scale = minimum / smallest_side
-
-    # check if the largest side is now greater than max_side, wich can happen
-    # when images have a large aspect ratio
-    largest_side = max(rows, cols)
-
-    if largest_side * scale > maximum:
-        scale = maximum / largest_side
-
-    return scale
-
-
-def flip_axis(image, axis):
-    image = numpy.asarray(image).swapaxes(axis, 0)
-    image = image[::-1, ...]
-    image = image.swapaxes(0, axis)
-
-    return image
-
-
-def flip_bounding_boxes_horizontally(bounding_boxes):
-    pass
-
-
-def flip_bounding_boxes_vertically(bounding_boxes):
-    pass
-
-
 class DictionaryIterator(keras.preprocessing.image.Iterator):
     def __init__(
             self,
@@ -52,8 +18,6 @@ class DictionaryIterator(keras.preprocessing.image.Iterator):
             batch_size=1,
             color_mode="rgb",
             data_format=None,
-            minimum=256,
-            maximum=512,
             seed=None,
             shuffle=False
     ):
@@ -96,6 +60,10 @@ class DictionaryIterator(keras.preprocessing.image.Iterator):
         else:
             self.mask_shape = (1, *target_size)
 
+        self.maximum = numpy.max(target_size)
+
+        self.minimum = numpy.min(target_size)
+
         self.n_classes = len(self.classes) + 1
 
         self.n_samples = len(self.dictionary)
@@ -114,6 +82,16 @@ class DictionaryIterator(keras.preprocessing.image.Iterator):
             selection = next(self.index_generator)
 
         return self._get_batches_of_transformed_samples(selection)
+
+    def find_scale(self, image):
+        r, c, _ = image.shape
+
+        scale = self.minimum / numpy.minimum(r, c)
+
+        if numpy.maximum(r, c) * scale > self.maximum:
+            scale = self.maximum / numpy.maximum(r, c)
+
+        return scale
 
     def _get_batches_of_transformed_samples(self, selection):
         target_bounding_boxes = numpy.zeros(
@@ -137,24 +115,40 @@ class DictionaryIterator(keras.preprocessing.image.Iterator):
         )
 
         for batch_index, image_index in enumerate(selection):
+            horizontal_flip = False
+
+            if self.generator.horizontal_flip:
+                if numpy.random.random() < 0.5:
+                    horizontal_flip = True
+
+            vertical_flip = False
+
+            if self.generator.vertical_flip:
+                if numpy.random.random() < 0.5:
+                    vertical_flip = True
+
             pathname = self.dictionary[image_index]["image"]["pathname"]
 
             target_image = numpy.zeros((*self.target_size, self.channels))
 
             image = skimage.io.imread(pathname)
 
-            scale = find_scale(image)
+            scale = self.find_scale(image)
 
             image = skimage.transform.rescale(image, scale)
 
             image = self.generator.standardize(image)
 
-            image = self.generator.random_transform(image)
+            if horizontal_flip:
+                image = numpy.fliplr(image)
 
-            c = image.shape[0]
-            r = image.shape[1]
+            if vertical_flip:
+                image = numpy.flipud(image)
 
-            target_image[:c, :r] = image
+            image_r = image.shape[0]
+            image_c = image.shape[1]
+
+            target_image[:image_r, :image_c] = image
 
             target_images[batch_index] = target_image
 
@@ -180,58 +174,76 @@ class DictionaryIterator(keras.preprocessing.image.Iterator):
                 if bounding_box["class"] not in self.classes:
                     continue
 
-                c = image.shape[0]
-                r = image.shape[1]
-
-                minimum_c = bounding_box["bounding_box"]["minimum"]["c"]
                 minimum_r = bounding_box["bounding_box"]["minimum"]["r"]
+                minimum_c = bounding_box["bounding_box"]["minimum"]["c"]
 
-                maximum_c = bounding_box["bounding_box"]["maximum"]["c"]
                 maximum_r = bounding_box["bounding_box"]["maximum"]["r"]
+                maximum_c = bounding_box["bounding_box"]["maximum"]["c"]
 
-                minimum_c *= scale
                 minimum_r *= scale
+                minimum_c *= scale
 
-                maximum_c *= scale
                 maximum_r *= scale
+                maximum_c *= scale
 
-                if minimum_c >= 0 and minimum_r >= 0 and maximum_c < r and maximum_r < c:
+                target_bounding_box = [
+                    minimum_r,
+                    minimum_c,
+                    maximum_r,
+                    maximum_c
+                ]
+
+                if horizontal_flip:
                     target_bounding_box = [
-                        minimum_c,
-                        minimum_r,
-                        maximum_c,
-                        maximum_r
+                        target_bounding_box[0],
+                        image.shape[1] - target_bounding_box[3],
+                        target_bounding_box[2],
+                        image.shape[1] - target_bounding_box[1]
                     ]
 
-                    target_bounding_boxes[
-                        batch_index,
-                        bounding_box_index
-                    ] = target_bounding_box
+                if vertical_flip:
+                    target_bounding_box = [
+                        image.shape[0] - target_bounding_box[2],
+                        target_bounding_box[1],
+                        image.shape[0] - target_bounding_box[0],
+                        target_bounding_box[3]
+                    ]
 
-                    target_mask = numpy.zeros(self.target_size)
+                target_bounding_boxes[
+                    batch_index,
+                    bounding_box_index
+                ] = target_bounding_box
 
-                    mask = skimage.io.imread(bounding_box["mask"]["pathname"])
+                target_mask = numpy.zeros(self.target_size)
 
-                    mask = skimage.transform.rescale(mask, scale, 0)
+                mask = skimage.io.imread(bounding_box["mask"]["pathname"])
 
-                    mask_c = image.shape[0]
-                    mask_r = image.shape[1]
+                mask = skimage.transform.rescale(mask, scale, 0)
 
-                    target_mask[:mask_c, :mask_r] = mask
+                if horizontal_flip:
+                    mask = numpy.fliplr(mask)
 
-                    target_masks[
-                        batch_index,
-                        bounding_box_index
-                    ] = target_mask
+                if vertical_flip:
+                    mask = numpy.flipud(mask)
 
-                    target_score = numpy.zeros((self.n_classes))
+                mask_r = image.shape[0]
+                mask_c = image.shape[1]
 
-                    target_score[self.classes[bounding_box["class"]]] = 1
+                target_mask[:mask_r, :mask_c] = mask
 
-                    target_scores[
-                        batch_index,
-                        bounding_box_index
-                    ] = target_score
+                target_masks[
+                    batch_index,
+                    bounding_box_index
+                ] = target_mask
+
+                target_score = numpy.zeros((self.n_classes))
+
+                target_score[self.classes[bounding_box["class"]]] = 1
+
+                target_scores[
+                    batch_index,
+                    bounding_box_index
+                ] = target_score
 
         x = [
             target_bounding_boxes,
@@ -292,30 +304,6 @@ class ObjectDetectionGenerator:
             shuffle,
             seed
         )
-
-    def random_transform(self, image, seed=None):
-        if seed is not None:
-            numpy.random.seed(seed)
-
-        horizontal_flip = False
-
-        if self.horizontal_flip:
-            if numpy.random.random() < 0.5:
-                horizontal_flip = True
-
-        vertical_flip = False
-
-        if self.vertical_flip:
-            if numpy.random.random() < 0.5:
-                vertical_flip = True
-
-        if horizontal_flip:
-            image = flip_axis(image, 1)
-
-        if vertical_flip:
-            image = flip_axis(image, 0)
-
-        return image
 
     def standardize(self, image):
         if self.preprocessing_function:
