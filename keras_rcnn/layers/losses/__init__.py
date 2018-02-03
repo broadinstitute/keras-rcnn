@@ -59,9 +59,8 @@ class RCNN(keras.layers.Layer):
 
 
 class RPN(keras.layers.Layer):
-    def __init__(self, anchors=9, **kwargs):
-        self.anchors = anchors
-
+    def __init__(self, **kwargs):
+        
         super(RPN, self).__init__(**kwargs)
 
     def call(self, inputs, **kwargs):
@@ -128,8 +127,6 @@ class RPN(keras.layers.Layer):
         return weight * (keras.backend.sum(a) / keras.backend.maximum(keras.backend.epsilon(), keras.backend.sum(p_star_i)))
 
     def get_config(self):
-        configuration = {
-            "anchors": self.anchors
-        }
-
+        configuration = {}
+        
         return {**super(RPN, self).get_config(), **configuration}
