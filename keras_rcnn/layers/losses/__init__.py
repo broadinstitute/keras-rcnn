@@ -13,13 +13,11 @@ class RCNN(keras.layers.Layer):
     def __init__(self, **kwargs):
         super(RCNN, self).__init__(**kwargs)
 
-    @property
     def classification_loss(self):
         loss = keras_rcnn.backend.softmax_classification(self.target_scores, self.output_scores, anchored=True)
 
         return keras.backend.mean(loss)
 
-    @property
     def regression_loss(self):
         output_deltas = self.output_deltas[:, :, 4:]
         target_deltas = self.target_deltas[:, :, 4:]
@@ -46,7 +44,7 @@ class RCNN(keras.layers.Layer):
         self.output_deltas = output_deltas
         self.output_scores = output_scores
 
-        loss = self.classification_loss + self.regression_loss
+        loss = self.classification_loss() + self.regression_loss()
 
         self.add_loss(loss)
 
@@ -60,11 +58,11 @@ class RCNN(keras.layers.Layer):
 
 class RPN(keras.layers.Layer):
     def __init__(self, **kwargs):
-        
+
         super(RPN, self).__init__(**kwargs)
 
     def call(self, inputs, **kwargs):
-        output_deltas, target_deltas, output_scores, target_scores = inputs
+        target_deltas, target_scores, output_deltas, output_scores = inputs
 
         self.target_deltas = target_deltas
         self.target_scores = target_scores
@@ -75,11 +73,10 @@ class RPN(keras.layers.Layer):
         self.output_deltas = keras.backend.reshape(output_deltas, (1, -1, 4))
         self.output_scores = keras.backend.reshape(output_scores, (1, -1))
 
-        self.add_loss(self.classification_loss + self.regression_loss)
+        self.add_loss(self.classification_loss() + self.regression_loss())
 
         return [output_deltas, output_scores]
 
-    @property
     def classification_loss(self):
         condition = keras.backend.not_equal(self.target_scores, -1)
 
@@ -94,7 +91,6 @@ class RPN(keras.layers.Layer):
 
         return keras.backend.mean(loss)
 
-    @property
     def regression_loss(self):
         condition = keras.backend.not_equal(self.target_scores, -1)
 
@@ -128,5 +124,5 @@ class RPN(keras.layers.Layer):
 
     def get_config(self):
         configuration = {}
-        
+
         return {**super(RPN, self).get_config(), **configuration}

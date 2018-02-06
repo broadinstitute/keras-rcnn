@@ -19,15 +19,17 @@ class TestRCNN():
 
         layer = keras_rcnn.layers.RCNN()
 
+        layer.get_config()
+
         layer.call([target_deltas, target_scores, output_deltas, output_scores])
 
-        classification_loss = layer.classification_loss
+        classification_loss = layer.classification_loss()
 
         classification_loss = keras.backend.eval(classification_loss)
 
         numpy.testing.assert_almost_equal(classification_loss, 0.0)
 
-        regression_loss = layer.regression_loss
+        regression_loss = layer.regression_loss()
 
         regression_loss = keras.backend.eval(regression_loss)
 
@@ -47,13 +49,13 @@ class TestRCNN():
 
         layer.call([target_deltas, target_scores, output_deltas, output_scores])
 
-        classification_loss = layer.classification_loss
+        classification_loss = layer.classification_loss()
 
         classification_loss = keras.backend.eval(classification_loss)
 
         numpy.testing.assert_almost_equal(classification_loss, numpy.log(1.0 / keras.backend.epsilon()), 5)
 
-        regression_loss = layer.regression_loss
+        regression_loss = layer.regression_loss()
 
         regression_loss = keras.backend.eval(regression_loss)
 
@@ -77,7 +79,7 @@ class TestRCNN():
 
         layer.call([target_deltas, target_scores, output_deltas, output_scores])
 
-        regression_loss = layer.regression_loss
+        regression_loss = layer.regression_loss()
 
         regression_loss = keras.backend.eval(regression_loss)
 
