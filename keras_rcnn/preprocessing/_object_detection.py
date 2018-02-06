@@ -33,11 +33,11 @@ class DictionaryIterator(keras.preprocessing.image.Iterator):
             self,
             dictionary,
             classes,
-            target_shape,
-            scale,
-            ox,
-            oy,
             generator,
+            target_shape=None,
+            scale=1,
+            ox=None,
+            oy=None,
             batch_size=1,
             shuffle=False,
             seed=None
@@ -147,5 +147,5 @@ class DictionaryIterator(keras.preprocessing.image.Iterator):
 
 
 class ObjectDetectionGenerator:
-    def flow(self, dictionary, classes, target_shape=None, scale=None, ox=None, oy=None):
-        return DictionaryIterator(dictionary, classes, target_shape, scale, ox, oy, self)
+    def flow(self, dictionary, classes, target_shape=None, scale=None, ox=None, oy=None, batch_size=1, shuffle=True, seed=None):
+        return DictionaryIterator(dictionary, classes, self, target_shape, scale, ox, oy, batch_size, shuffle, seed)

@@ -219,7 +219,7 @@ def overlapping(anchors, gt_boxes, inds_inside):
     assert keras.backend.ndim(anchors) == 2
     assert keras.backend.ndim(gt_boxes) == 2
 
-    reference = keras_rcnn.backend.overlap(anchors, gt_boxes)
+    reference = keras_rcnn.backend.intersection_over_union(anchors, gt_boxes)
 
     gt_argmax_overlaps_inds = keras.backend.argmax(reference, axis=0)
 

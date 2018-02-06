@@ -3,12 +3,36 @@
 import keras.backend
 import keras.engine
 import keras.layers
+import keras_resnet.models
 
 import keras_rcnn.backend
 import keras_rcnn.classifiers
 import keras_rcnn.datasets.malaria
 import keras_rcnn.layers
 import keras_rcnn.preprocessing
+
+
+def pyramid(c3, c4, c5, features):
+    p4 = keras.layers.Conv2D(features, kernel_size=1, strides=1, padding='same', name='p4')(c5)
+
+    upsampled_p4 = keras_rcnn.layers.Upsample(name='upsampled_p4')([p4, c4])
+
+    p3 = keras.layers.Conv2D(features, kernel_size=1, strides=1, padding='same', name='C4_reduced')(c4)
+    p3 = keras.layers.Add(name='p5_merged')([upsampled_p4, p3])
+    p3 = keras.layers.Conv2D(features, kernel_size=3, strides=1, padding='same', name='p3')(p3)
+
+    upsampled_p3 = keras_rcnn.layers.Upsample(name='upsampled_p3')([p3, c3])
+
+    p2 = keras.layers.Conv2D(features, kernel_size=1, strides=1, padding='same', name='C3_reduced')(c3)
+    p2 = keras.layers.Add(name='p4_merged')([upsampled_p3, p2])
+    p2 = keras.layers.Conv2D(features, kernel_size=3, strides=1, padding='same', name='p2')(p2)
+
+    p5 = keras.layers.Conv2D(features, kernel_size=3, strides=2, padding='same', name='p5')(c5)
+
+    p6 = keras.layers.Activation('relu', name='C6_relu')(p5)
+    p6 = keras.layers.Conv2D(features, kernel_size=3, strides=2, padding='same', name='p6')(p6)
+
+    return p2, p3, p4, p5, p6
 
 
 class RPN(keras.models.Model):
@@ -107,7 +131,10 @@ class RPN(keras.models.Model):
 
             matplotlib.pyplot.show()
     """
-    def __init__(self, image, classes):
+    def __init__(self, image, classes, feature_maps=None, features=256):
+        if feature_maps is None:
+            feature_maps = [32, 64, 128, 256, 512]
+
         inputs = [
             keras.layers.Input((None, 4)),
             image,
@@ -123,40 +150,48 @@ class RPN(keras.models.Model):
 
         bounding_boxes, image, labels, metadata = inputs
 
-        features = keras.layers.Conv2D(64, name="convolution_1_1", **options)(image)
-        features = keras.layers.Conv2D(64, name="convolution_1_2", **options)(features)
+        _, c3, c4, c5 = keras_resnet.models.ResNet50(image, include_top=False).outputs
 
-        features = keras.layers.MaxPooling2D(strides=(2, 2), name="max_pooling_1")(features)
+        p2, p3, p4, p5, p6 = pyramid(c3, c4, c5, features)
 
-        features = keras.layers.Conv2D(128, name="convolution_2_1", **options)(features)
-        features = keras.layers.Conv2D(128, name="convolution_2_2", **options)(features)
+        number_of_anchors = len(feature_maps) * 3
 
-        features = keras.layers.MaxPooling2D(strides=(2, 2), name="max_pooling_2")(features)
+        pyramidal_deltas = []
+        pyramidal_scores = []
 
-        features = keras.layers.Conv2D(256, name="convolution_3_1", **options)(features)
-        features = keras.layers.Conv2D(256, name="convolution_3_2", **options)(features)
-        features = keras.layers.Conv2D(256, name="convolution_3_3", **options)(features)
-        features = keras.layers.Conv2D(256, name="convolution_3_4", **options)(features)
+        pyramidal_target_anchors = []
 
-        features = keras.layers.MaxPooling2D(strides=(2, 2), name="max_pooling_3")(features)
+        pyramidal_target_bounding_boxes = []
 
-        features = keras.layers.Conv2D(512, name="convolution_4_1", **options)(features)
-        features = keras.layers.Conv2D(512, name="convolution_4_2", **options)(features)
-        features = keras.layers.Conv2D(512, name="convolution_4_3", **options)(features)
-        features = keras.layers.Conv2D(512, name="convolution_4_4", **options)(features)
+        pyramidal_target_scores = []
 
-        features = keras.layers.MaxPooling2D(strides=(2, 2), name="max_pooling_4")(features)
+        for index, feature_map in enumerate(feature_maps):
+            name = f"p{index + 2}"
 
-        features = keras.layers.Conv2D(512, name="convolution_5_1", **options)(features)
-        features = keras.layers.Conv2D(512, name="convolution_5_2", **options)(features)
-        features = keras.layers.Conv2D(512, name="convolution_5_3", **options)(features)
+            convolution_3x3 = keras.layers.Conv2D(features, **options)(locals()[name])
 
-        convolution_3x3 = keras.layers.Conv2D(512, name="convolution_3x3", **options)(features)
+            deltas = keras.layers.Conv2D(number_of_anchors * 4, (1, 1), activation="linear", kernel_initializer="zero")(convolution_3x3)
+            scores = keras.layers.Conv2D(number_of_anchors * 1, (1, 1), activation="sigmoid", kernel_initializer="uniform")(convolution_3x3)
 
-        deltas = keras.layers.Conv2D(9 * 4, (1, 1), activation="linear", kernel_initializer="zero", name="deltas")(convolution_3x3)
-        scores = keras.layers.Conv2D(9 * 1, (1, 1), activation="sigmoid", kernel_initializer="uniform", name="scores")(convolution_3x3)
+            target_anchors, target_scores, target_bounding_boxes = keras_rcnn.layers.AnchorTarget(base_size=(feature_map - 1), scales=[1])([scores, bounding_boxes, metadata])
 
-        anchors, rpn_labels, bounding_box_targets = keras_rcnn.layers.AnchorTarget()([scores, bounding_boxes, metadata])
+            deltas = keras.layers.Reshape((-1, 4))(deltas)
+            scores = keras.layers.Reshape((-1,))(scores)
+
+            pyramidal_deltas.append(deltas)
+            pyramidal_scores.append(scores)
+
+            pyramidal_target_anchors.append(target_anchors)
+
+            pyramidal_target_bounding_boxes.append(target_bounding_boxes)
+
+            pyramidal_target_scores.append(target_scores)
+
+        anchors = keras.layers.concatenate(pyramidal_target_anchors, 1)
+        deltas = keras.layers.concatenate(pyramidal_deltas, 1)
+        scores = keras.layers.concatenate(pyramidal_scores, 1)
+        rpn_labels = keras.layers.concatenate(pyramidal_target_scores, 1)
+        bounding_box_targets = keras.layers.concatenate(pyramidal_target_bounding_boxes, 1)
 
         deltas, scores = keras_rcnn.layers.RPN()([deltas, bounding_box_targets, scores, rpn_labels])
 

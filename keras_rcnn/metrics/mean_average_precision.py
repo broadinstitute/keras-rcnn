@@ -69,7 +69,7 @@ def mean_average_precision(target, output, class_descriptions):
 
     Args:
         target: ground truth
-        output: prediction output
+        output: prediction output [boxes (batch size, detections, 4), scores (batch size, detections, classes)]
         class_descriptions: list of class names, where class_descriptions['background'] = 0
 
     Returns: mean average precision
@@ -80,6 +80,11 @@ def mean_average_precision(target, output, class_descriptions):
     # NOTE: The image indices for each detection.
 
     image_indices = numpy.reshape([index for index in range(len(output_all_scores)) for i in range(len(output_all_scores[index]))], output_all_scores.shape[:2])
+    
+    # concatenate/reshape 
+    output_bounding_boxes = numpy.reshape(output_bounding_boxes, (-1, 4))
+    output_all_scores = numpy.reshape(output_all_scores, (-1, len(class_descriptions)+1))
+    image_indices = numpy.reshape(image_indices, (-1,))
 
     # remove filler detections
     filler = numpy.sum(output_all_scores, axis = -1) > 0

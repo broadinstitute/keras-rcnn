@@ -1,83 +1,100 @@
-keras-rcnn (WIP)
-================
+Keras-RCNN
+==========
 
 .. image:: https://travis-ci.org/broadinstitute/keras-rcnn.svg?branch=master
     :target: https://travis-ci.org/broadinstitute/keras-rcnn
 
-.. image::https://codecov.io/gh/broadinstitute/keras-rcnn/branch/master/graph/badge.svg
+.. image:: https://codecov.io/gh/broadinstitute/keras-rcnn/branch/master/graph/badge.svg
     :target: https://codecov.io/gh/broadinstitute/keras-rcnn
 
-keras-rcnn is **the** Keras package for region-based convolutional
+keras-rcnn is *the* Keras package for region-based convolutional
 neural networks.
 
-Contributing
-------------
+Getting Started
+---------------
 
-We’ve been meeting in the #keras-rcnn channel on the keras.io Slack
-server. You can join the server by inviting yourself from the following
-website:
-
-https://keras-slack-autojoin.herokuapp.com/
-
-Status
-------
-
-Hi,
-
-It’s **Wednesday, October 25, 2017**. We’ve made **substantial**
-progress since my last update. Notably, it’s now possible to train or
-infer from an object detection model.
-
-Here’s a brief tutorial:
-
-Load a dataset. I recommend experimenting with the malaria dataset from
-Hung, et al. that’s provided with the package:
+Let’s read:
 
 .. code:: python
 
-    import keras_rcnn.datasets
-    import keras_rcnn.preprocessing
+    training, validation, test = keras_rcnn.datasets.malaria_phenotypes.load_data()
 
-    training, test = keras_rcnn.datasets.malaria.load_data()
+    classes = {
+        "rbc": 1, "leu": 2, "ring": 3, "tro": 4, "sch": 5, "gam": 6
+    }
 
     generator = keras_rcnn.preprocessing.ObjectDetectionGenerator()
 
-    classes = {
-        "rbc": 1,
-        "not":2
-    }
-
     generator = generator.flow(training, classes)
 
-Create an RCNN instance:
+    validation_data = keras_rcnn.preprocessing.ObjectDetectionGenerator()
+
+    validation_data = validation_data.flow(validation, classes)
+
+and inspect our training data:
 
 .. code:: python
 
-    import keras.layers
-    import keras_rcnn.models
+    (target_bounding_boxes, target_image, target_scores, _), _ = generator.next()
 
-    image = keras.layers.input((448, 448, 3))
+    target_bounding_boxes = numpy.squeeze(target_bounding_boxes)
+
+    target_image = numpy.squeeze(target_image)
+
+    target_scores = numpy.argmax(target_scores, -1)
+
+    target_scores = numpy.squeeze(target_scores)
+
+    _, axis = matplotlib.pyplot.subplots(1, figsize=(12, 8))
+
+    axis.imshow(target_image)
+
+    for target_index, target_score in enumerate(target_scores):
+        if target_score > 0:
+            xy = [
+                target_bounding_boxes[target_index][0],
+                target_bounding_boxes[target_index][1]
+            ]
+
+            w = target_bounding_boxes[target_index][2] - target_bounding_boxes[target_index][0]
+            h = target_bounding_boxes[target_index][3] - target_bounding_boxes[target_index][1]
+
+            rectangle = matplotlib.patches.Rectangle(xy, w, h, edgecolor="r", facecolor="none")
+
+            axis.add_patch(rectangle)
+
+    matplotlib.pyplot.show()
+
+.. image:: https://storage.googleapis.com/keras-rcnn-website/example.png
+
+Let’s create an RCNN instance:
+
+.. code:: python
+
+    image = keras.layers.Input((None, None, 3))
 
     model = keras_rcnn.models.RCNN(image, classes=len(classes) + 1)
 
-Specify your preferred optimizer and pass that to the compile method:
+and pass our preferred optimizer to the `compile` method:
 
 .. code:: python
 
-    optimizer = keras.optimizers.Adam(0.001)
+    optimizer = keras.optimizers.Adam(0.0001)
 
     model.compile(optimizer)
 
-Train the model:
+Finally, let’s use the `fit_generator` method to train our network:
 
 .. code:: python
 
-    model.fit_generator(generator, 256, epochs=32, callbacks=callbacks)
+    model.fit_generator(generator)
 
-Finally, make a prediction from the trained model:
+Slack
+-----
 
-.. code:: python
+We’ve been meeting in the #keras-rcnn channel on the keras.io Slack
+server. 
 
-    x = generator.next()[0]
+You can join the server by inviting yourself from the following website:
 
-    y_anchors, y_deltas, y_proposals, y_scores = model.predict(x)
+https://keras-slack-autojoin.herokuapp.com/
