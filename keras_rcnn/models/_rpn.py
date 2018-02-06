@@ -166,7 +166,7 @@ class RPN(keras.models.Model):
         pyramidal_target_scores = []
 
         for index, feature_map in enumerate(feature_maps):
-            name = f"p{index + 2}"
+            name = "p{index_substi + 2}".format(index_substri = index)
 
             convolution_3x3 = keras.layers.Conv2D(features, **options)(locals()[name])
 
