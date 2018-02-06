@@ -20,6 +20,16 @@ class TestObjectDetectionGenerator:
 
         generator.next()
 
+        generator = keras_rcnn.preprocessing.ObjectDetectionGenerator(data_format=None)
+
+        generator.flow_from_dictionary(training, classes, color_mode="grayscale", target_size=(448, 448))
+
+        # generator = keras_rcnn.preprocessing.ObjectDetectionGenerator()
+        #
+        # generator.flow_from_dictionary(training, classes, color_mode="brg", target_size=(448, 448))
+        
+
+
     def test_standardize(self):
 
         training, _ = keras_rcnn.datasets.dsb2018.load_data()
@@ -29,3 +39,9 @@ class TestObjectDetectionGenerator:
         image = skimage.io.imread(training[0]['image']['pathname'])
 
         generator.standardize(image)
+
+    def test_find_scale(self):
+        pass
+
+    def test_get_batches_of_transformed_samples(self):
+        pass
