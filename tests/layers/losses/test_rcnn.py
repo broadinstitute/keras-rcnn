@@ -1,71 +1,84 @@
-# import keras.backend
-# import numpy
-#
-# import keras_rcnn.backend
-# import keras_rcnn.layers
-# import keras_rcnn.layers.object_detection
-#
-#
-# def test_rcnn_classification():
-#     num_classes = 5
-#     layer = keras_rcnn.layers.losses.RCNNClassificationLoss()
-#     classes = numpy.random.choice(range(0, num_classes), (91))
-#     target = numpy.zeros((1, 91, num_classes))
-#     target[0, numpy.arange(91), classes] = 1
-#     target = keras.backend.variable(target)
-#     scores = keras.backend.variable(numpy.random.random((1, 91, num_classes)))
-#
-#     numpy.testing.assert_array_equal(layer.call([scores, target]), scores)
-#
-#     assert len(layer.losses) == 1
-#
-#
-# def test_rcnn_regression():
-#     keras.backend.set_learning_phase(1)
-#     num_classes = 5
-#     layer = keras_rcnn.layers.losses.RCNNRegressionLoss()
-#
-#     deltas = numpy.zeros((1, 91, 4 * num_classes), dtype="float32")
-#     target = numpy.zeros((1, 91, 4 * num_classes), dtype="float32")
-#     labels_target = numpy.zeros((1, 91, num_classes), dtype="float32")
-#     labels_target[:, :, 1] = 1
-#
-#     expected_loss = 0
-#
-#     numpy.testing.assert_array_equal(layer.call([deltas,
-#                                                 target,
-#                                                 labels_target]), deltas)
-#
-#     assert len(layer.losses) == 1
-#
-#     assert numpy.isclose(keras.backend.eval(layer.losses[0]), expected_loss)
-#
-#     deltas = numpy.array([[1, 0, 1, 0, 3, 4, 5, 6, 0, 0, 0, 0],
-#                       [0, 0, 0, 0, .7, .3, 5, 6, .4, -.1, 1, -.5],
-#                       [5, 2, 0, 0, -.2, 0, 7, .8, 1, 5, 2, 10],
-#                       [0, 0, 0, 0, 5, 3, 13, 4, 0, 0, 0, 0],
-#                       [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]])
-#     deltas = 1.0 * numpy.expand_dims(deltas, 0)
-#     deltas = keras.backend.variable(deltas)
-#     target = 1.0 * numpy.array([[0, 0, 0, 0, 3, 4, 5, 6, 0, 0, 0, 0],
-#                       [0, 0, 0, 0, 7, 0, 5, 6, 0, 0, 0, 0],
-#                       [0, 0, 0, 0, 0, 0, 0, 0, .1, 5, .2, 10],
-#                       [0, 0, 0, 0, 5, 3, 13, 4, 0, 0, 0, 0],
-#                       [0, 0, 0, 0, 0, 0, 0, 0, 40, 12, 2, .5]])
-#     target = numpy.expand_dims(target, 0)
-#     target = keras.backend.variable(target)
-#
-#     labels_target = numpy.zeros((1, 5, 3), dtype="float32")
-#     labels_target[:, 0, 1] = 1
-#     labels_target[:, 1, 2] = 1
-#     labels_target[:, 2, 1] = 1
-#     labels_target[:, 3:, 0] = 1
-#
-#     numpy.testing.assert_array_equal(layer.call([deltas,
-#                                                 target,
-#                                                 labels_target]), deltas)
-#
-#     expected_loss = 2.5158279
-#
-#     numpy.testing.assert_almost_equal(keras.backend.eval(layer.losses[1]),
-#                                       expected_loss)
+import keras.backend
+import keras_rcnn.layers
+import numpy
+
+
+class TestRCNN():
+    def test_call(self):
+        classes = 3
+
+        target_deltas = keras.backend.ones((1, 2, 4 * classes))
+        target_scores = keras.backend.variable([[0, 0, 1], [0, 0, 1]])
+        target_scores = keras.backend.expand_dims(target_scores, 0)
+        target_scores = keras.backend.cast(target_scores, keras.backend.floatx())
+
+        output_deltas = keras.backend.ones((1, 2, 4 * classes))
+        output_scores = keras.backend.variable([[0, 0, 1], [0, 0, 1]])
+        output_scores = keras.backend.expand_dims(output_scores, 0)
+        output_scores = keras.backend.cast(output_scores, keras.backend.floatx())
+
+        layer = keras_rcnn.layers.RCNN()
+
+        layer.call([target_deltas, target_scores, output_deltas, output_scores])
+
+        classification_loss = layer.classification_loss
+
+        classification_loss = keras.backend.eval(classification_loss)
+
+        numpy.testing.assert_almost_equal(classification_loss, 0.0)
+
+        regression_loss = layer.regression_loss
+
+        regression_loss = keras.backend.eval(regression_loss)
+
+        numpy.testing.assert_almost_equal(regression_loss, 0.0)
+
+        loss = layer.losses.pop()
+
+        loss = keras.backend.eval(loss)
+
+        numpy.testing.assert_almost_equal(loss, 0.0)
+
+        target_scores = keras.backend.variable([[0, 0, 1], [0, 0, 1]])
+        target_scores = keras.backend.expand_dims(target_scores, 0)
+
+        output_scores = keras.backend.variable([[0, 1, 0], [0, 1, 0]])
+        output_scores = keras.backend.expand_dims(output_scores, 0)
+
+        layer.call([target_deltas, target_scores, output_deltas, output_scores])
+
+        classification_loss = layer.classification_loss
+
+        classification_loss = keras.backend.eval(classification_loss)
+
+        numpy.testing.assert_almost_equal(classification_loss, numpy.log(1.0 / keras.backend.epsilon()), 5)
+
+        regression_loss = layer.regression_loss
+
+        regression_loss = keras.backend.eval(regression_loss)
+
+        numpy.testing.assert_almost_equal(regression_loss, 0.0)
+
+        loss = layer.losses.pop()
+
+        loss = keras.backend.eval(loss)
+
+        numpy.testing.assert_almost_equal(loss, numpy.log(1.0 / keras.backend.epsilon()), 5)
+
+        target_scores = keras.backend.variable([[0, 0, 1], [0, 1, 0]])
+        target_scores = keras.backend.expand_dims(target_scores, 0)
+        output_scores = keras.backend.variable([[0, 1, 0], [0, 1, 0]])
+        output_scores = keras.backend.expand_dims(output_scores, 0)
+
+        target_deltas = keras.backend.variable([[0, 0, 0, 0, 0, 0, 0, 0, -.1, .2, .3, .4], [-.1, .2, 1, -3, 0, -1, 1.3, -.1, 2, .3, -1.5, .6]])
+        target_deltas = keras.backend.expand_dims(target_deltas, 0)
+        output_deltas = keras.backend.variable([[-.1, .2, 1, -3, 0, 0, .1, 1, 0, .1, -.1, .8], [-.1, 2, 0, 0, 1, 1, -.1, -.5, 0, 1, -.5, -1]])
+        output_deltas = keras.backend.expand_dims(output_deltas, 0)
+
+        layer.call([target_deltas, target_scores, output_deltas, output_scores])
+
+        regression_loss = layer.regression_loss
+
+        regression_loss = keras.backend.eval(regression_loss)
+
+        numpy.testing.assert_almost_equal(regression_loss, 1.575)
