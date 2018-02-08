@@ -165,15 +165,19 @@ class RPN(keras.models.Model):
 
         pyramidal_target_scores = []
 
+        shared_conv = keras.layers.Conv2D(features, **options)
+        shared_deltas = keras.layers.Conv2D(number_of_anchors * 4, (1, 1), activation="linear", kernel_initializer="zero")
+        shared_scores = keras.layers.Conv2D(number_of_anchors * 1, (1, 1), activation="sigmoid", kernel_initializer="uniform")
+
         for index, feature_map in enumerate(feature_maps):
             name = f"p{index + 2}"
 
-            convolution_3x3 = keras.layers.Conv2D(features, **options)(locals()[name])
+            convolution_3x3 = shared_conv(locals()[name])
 
-            deltas = keras.layers.Conv2D(number_of_anchors * 4, (1, 1), activation="linear", kernel_initializer="zero")(convolution_3x3)
-            scores = keras.layers.Conv2D(number_of_anchors * 1, (1, 1), activation="sigmoid", kernel_initializer="uniform")(convolution_3x3)
+            deltas = shared_deltas(convolution_3x3)
+            scores = shared_scores(convolution_3x3)
 
-            target_anchors, target_scores, target_bounding_boxes = keras_rcnn.layers.AnchorTarget(base_size=(feature_map - 1), scales=[1])([scores, bounding_boxes, metadata])
+            target_anchors, target_scores, target_bounding_boxes = keras_rcnn.layers.AnchorTarget(base_size=(feature_map - 1), scales=[0.5, 1, 1.5])([scores, bounding_boxes, metadata])
 
             deltas = keras.layers.Reshape((-1, 4))(deltas)
             scores = keras.layers.Reshape((-1,))(scores)
