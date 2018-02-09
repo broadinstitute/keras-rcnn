@@ -197,7 +197,7 @@ class RPN(keras.models.Model):
         rpn_labels = keras.layers.concatenate(pyramidal_target_scores, 1)
         bounding_box_targets = keras.layers.concatenate(pyramidal_target_bounding_boxes, 1)
 
-        deltas, scores = keras_rcnn.layers.RPN()([deltas, bounding_box_targets, scores, rpn_labels])
+        deltas, scores = keras_rcnn.layers.RPN()([bounding_box_targets, rpn_labels, deltas, scores])
 
         proposals = keras_rcnn.layers.ObjectProposal()([metadata, deltas, scores, anchors])
 
