@@ -2,9 +2,10 @@
 
 import keras.backend
 import keras.layers
-import tensorflow
 
 import keras_rcnn.backend
+
+from ._mask_rcnn import MaskRCNN
 
 
 class RCNN(keras.layers.Layer):
