@@ -6,7 +6,7 @@ import tensorflow
 
 import keras_rcnn.backend
 
-from ._mask_rcnn import RCNNMaskLoss
+from ._mask_rcnn import MaskRCNN
 
 
 class RCNN(keras.layers.Layer):
@@ -58,48 +58,50 @@ class RCNN(keras.layers.Layer):
 
 class RPN(keras.layers.Layer):
     def __init__(self, **kwargs):
-
         super(RPN, self).__init__(**kwargs)
 
     def call(self, inputs, **kwargs):
         target_deltas, target_scores, output_deltas, output_scores = inputs
 
-        self.target_deltas = target_deltas
-        self.target_scores = target_scores
+        a = self.classification_loss(target_scores, output_scores)
 
-        self.output_deltas = output_deltas
-        self.output_scores = output_scores
+        b = self.regression_loss(target_deltas, target_scores, output_deltas)
 
-        self.output_deltas = keras.backend.reshape(output_deltas, (1, -1, 4))
-        self.output_scores = keras.backend.reshape(output_scores, (1, -1))
+        loss = a + b
 
-        self.add_loss(self.classification_loss() + self.regression_loss())
+        self.add_loss(loss)
 
         return [output_deltas, output_scores]
 
-    def classification_loss(self):
-        condition = keras.backend.not_equal(self.target_scores, -1)
+    @staticmethod
+    def classification_loss(target_scores, output_scores):
+        output_scores = keras.backend.reshape(output_scores, (1, -1))
+
+        condition = keras.backend.not_equal(target_scores, -1)
 
         indices = keras_rcnn.backend.where(condition)
 
         indices = keras.backend.expand_dims(indices, 0)
 
-        target = keras_rcnn.backend.gather_nd(self.target_scores, indices)
-        output = keras_rcnn.backend.gather_nd(self.output_scores, indices)
+        target = keras_rcnn.backend.gather_nd(target_scores, indices)
+        output = keras_rcnn.backend.gather_nd(output_scores, indices)
 
         loss = keras.backend.binary_crossentropy(target, output)
 
         return keras.backend.mean(loss)
 
-    def regression_loss(self):
-        condition = keras.backend.not_equal(self.target_scores, -1)
+    @staticmethod
+    def regression_loss(target_deltas, target_scores, output_deltas):
+        output_deltas = keras.backend.reshape(output_deltas, (1, -1, 4))
+
+        condition = keras.backend.not_equal(target_scores, -1)
 
         indices = keras_rcnn.backend.where(condition)
 
-        output = keras_rcnn.backend.gather_nd(self.output_deltas, indices)
-        target = keras_rcnn.backend.gather_nd(self.target_deltas, indices)
+        output = keras_rcnn.backend.gather_nd(output_deltas, indices)
+        target = keras_rcnn.backend.gather_nd(target_deltas, indices)
 
-        target_scores = keras_rcnn.backend.gather_nd(self.target_scores, indices)
+        target_scores = keras_rcnn.backend.gather_nd(target_scores, indices)
 
         condition = keras.backend.greater(target_scores, 0)
 
@@ -120,7 +122,9 @@ class RPN(keras.layers.Layer):
         # Divided by anchor overlaps
         weight = 10.0
 
-        return weight * (keras.backend.sum(a) / keras.backend.maximum(keras.backend.epsilon(), keras.backend.sum(p_star_i)))
+        loss = weight * (keras.backend.sum(a) / keras.backend.maximum(keras.backend.epsilon(), keras.backend.sum(p_star_i)))
+
+        return loss
 
     def get_config(self):
         configuration = {}
