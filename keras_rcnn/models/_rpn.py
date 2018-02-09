@@ -170,7 +170,7 @@ class RPN(keras.models.Model):
         shared_scores = keras.layers.Conv2D(number_of_anchors * 1, (1, 1), activation="sigmoid", kernel_initializer="uniform")
 
         for index, feature_map in enumerate(feature_maps):
-            name = f"p{index + 2}"
+            name = "p{index_substi + 2}".format(index_substri = index)
 
             convolution_3x3 = shared_conv(locals()[name])
 
