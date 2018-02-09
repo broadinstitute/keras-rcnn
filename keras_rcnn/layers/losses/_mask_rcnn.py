@@ -53,7 +53,7 @@ class MaskRCNN(keras.layers.Layer):
         return keras.backend.maximum(intersection / union, 0)
 
     def categorical_crossentropy(self, target, output):
-        output = keras.backend.minimum(output, keras.backend.epsilon())
+        output = output + keras.backend.epsilon()
 
         output = keras.backend.transpose(keras.backend.log(output))
 
@@ -69,7 +69,8 @@ class MaskRCNN(keras.layers.Layer):
         target_bounding_boxes = keras.backend.squeeze(target_bounding_boxes, axis=0)
         output_bounding_boxes = keras.backend.squeeze(output_bounding_boxes, axis=0)
 
-        index = keras.backend.prod(keras.backend.shape(target_masks)[2:])
+        # TODO: simplify (this is just a fancy method to find width * height)
+        index = keras.backend.prod(keras.backend.shape(target_masks)[1:])
 
         target_masks = keras.backend.reshape(target_masks, [-1, index])
         output_masks = keras.backend.reshape(output_masks, [-1, index])

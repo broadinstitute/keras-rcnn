@@ -6,8 +6,6 @@ import tensorflow
 
 import keras_rcnn.backend
 
-from ._mask_rcnn import MaskRCNN
-
 
 class RCNN(keras.layers.Layer):
     def __init__(self, **kwargs):
