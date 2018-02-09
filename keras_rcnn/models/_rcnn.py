@@ -63,8 +63,8 @@ class RCNN(keras.models.Model):
 
         target_anchors, target_proposal_labels, target_proposals = keras_rcnn.layers.AnchorTarget()([output_scores, target_bounding_boxes, target_metadata])
 
-        output_deltas, output_scores = keras_rcnn.layers.RPN()([output_deltas, target_proposals, output_scores, target_proposal_labels])
-
+        output_deltas, output_scores = keras_rcnn.layers.RPN()([target_proposals, target_proposal_labels, output_deltas, output_scores])
+        
         output_proposals = keras_rcnn.layers.ObjectProposal()([target_metadata, output_deltas, output_scores, target_anchors])
 
         output_proposals, target_proposal_labels, target_proposals = keras_rcnn.layers.ProposalTarget()([output_proposals, target_labels, target_bounding_boxes])
