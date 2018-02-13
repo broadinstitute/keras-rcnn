@@ -16,18 +16,13 @@ class TestObjectDetectionGenerator:
 
         generator = keras_rcnn.preprocessing.ObjectDetectionGenerator()
 
-        generator = generator.flow_from_dictionary(training, classes, target_size=(448, 448))
+        generator = generator.flow_from_dictionary(training, classes, target_size=(224, 224))
 
         generator.next()
 
         generator = keras_rcnn.preprocessing.ObjectDetectionGenerator(data_format=None)
 
-        generator.flow_from_dictionary(training, classes, color_mode="grayscale", target_size=(448, 448))
-
-        # generator = keras_rcnn.preprocessing.ObjectDetectionGenerator()
-        #
-        # generator.flow_from_dictionary(training, classes, color_mode="brg", target_size=(448, 448))
-        
+        generator.flow_from_dictionary(training, classes, color_mode="grayscale", target_size=(224, 224))
 
 
     def test_standardize(self):

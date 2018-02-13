@@ -37,4 +37,4 @@ class TestMaskRCNN():
         mask_loss = keras.backend.eval(mask_loss)
 
         numpy.testing.assert_almost_equal(mask_loss, numpy.log(1.0 / keras.backend.epsilon()), 0), mask_loss
-        
+
