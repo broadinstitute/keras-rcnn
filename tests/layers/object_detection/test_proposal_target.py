@@ -34,17 +34,17 @@ def test_proposal_target():
 
     model = keras.models.Model([a, b, c], [x, y, z])
 
-    assert model.output_shape == [(1, None, 4), (1, None, 2), (1, None, 8)]
+    assert model.output_shape == [(1, None, 8), (1, None, 2), (1, None, 4)]
 
-    a = numpy.random.random((1, 300, 4))
+    a = numpy.random.random((1, 10, 4))
     b = numpy.random.random((1, 10, 2))
-    c = numpy.random.random((1, 10, 4))
+    c = numpy.random.random((1, 300, 4))
 
     x, y, z = model.predict([a, b, c])
 
-    assert x.shape == (1, 32, 4), x.shape
+    assert x.shape == (1, 32, 8), x.shape
     assert y.shape == (1, 32, 2), y.shape
-    assert z.shape == (1, 32, 8), z.shape
+    assert z.shape == (1, 32, 4), z.shape
 
 
 def test_sample():
