@@ -33,7 +33,7 @@ class RegionOfInterest(keras.engine.topology.Layer):
 
         :rtype: `(samples, proposals, width, height, channels)`
         """
-        image, boxes, metadata = x[0], x[1], x[2]
+        metadata, image, boxes = x[0], x[1], x[2]
 
         # convert regions from (x, y, w, h) to (x1, y1, x2, y2)
         boxes = keras.backend.cast(boxes, keras.backend.floatx())

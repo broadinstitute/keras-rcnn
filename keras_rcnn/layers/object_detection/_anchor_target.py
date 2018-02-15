@@ -59,11 +59,11 @@ class AnchorTarget(keras.layers.Layer):
 
     # TODO: should AnchorTarget only be enabled during training
     def call(self, inputs, **kwargs):
-        scores, gt_boxes, metadata = inputs
+        target_bounding_boxes, metadata, scores = inputs
 
         metadata = metadata[0, :]  # keras.backend.int_shape(image)[1:]
 
-        gt_boxes = gt_boxes[0]
+        target_bounding_boxes = target_bounding_boxes[0]
 
         rr = keras.backend.shape(scores)[1]
         cc = keras.backend.shape(scores)[2]
@@ -74,39 +74,39 @@ class AnchorTarget(keras.layers.Layer):
         all_anchors = keras_rcnn.backend.shift((rr, cc), self.stride, self.base_size, self.ratios, self.scales)
 
         # only keep anchors inside the image
-        inds_inside, anchors = inside_image(all_anchors, metadata,
+        indices_inside, anchors = inside_image(all_anchors, metadata,
                                             self.allowed_border)
 
         # 2. obtain indices of gt boxes with the greatest overlap, balanced
-        # labels
-        argmax_overlaps_indices, labels = label(gt_boxes, anchors, inds_inside,
+        # target_categories
+        argmax_overlaps_indices, target_categories = label(target_bounding_boxes, anchors, indices_inside,
                                                 self.negative_overlap,
                                                 self.positive_overlap,
                                                 self.clobber_positives)
 
-        gt_boxes = keras.backend.gather(gt_boxes, argmax_overlaps_indices)
+        target_bounding_boxes = keras.backend.gather(target_bounding_boxes, argmax_overlaps_indices)
 
         # Convert fixed anchors in (x, y, w, h) to (dx, dy, dw, dh)
-        bbox_reg_targets = keras_rcnn.backend.bbox_transform(anchors, gt_boxes)
+        target_bounding_box_targets = keras_rcnn.backend.bbox_transform(anchors, target_bounding_boxes)
 
-        # TODO: Why is bbox_reg_targets' shape (5, ?, 4)? Why is gt_boxes'
+        # TODO: Why is target_bounding_box_targets' shape (5, ?, 4)? Why is target_bounding_boxes'
         # shape (None, None, 4) and not (None, 4)?
-        bbox_reg_targets = keras.backend.reshape(bbox_reg_targets, (-1, 4))
+        target_bounding_box_targets = keras.backend.reshape(target_bounding_box_targets, (-1, 4))
 
         # map up to original set of anchors
-        labels = unmap(labels, total_anchors, inds_inside, fill=-1)
-        bbox_reg_targets = unmap(bbox_reg_targets, total_anchors, inds_inside,
+        target_categories = unmap(target_categories, total_anchors, indices_inside, fill=-1)
+        target_bounding_box_targets = unmap(target_bounding_box_targets, total_anchors, indices_inside,
                                  fill=0)
 
-        labels = keras.backend.expand_dims(labels, axis=0)
-        bbox_reg_targets = keras.backend.expand_dims(bbox_reg_targets, axis=0)
+        target_categories = keras.backend.expand_dims(target_categories, axis=0)
+        target_bounding_box_targets = keras.backend.expand_dims(target_bounding_box_targets, axis=0)
         all_anchors = keras.backend.expand_dims(all_anchors, axis=0)
 
         # TODO: implement inside and outside weights
-        return [all_anchors, labels, bbox_reg_targets]
+        return [all_anchors, target_bounding_box_targets, target_categories]
 
     def compute_output_shape(self, input_shape):
-        return [(1, None, 4), (1, None), (1, None, 4)]
+        return [(1, None, 4), (1, None, 4), (1, None)]
 
     def compute_mask(self, inputs, mask=None):
         # unfortunately this is required

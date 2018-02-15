@@ -38,7 +38,7 @@ class ObjectProposal(keras.engine.topology.Layer):
         """
         `image_shape_and_scale` has the shape [width, height, scale]
         """
-        image_shape_and_scale, deltas, scores, anchors = inputs
+        anchors, image_shape_and_scale, deltas, scores = inputs
         anchors = keras.backend.reshape(anchors, (-1, 4))
 
         # TODO: Fix usage of batch index

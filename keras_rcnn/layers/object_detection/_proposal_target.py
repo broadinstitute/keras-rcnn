@@ -72,7 +72,7 @@ class ProposalTarget(keras.layers.Layer):
 
         # labels (class1, class2, ... , num_classes)
         # Include ground-truth boxes in the set of candidate rois
-        proposals, labels, bounding_boxes = inputs
+        bounding_boxes, labels, proposals = inputs
 
         proposals = keras.backend.in_train_phase(
             x=keras.backend.concatenate((proposals, bounding_boxes), axis=1),
@@ -103,11 +103,11 @@ class ProposalTarget(keras.layers.Layer):
                                               lambda: self.sample(proposals, bounding_boxes, labels),
                                               lambda: test(proposals, bounding_boxes, labels))
 
-        rois = keras.backend.expand_dims(sample_outputs[0], 0)
+        proposals = keras.backend.expand_dims(sample_outputs[0], 0)
         labels = keras.backend.expand_dims(sample_outputs[1], 0)
-        bbox_targets = keras.backend.expand_dims(sample_outputs[2], 0)
+        bounding_box_targets = keras.backend.expand_dims(sample_outputs[2], 0)
 
-        return [rois, labels, bbox_targets]
+        return [bounding_box_targets, labels, proposals]
 
     def get_config(self):
         configuration = {
@@ -179,7 +179,7 @@ class ProposalTarget(keras.layers.Layer):
 
         self.batch_size = input_shape[0][0]
 
-        return [(self.batch_size, None, 4), (self.batch_size, None, num_classes), (self.batch_size, None, 4 * num_classes)]
+        return [(self.batch_size, None, 4 * num_classes), (self.batch_size, None, num_classes), (self.batch_size, None, 4)]
 
     def compute_mask(self, inputs, mask=None):
         return [None, None, None]

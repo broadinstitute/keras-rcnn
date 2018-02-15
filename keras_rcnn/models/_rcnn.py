@@ -64,15 +64,15 @@ class RCNN(keras.models.Model):
 
         output_scores = keras.layers.Conv2D(9 * 1, (1, 1), activation="sigmoid", kernel_initializer="uniform", name="scores")(convolution_3x3)
 
-        target_anchors, target_proposal_categories, target_proposal_bounding_boxes = keras_rcnn.layers.AnchorTarget()([output_scores, target_bounding_boxes, target_metadata])
+        target_anchors, target_proposal_bounding_boxes, target_proposal_categories = keras_rcnn.layers.AnchorTarget()([target_bounding_boxes, target_metadata, output_scores])
 
         output_deltas, output_scores = keras_rcnn.layers.RPN()([target_proposal_bounding_boxes, target_proposal_categories, output_deltas, output_scores])
 
-        output_proposal_categories = keras_rcnn.layers.ObjectProposal()([target_metadata, output_deltas, output_scores, target_anchors])
+        output_proposal_bounding_boxes = keras_rcnn.layers.ObjectProposal()([target_anchors, target_metadata, output_deltas, output_scores])
 
-        output_proposal_categories, target_proposal_categories, target_proposal_bounding_boxes = keras_rcnn.layers.ProposalTarget()([output_proposal_categories, target_categories, target_bounding_boxes])
+        target_proposal_bounding_boxes, target_proposal_categories, output_proposal_bounding_boxes = keras_rcnn.layers.ProposalTarget()([target_bounding_boxes, target_categories, output_proposal_bounding_boxes])
 
-        output_features = keras_rcnn.layers.RegionOfInterest((14, 14))([output_features, output_proposal_categories, target_metadata])
+        output_features = keras_rcnn.layers.RegionOfInterest((14, 14))([target_metadata, output_features, output_proposal_bounding_boxes])
 
         output_features = keras.layers.TimeDistributed(keras.layers.Flatten())(output_features)
 
@@ -90,7 +90,7 @@ class RCNN(keras.models.Model):
 
         output_deltas, output_scores = keras_rcnn.layers.RCNN()([target_proposal_bounding_boxes, target_proposal_categories, output_deltas, output_scores])
 
-        output_bounding_boxes, output_categories = keras_rcnn.layers.ObjectDetection()([output_proposal_categories, output_deltas, output_scores, target_metadata])
+        output_bounding_boxes, output_categories = keras_rcnn.layers.ObjectDetection()([target_metadata, output_deltas, output_proposal_bounding_boxes, output_scores])
 
         outputs = [
             output_bounding_boxes,
