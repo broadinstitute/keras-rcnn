@@ -2,18 +2,7 @@ import keras_rcnn.preprocessing
 
 
 class TestObjectDetectionGenerator:
-    def test_flow_from_dictionary(self, training_dictionary):
-        generator = keras_rcnn.preprocessing.ObjectDetectionGenerator()
-
-        categories = {"circle": 1, "square": 2, "triangle": 3}
-
-        generator = generator.flow_from_dictionary(
-            dictionary=training_dictionary,
-            categories=categories,
-            target_size=(224, 224),
-            shuffle=False
-        )
-
+    def test_flow_from_dictionary(self, generator):
         x, _ = generator.next()
 
         bounding_boxes, categories, images, masks, metadata = x
