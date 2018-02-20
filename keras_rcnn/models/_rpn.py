@@ -6,7 +6,7 @@ import keras_resnet.models
 import keras_rcnn.layers
 
 
-class RPN(keras.models.Model):
+class RCNN(keras.models.Model):
     def __init__(self, input_shape, categories):
         n_categories = len(categories) + 1
 
@@ -86,15 +86,44 @@ class RPN(keras.models.Model):
             output_proposal_bounding_boxes
         ])
 
-        outputs = [
-            target_anchors,
+        output_features = keras_rcnn.layers.RegionOfInterest((14, 14))([
+            target_metadata,
+            output_features,
+            output_proposal_bounding_boxes
+        ])
+
+        output_features = keras.layers.TimeDistributed(keras.layers.Flatten())(output_features)
+
+        output_features = keras.layers.TimeDistributed(keras.layers.Dense(256, activation="relu"))(output_features)
+
+        output_deltas = keras.layers.TimeDistributed(keras.layers.Dense(4 * n_categories, kernel_initializer="zero"))(output_features)
+
+        output_deltas = keras.layers.Activation("linear")(output_deltas)
+
+        output_scores = keras.layers.TimeDistributed(keras.layers.Dense(1 * n_categories, kernel_initializer="zero"))(output_features)
+
+        output_scores = keras.layers.Activation("softmax")(output_scores)
+
+        output_deltas, output_scores = keras_rcnn.layers.RCNN()([
             target_proposal_bounding_boxes,
             target_proposal_categories,
             output_deltas,
             output_scores
+        ])
+
+        output_bounding_boxes, output_categories = keras_rcnn.layers.ObjectDetection()([
+            target_metadata,
+            output_deltas,
+            output_proposal_bounding_boxes,
+            output_scores
+        ])
+
+        outputs = [
+            output_bounding_boxes,
+            output_categories
         ]
 
-        super(RPN, self).__init__(inputs, outputs)
+        super(RCNN, self).__init__(inputs, outputs)
 
     def compile(self, optimizer, **kwargs):
-        super(RPN, self).compile(optimizer, None)
+        super(RCNN, self).compile(optimizer, None)
