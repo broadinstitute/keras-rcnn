@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 
 import keras
-import keras_resnet.models
 
 import keras_rcnn.layers
 
@@ -49,16 +48,25 @@ class RCNN(keras.models.Model):
             target_metadata
         ]
 
-        _, _, _, output_features = keras_resnet.models.ResNet50(
-            inputs=target_image,
-            include_top=False
-        ).outputs
+        output_features = keras.layers.Conv2D(64, **options)(target_image)
 
         convolution_3x3 = keras.layers.Conv2D(64, **options)(output_features)
 
-        output_deltas = keras.layers.Conv2D(9 * 4, (1, 1), activation="linear", kernel_initializer="zero", name="deltas")(convolution_3x3)
+        output_deltas = keras.layers.Conv2D(
+            filters=9 * 4,
+            kernel_size=(1, 1),
+            activation="linear",
+            kernel_initializer="zero",
+            name="deltas"
+        )(convolution_3x3)
 
-        output_scores = keras.layers.Conv2D(9 * 1, (1, 1), activation="sigmoid", kernel_initializer="uniform", name="scores")(convolution_3x3)
+        output_scores = keras.layers.Conv2D(
+            filters=9 * 1,
+            kernel_size=(1, 1),
+            activation="sigmoid",
+            kernel_initializer="uniform",
+            name="scores"
+        )(convolution_3x3)
 
         target_anchors, target_proposal_bounding_boxes, target_proposal_categories = keras_rcnn.layers.AnchorTarget()([
             target_bounding_boxes,
@@ -80,7 +88,7 @@ class RCNN(keras.models.Model):
             output_scores
         ])
 
-        target_proposal_bounding_boxes, target_proposal_categories, _ = keras_rcnn.layers.ProposalTarget()([
+        target_proposal_bounding_boxes, target_proposal_categories, output_proposal_bounding_boxes = keras_rcnn.layers.ProposalTarget()([
             target_bounding_boxes,
             target_categories,
             output_proposal_bounding_boxes
@@ -92,17 +100,32 @@ class RCNN(keras.models.Model):
             output_proposal_bounding_boxes
         ])
 
-        output_features = keras.layers.TimeDistributed(keras.layers.Flatten())(output_features)
+        output_features = keras.layers.TimeDistributed(
+            keras.layers.Flatten()
+        )(output_features)
 
-        output_features = keras.layers.TimeDistributed(keras.layers.Dense(256, activation="relu"))(output_features)
+        output_features = keras.layers.TimeDistributed(
+            keras.layers.Dense(
+                units=256,
+                activation="relu"
+            )
+        )(output_features)
 
-        output_deltas = keras.layers.TimeDistributed(keras.layers.Dense(4 * n_categories, kernel_initializer="zero"))(output_features)
+        output_deltas = keras.layers.TimeDistributed(
+            keras.layers.Dense(
+                units=4 * n_categories,
+                activation="linear",
+                kernel_initializer="zero"
+            )
+        )(output_features)
 
-        output_deltas = keras.layers.Activation("linear")(output_deltas)
-
-        output_scores = keras.layers.TimeDistributed(keras.layers.Dense(1 * n_categories, kernel_initializer="zero"))(output_features)
-
-        output_scores = keras.layers.Activation("softmax")(output_scores)
+        output_scores = keras.layers.TimeDistributed(
+            keras.layers.Dense(
+                units=1 * n_categories,
+                activation="softmax",
+                kernel_initializer="zero"
+            )
+        )(output_features)
 
         output_deltas, output_scores = keras_rcnn.layers.RCNN()([
             target_proposal_bounding_boxes,
@@ -112,10 +135,10 @@ class RCNN(keras.models.Model):
         ])
 
         output_bounding_boxes, output_categories = keras_rcnn.layers.ObjectDetection()([
-            target_metadata,
-            output_deltas,
             output_proposal_bounding_boxes,
-            output_scores
+            output_deltas,
+            output_scores,
+            target_metadata
         ])
 
         outputs = [
