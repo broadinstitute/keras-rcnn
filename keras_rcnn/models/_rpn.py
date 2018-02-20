@@ -7,7 +7,7 @@ import keras_rcnn.layers
 
 
 class RPN(keras.models.Model):
-    def __init__(self, input_shape, categories, backbone=None):
+    def __init__(self, input_shape, categories):
         n_categories = len(categories) + 1
 
         target_bounding_boxes = keras.layers.Input(
