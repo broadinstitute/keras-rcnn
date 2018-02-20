@@ -2,9 +2,8 @@
 
 import json
 
-import pkg_resources
-
 import jsonschema
+import pkg_resources
 
 
 def load_data():
