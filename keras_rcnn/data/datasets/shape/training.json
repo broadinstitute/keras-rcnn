@@ -1,0 +1,1982 @@
+[
+    {
+        "image": {
+            "checksum": "4da832c00c390775c3187e962f2159ce",
+            "pathname": "images/01.png",
+            "shape": {
+                "r": 320,
+                "c": 320,
+                "channels": 3
+            }
+        },
+        "objects": [
+            {
+                "bounding_box": {
+                    "minimum": {
+                        "r": 128,
+                        "c": 32
+                    },
+                    "maximum": {
+                        "r": 192,
+                        "c": 96
+                    }
+                },
+                "category": "triangle",
+                "mask": null
+            },
+            {
+                "bounding_box": {
+                    "minimum": {
+                        "r": 128,
+                        "c": 128
+                    },
+                    "maximum": {
+                        "r": 192,
+                        "c": 192
+                    }
+                },
+                "category": "square",
+                "mask": null
+            },
+            {
+                "bounding_box": {
+                    "minimum": {
+                        "r": 128,
+                        "c": 224
+                    },
+                    "maximum": {
+                        "r": 192,
+                        "c": 288
+                    }
+                },
+                "category": "circle",
+                "mask": null
+            }
+        ]
+    },
+    {
+        "image": {
+            "checksum": "077c386a89482070a6e73f318c8a273a",
+            "pathname": "images/02.png",
+            "shape": {
+                "r": 320,
+                "c": 320,
+                "channels": 3
+            }
+        },
+        "objects": [
+            {
+                "bounding_box": {
+                    "minimum": {
+                        "r": 128,
+                        "c": 32
+                    },
+                    "maximum": {
+                        "r": 192,
+                        "c": 96
+                    }
+                },
+                "category": "triangle",
+                "mask": null
+            },
+            {
+                "bounding_box": {
+                    "minimum": {
+                        "r": 128,
+                        "c": 128
+                    },
+                    "maximum": {
+                        "r": 192,
+                        "c": 192
+                    }
+                },
+                "category": "square",
+                "mask": null
+            },
+            {
+                "bounding_box": {
+                    "minimum": {
+                        "r": 128,
+                        "c": 224
+                    },
+                    "maximum": {
+                        "r": 192,
+                        "c": 288
+                    }
+                },
+                "category": "circle",
+                "mask": null
+            }
+        ]
+    },
+    {
+        "image": {
+            "checksum": "43523b0909eafd1a5375c0b99f953d23",
+            "pathname": "images/03.png",
+            "shape": {
+                "r": 320,
+                "c": 320,
+                "channels": 3
+            }
+        },
+        "objects": [
+            {
+                "bounding_box": {
+                    "minimum": {
+                        "r": 128,
+                        "c": 32
+                    },
+                    "maximum": {
+                        "r": 192,
+                        "c": 96
+                    }
+                },
+                "category": "triangle",
+                "mask": null
+            },
+            {
+                "bounding_box": {
+                    "minimum": {
+                        "r": 128,
+                        "c": 128
+                    },
+                    "maximum": {
+                        "r": 192,
+                        "c": 192
+                    }
+                },
+                "category": "square",
+                "mask": null
+            },
+            {
+                "bounding_box": {
+                    "minimum": {
+                        "r": 128,
+                        "c": 224
+                    },
+                    "maximum": {
+                        "r": 192,
+                        "c": 288
+                    }
+                },
+                "category": "circle",
+                "mask": null
+            }
+        ]
+    },
+    {
+        "image": {
+            "checksum": "ceac88c3b31eaf05f2582ff406b19d52",
+            "pathname": "images/04.png",
+            "shape": {
+                "r": 320,
+                "c": 320,
+                "channels": 3
+            }
+        },
+        "objects": [
+            {
+                "bounding_box": {
+                    "minimum": {
+                        "r": 128,
+                        "c": 32
+                    },
+                    "maximum": {
+                        "r": 192,
+                        "c": 96
+                    }
+                },
+                "category": "triangle",
+                "mask": null
+            },
+            {
+                "bounding_box": {
+                    "minimum": {
+                        "r": 128,
+                        "c": 128
+                    },
+                    "maximum": {
+                        "r": 192,
+                        "c": 192
+                    }
+                },
+                "category": "square",
+                "mask": null
+            },
+            {
+                "bounding_box": {
+                    "minimum": {
+                        "r": 128,
+                        "c": 224
+                    },
+                    "maximum": {
+                        "r": 192,
+                        "c": 288
+                    }
+                },
+                "category": "circle",
+                "mask": null
+            }
+        ]
+    },
+    {
+        "image": {
+            "checksum": "a9c0de5c73f9c2bd456b138c3a74ebab",
+            "pathname": "images/05.png",
+            "shape": {
+                "r": 320,
+                "c": 320,
+                "channels": 3
+            }
+        },
+        "objects": [
+            {
+                "bounding_box": {
+                    "minimum": {
+                        "r": 128,
+                        "c": 32
+                    },
+                    "maximum": {
+                        "r": 192,
+                        "c": 96
+                    }
+                },
+                "category": "triangle",
+                "mask": null
+            },
+            {
+                "bounding_box": {
+                    "minimum": {
+                        "r": 128,
+                        "c": 128
+                    },
+                    "maximum": {
+                        "r": 192,
+                        "c": 192
+                    }
+                },
+                "category": "square",
+                "mask": null
+            },
+            {
+                "bounding_box": {
+                    "minimum": {
+                        "r": 128,
+                        "c": 224
+                    },
+                    "maximum": {
+                        "r": 192,
+                        "c": 288
+                    }
+                },
+                "category": "circle",
+                "mask": null
+            }
+        ]
+    },
+    {
+        "image": {
+            "checksum": "f8d1ec837e45945634704291de05e231",
+            "pathname": "images/06.png",
+            "shape": {
+                "r": 320,
+                "c": 320,
+                "channels": 3
+            }
+        },
+        "objects": [
+            {
+                "bounding_box": {
+                    "minimum": {
+                        "r": 128,
+                        "c": 32
+                    },
+                    "maximum": {
+                        "r": 192,
+                        "c": 96
+                    }
+                },
+                "category": "triangle",
+                "mask": null
+            },
+            {
+                "bounding_box": {
+                    "minimum": {
+                        "r": 128,
+                        "c": 128
+                    },
+                    "maximum": {
+                        "r": 192,
+                        "c": 192
+                    }
+                },
+                "category": "square",
+                "mask": null
+            },
+            {
+                "bounding_box": {
+                    "minimum": {
+                        "r": 128,
+                        "c": 224
+                    },
+                    "maximum": {
+                        "r": 192,
+                        "c": 288
+                    }
+                },
+                "category": "circle",
+                "mask": null
+            }
+        ]
+    },
+    {
+        "image": {
+            "checksum": "91ad7c214074b64267c49d405458ea79",
+            "pathname": "images/07.png",
+            "shape": {
+                "r": 320,
+                "c": 320,
+                "channels": 3
+            }
+        },
+        "objects": [
+            {
+                "bounding_box": {
+                    "minimum": {
+                        "r": 128,
+                        "c": 32
+                    },
+                    "maximum": {
+                        "r": 192,
+                        "c": 96
+                    }
+                },
+                "category": "triangle",
+                "mask": null
+            },
+            {
+                "bounding_box": {
+                    "minimum": {
+                        "r": 128,
+                        "c": 128
+                    },
+                    "maximum": {
+                        "r": 192,
+                        "c": 192
+                    }
+                },
+                "category": "square",
+                "mask": null
+            },
+            {
+                "bounding_box": {
+                    "minimum": {
+                        "r": 128,
+                        "c": 224
+                    },
+                    "maximum": {
+                        "r": 192,
+                        "c": 288
+                    }
+                },
+                "category": "circle",
+                "mask": null
+            }
+        ]
+    },
+    {
+        "image": {
+            "checksum": "f98625b5bc23f1a6ab3095c306d86069",
+            "pathname": "images/08.png",
+            "shape": {
+                "r": 320,
+                "c": 320,
+                "channels": 3
+            }
+        },
+        "objects": [
+            {
+                "bounding_box": {
+                    "minimum": {
+                        "r": 128,
+                        "c": 32
+                    },
+                    "maximum": {
+                        "r": 192,
+                        "c": 96
+                    }
+                },
+                "category": "triangle",
+                "mask": null
+            },
+            {
+                "bounding_box": {
+                    "minimum": {
+                        "r": 128,
+                        "c": 128
+                    },
+                    "maximum": {
+                        "r": 192,
+                        "c": 192
+                    }
+                },
+                "category": "square",
+                "mask": null
+            },
+            {
+                "bounding_box": {
+                    "minimum": {
+                        "r": 128,
+                        "c": 224
+                    },
+                    "maximum": {
+                        "r": 192,
+                        "c": 288
+                    }
+                },
+                "category": "circle",
+                "mask": null
+            }
+        ]
+    },
+    {
+        "image": {
+            "checksum": "93d9967bddb2f48a7eeb9d23adfefa80",
+            "pathname": "images/09.png",
+            "shape": {
+                "r": 320,
+                "c": 320,
+                "channels": 3
+            }
+        },
+        "objects": [
+            {
+                "bounding_box": {
+                    "minimum": {
+                        "r": 128,
+                        "c": 32
+                    },
+                    "maximum": {
+                        "r": 192,
+                        "c": 96
+                    }
+                },
+                "category": "triangle",
+                "mask": null
+            },
+            {
+                "bounding_box": {
+                    "minimum": {
+                        "r": 128,
+                        "c": 128
+                    },
+                    "maximum": {
+                        "r": 192,
+                        "c": 192
+                    }
+                },
+                "category": "square",
+                "mask": null
+            },
+            {
+                "bounding_box": {
+                    "minimum": {
+                        "r": 128,
+                        "c": 224
+                    },
+                    "maximum": {
+                        "r": 192,
+                        "c": 288
+                    }
+                },
+                "category": "circle",
+                "mask": null
+            }
+        ]
+    },
+    {
+        "image": {
+            "checksum": "0cb270f819f62dd4731c658ce219bf81",
+            "pathname": "images/10.png",
+            "shape": {
+                "r": 320,
+                "c": 320,
+                "channels": 3
+            }
+        },
+        "objects": [
+            {
+                "bounding_box": {
+                    "minimum": {
+                        "r": 128,
+                        "c": 32
+                    },
+                    "maximum": {
+                        "r": 192,
+                        "c": 96
+                    }
+                },
+                "category": "triangle",
+                "mask": null
+            },
+            {
+                "bounding_box": {
+                    "minimum": {
+                        "r": 128,
+                        "c": 128
+                    },
+                    "maximum": {
+                        "r": 192,
+                        "c": 192
+                    }
+                },
+                "category": "square",
+                "mask": null
+            },
+            {
+                "bounding_box": {
+                    "minimum": {
+                        "r": 128,
+                        "c": 224
+                    },
+                    "maximum": {
+                        "r": 192,
+                        "c": 288
+                    }
+                },
+                "category": "circle",
+                "mask": null
+            }
+        ]
+    },
+    {
+        "image": {
+            "checksum": "dc3b9fc99766322121a2e7923c5d3109",
+            "pathname": "images/11.png",
+            "shape": {
+                "r": 320,
+                "c": 320,
+                "channels": 3
+            }
+        },
+        "objects": [
+            {
+                "bounding_box": {
+                    "minimum": {
+                        "r": 128,
+                        "c": 32
+                    },
+                    "maximum": {
+                        "r": 192,
+                        "c": 96
+                    }
+                },
+                "category": "triangle",
+                "mask": null
+            },
+            {
+                "bounding_box": {
+                    "minimum": {
+                        "r": 128,
+                        "c": 128
+                    },
+                    "maximum": {
+                        "r": 192,
+                        "c": 192
+                    }
+                },
+                "category": "square",
+                "mask": null
+            },
+            {
+                "bounding_box": {
+                    "minimum": {
+                        "r": 128,
+                        "c": 224
+                    },
+                    "maximum": {
+                        "r": 192,
+                        "c": 288
+                    }
+                },
+                "category": "circle",
+                "mask": null
+            }
+        ]
+    },
+    {
+        "image": {
+            "checksum": "41b78e97719bdfdd7c5b6474cc41414f",
+            "pathname": "images/12.png",
+            "shape": {
+                "r": 320,
+                "c": 320,
+                "channels": 3
+            }
+        },
+        "objects": [
+            {
+                "bounding_box": {
+                    "minimum": {
+                        "r": 128,
+                        "c": 32
+                    },
+                    "maximum": {
+                        "r": 192,
+                        "c": 96
+                    }
+                },
+                "category": "triangle",
+                "mask": null
+            },
+            {
+                "bounding_box": {
+                    "minimum": {
+                        "r": 128,
+                        "c": 128
+                    },
+                    "maximum": {
+                        "r": 192,
+                        "c": 192
+                    }
+                },
+                "category": "square",
+                "mask": null
+            },
+            {
+                "bounding_box": {
+                    "minimum": {
+                        "r": 128,
+                        "c": 224
+                    },
+                    "maximum": {
+                        "r": 192,
+                        "c": 288
+                    }
+                },
+                "category": "circle",
+                "mask": null
+            }
+        ]
+    },
+    {
+        "image": {
+            "checksum": "16ee8dc8f028ba35d57e27e1368e8b47",
+            "pathname": "images/13.png",
+            "shape": {
+                "r": 320,
+                "c": 320,
+                "channels": 3
+            }
+        },
+        "objects": [
+            {
+                "bounding_box": {
+                    "minimum": {
+                        "r": 128,
+                        "c": 32
+                    },
+                    "maximum": {
+                        "r": 192,
+                        "c": 96
+                    }
+                },
+                "category": "triangle",
+                "mask": null
+            },
+            {
+                "bounding_box": {
+                    "minimum": {
+                        "r": 128,
+                        "c": 128
+                    },
+                    "maximum": {
+                        "r": 192,
+                        "c": 192
+                    }
+                },
+                "category": "square",
+                "mask": null
+            },
+            {
+                "bounding_box": {
+                    "minimum": {
+                        "r": 128,
+                        "c": 224
+                    },
+                    "maximum": {
+                        "r": 192,
+                        "c": 288
+                    }
+                },
+                "category": "circle",
+                "mask": null
+            }
+        ]
+    },
+    {
+        "image": {
+            "checksum": "d665a6751016a47204796cf30d76c38d",
+            "pathname": "images/14.png",
+            "shape": {
+                "r": 320,
+                "c": 320,
+                "channels": 3
+            }
+        },
+        "objects": [
+            {
+                "bounding_box": {
+                    "minimum": {
+                        "r": 128,
+                        "c": 32
+                    },
+                    "maximum": {
+                        "r": 192,
+                        "c": 96
+                    }
+                },
+                "category": "triangle",
+                "mask": null
+            },
+            {
+                "bounding_box": {
+                    "minimum": {
+                        "r": 128,
+                        "c": 128
+                    },
+                    "maximum": {
+                        "r": 192,
+                        "c": 192
+                    }
+                },
+                "category": "square",
+                "mask": null
+            },
+            {
+                "bounding_box": {
+                    "minimum": {
+                        "r": 128,
+                        "c": 224
+                    },
+                    "maximum": {
+                        "r": 192,
+                        "c": 288
+                    }
+                },
+                "category": "circle",
+                "mask": null
+            }
+        ]
+    },
+    {
+        "image": {
+            "checksum": "c5dc140edd87fe0c705dda9ba633a961",
+            "pathname": "images/15.png",
+            "shape": {
+                "r": 320,
+                "c": 320,
+                "channels": 3
+            }
+        },
+        "objects": [
+            {
+                "bounding_box": {
+                    "minimum": {
+                        "r": 128,
+                        "c": 32
+                    },
+                    "maximum": {
+                        "r": 192,
+                        "c": 96
+                    }
+                },
+                "category": "triangle",
+                "mask": null
+            },
+            {
+                "bounding_box": {
+                    "minimum": {
+                        "r": 128,
+                        "c": 128
+                    },
+                    "maximum": {
+                        "r": 192,
+                        "c": 192
+                    }
+                },
+                "category": "square",
+                "mask": null
+            },
+            {
+                "bounding_box": {
+                    "minimum": {
+                        "r": 128,
+                        "c": 224
+                    },
+                    "maximum": {
+                        "r": 192,
+                        "c": 288
+                    }
+                },
+                "category": "circle",
+                "mask": null
+            }
+        ]
+    },
+    {
+        "image": {
+            "checksum": "1c6b460e0b0dfd4244c1f595dee97471",
+            "pathname": "images/16.png",
+            "shape": {
+                "r": 320,
+                "c": 320,
+                "channels": 3
+            }
+        },
+        "objects": [
+            {
+                "bounding_box": {
+                    "minimum": {
+                        "r": 128,
+                        "c": 32
+                    },
+                    "maximum": {
+                        "r": 192,
+                        "c": 96
+                    }
+                },
+                "category": "triangle",
+                "mask": null
+            },
+            {
+                "bounding_box": {
+                    "minimum": {
+                        "r": 128,
+                        "c": 128
+                    },
+                    "maximum": {
+                        "r": 192,
+                        "c": 192
+                    }
+                },
+                "category": "square",
+                "mask": null
+            },
+            {
+                "bounding_box": {
+                    "minimum": {
+                        "r": 128,
+                        "c": 224
+                    },
+                    "maximum": {
+                        "r": 192,
+                        "c": 288
+                    }
+                },
+                "category": "circle",
+                "mask": null
+            }
+        ]
+    },
+    {
+        "image": {
+            "checksum": "f73c71bf1f7670e086275b753231822f",
+            "pathname": "images/17.png",
+            "shape": {
+                "r": 320,
+                "c": 320,
+                "channels": 3
+            }
+        },
+        "objects": [
+            {
+                "bounding_box": {
+                    "minimum": {
+                        "r": 128,
+                        "c": 32
+                    },
+                    "maximum": {
+                        "r": 192,
+                        "c": 96
+                    }
+                },
+                "category": "triangle",
+                "mask": null
+            },
+            {
+                "bounding_box": {
+                    "minimum": {
+                        "r": 128,
+                        "c": 128
+                    },
+                    "maximum": {
+                        "r": 192,
+                        "c": 192
+                    }
+                },
+                "category": "square",
+                "mask": null
+            },
+            {
+                "bounding_box": {
+                    "minimum": {
+                        "r": 128,
+                        "c": 224
+                    },
+                    "maximum": {
+                        "r": 192,
+                        "c": 288
+                    }
+                },
+                "category": "circle",
+                "mask": null
+            }
+        ]
+    },
+    {
+        "image": {
+            "checksum": "504c953d1cc246f1cc384c26a5fef958",
+            "pathname": "images/18.png",
+            "shape": {
+                "r": 320,
+                "c": 320,
+                "channels": 3
+            }
+        },
+        "objects": [
+            {
+                "bounding_box": {
+                    "minimum": {
+                        "r": 128,
+                        "c": 32
+                    },
+                    "maximum": {
+                        "r": 192,
+                        "c": 96
+                    }
+                },
+                "category": "triangle",
+                "mask": null
+            },
+            {
+                "bounding_box": {
+                    "minimum": {
+                        "r": 128,
+                        "c": 128
+                    },
+                    "maximum": {
+                        "r": 192,
+                        "c": 192
+                    }
+                },
+                "category": "square",
+                "mask": null
+            },
+            {
+                "bounding_box": {
+                    "minimum": {
+                        "r": 128,
+                        "c": 224
+                    },
+                    "maximum": {
+                        "r": 192,
+                        "c": 288
+                    }
+                },
+                "category": "circle",
+                "mask": null
+            }
+        ]
+    },
+    {
+        "image": {
+            "checksum": "09568b5faae3f75ce61aea9a85aa17b5",
+            "pathname": "images/19.png",
+            "shape": {
+                "r": 320,
+                "c": 320,
+                "channels": 3
+            }
+        },
+        "objects": [
+            {
+                "bounding_box": {
+                    "minimum": {
+                        "r": 128,
+                        "c": 32
+                    },
+                    "maximum": {
+                        "r": 192,
+                        "c": 96
+                    }
+                },
+                "category": "triangle",
+                "mask": null
+            },
+            {
+                "bounding_box": {
+                    "minimum": {
+                        "r": 128,
+                        "c": 128
+                    },
+                    "maximum": {
+                        "r": 192,
+                        "c": 192
+                    }
+                },
+                "category": "square",
+                "mask": null
+            },
+            {
+                "bounding_box": {
+                    "minimum": {
+                        "r": 128,
+                        "c": 224
+                    },
+                    "maximum": {
+                        "r": 192,
+                        "c": 288
+                    }
+                },
+                "category": "circle",
+                "mask": null
+            }
+        ]
+    },
+    {
+        "image": {
+            "checksum": "5277f34edb912221b45f29fa7bd2c564",
+            "pathname": "images/20.png",
+            "shape": {
+                "r": 320,
+                "c": 320,
+                "channels": 3
+            }
+        },
+        "objects": [
+            {
+                "bounding_box": {
+                    "minimum": {
+                        "r": 128,
+                        "c": 32
+                    },
+                    "maximum": {
+                        "r": 192,
+                        "c": 96
+                    }
+                },
+                "category": "triangle",
+                "mask": null
+            },
+            {
+                "bounding_box": {
+                    "minimum": {
+                        "r": 128,
+                        "c": 128
+                    },
+                    "maximum": {
+                        "r": 192,
+                        "c": 192
+                    }
+                },
+                "category": "square",
+                "mask": null
+            },
+            {
+                "bounding_box": {
+                    "minimum": {
+                        "r": 128,
+                        "c": 224
+                    },
+                    "maximum": {
+                        "r": 192,
+                        "c": 288
+                    }
+                },
+                "category": "circle",
+                "mask": null
+            }
+        ]
+    },
+    {
+        "image": {
+            "checksum": "0d38f62faf2a5f07a796fe02ef1c1cd8",
+            "pathname": "images/21.png",
+            "shape": {
+                "r": 320,
+                "c": 320,
+                "channels": 3
+            }
+        },
+        "objects": [
+            {
+                "bounding_box": {
+                    "minimum": {
+                        "r": 128,
+                        "c": 32
+                    },
+                    "maximum": {
+                        "r": 192,
+                        "c": 96
+                    }
+                },
+                "category": "triangle",
+                "mask": null
+            },
+            {
+                "bounding_box": {
+                    "minimum": {
+                        "r": 128,
+                        "c": 128
+                    },
+                    "maximum": {
+                        "r": 192,
+                        "c": 192
+                    }
+                },
+                "category": "square",
+                "mask": null
+            },
+            {
+                "bounding_box": {
+                    "minimum": {
+                        "r": 128,
+                        "c": 224
+                    },
+                    "maximum": {
+                        "r": 192,
+                        "c": 288
+                    }
+                },
+                "category": "circle",
+                "mask": null
+            }
+        ]
+    },
+    {
+        "image": {
+            "checksum": "2290eab1d16ec1a7ae63e42e1b5062f9",
+            "pathname": "images/22.png",
+            "shape": {
+                "r": 320,
+                "c": 320,
+                "channels": 3
+            }
+        },
+        "objects": [
+            {
+                "bounding_box": {
+                    "minimum": {
+                        "r": 128,
+                        "c": 32
+                    },
+                    "maximum": {
+                        "r": 192,
+                        "c": 96
+                    }
+                },
+                "category": "triangle",
+                "mask": null
+            },
+            {
+                "bounding_box": {
+                    "minimum": {
+                        "r": 128,
+                        "c": 128
+                    },
+                    "maximum": {
+                        "r": 192,
+                        "c": 192
+                    }
+                },
+                "category": "square",
+                "mask": null
+            },
+            {
+                "bounding_box": {
+                    "minimum": {
+                        "r": 128,
+                        "c": 224
+                    },
+                    "maximum": {
+                        "r": 192,
+                        "c": 288
+                    }
+                },
+                "category": "circle",
+                "mask": null
+            }
+        ]
+    },
+    {
+        "image": {
+            "checksum": "488c3095ede15f50a2b5dce5e2eb8321",
+            "pathname": "images/23.png",
+            "shape": {
+                "r": 320,
+                "c": 320,
+                "channels": 3
+            }
+        },
+        "objects": [
+            {
+                "bounding_box": {
+                    "minimum": {
+                        "r": 128,
+                        "c": 32
+                    },
+                    "maximum": {
+                        "r": 192,
+                        "c": 96
+                    }
+                },
+                "category": "triangle",
+                "mask": null
+            },
+            {
+                "bounding_box": {
+                    "minimum": {
+                        "r": 128,
+                        "c": 128
+                    },
+                    "maximum": {
+                        "r": 192,
+                        "c": 192
+                    }
+                },
+                "category": "square",
+                "mask": null
+            },
+            {
+                "bounding_box": {
+                    "minimum": {
+                        "r": 128,
+                        "c": 224
+                    },
+                    "maximum": {
+                        "r": 192,
+                        "c": 288
+                    }
+                },
+                "category": "circle",
+                "mask": null
+            }
+        ]
+    },
+    {
+        "image": {
+            "checksum": "e13e4288d252f1e27bcc9fb811e71f5d",
+            "pathname": "images/24.png",
+            "shape": {
+                "r": 320,
+                "c": 320,
+                "channels": 3
+            }
+        },
+        "objects": [
+            {
+                "bounding_box": {
+                    "minimum": {
+                        "r": 128,
+                        "c": 32
+                    },
+                    "maximum": {
+                        "r": 192,
+                        "c": 96
+                    }
+                },
+                "category": "triangle",
+                "mask": null
+            },
+            {
+                "bounding_box": {
+                    "minimum": {
+                        "r": 128,
+                        "c": 128
+                    },
+                    "maximum": {
+                        "r": 192,
+                        "c": 192
+                    }
+                },
+                "category": "square",
+                "mask": null
+            },
+            {
+                "bounding_box": {
+                    "minimum": {
+                        "r": 128,
+                        "c": 224
+                    },
+                    "maximum": {
+                        "r": 192,
+                        "c": 288
+                    }
+                },
+                "category": "circle",
+                "mask": null
+            }
+        ]
+    },
+    {
+        "image": {
+            "checksum": "61c1436f2c0f043359261b6dfbb5a156",
+            "pathname": "images/25.png",
+            "shape": {
+                "r": 320,
+                "c": 320,
+                "channels": 3
+            }
+        },
+        "objects": [
+            {
+                "bounding_box": {
+                    "minimum": {
+                        "r": 128,
+                        "c": 32
+                    },
+                    "maximum": {
+                        "r": 192,
+                        "c": 96
+                    }
+                },
+                "category": "triangle",
+                "mask": null
+            },
+            {
+                "bounding_box": {
+                    "minimum": {
+                        "r": 128,
+                        "c": 128
+                    },
+                    "maximum": {
+                        "r": 192,
+                        "c": 192
+                    }
+                },
+                "category": "square",
+                "mask": null
+            },
+            {
+                "bounding_box": {
+                    "minimum": {
+                        "r": 128,
+                        "c": 224
+                    },
+                    "maximum": {
+                        "r": 192,
+                        "c": 288
+                    }
+                },
+                "category": "circle",
+                "mask": null
+            }
+        ]
+    },
+    {
+        "image": {
+            "checksum": "0877d61998906a7287d5078cd78861f5",
+            "pathname": "images/26.png",
+            "shape": {
+                "r": 320,
+                "c": 320,
+                "channels": 3
+            }
+        },
+        "objects": [
+            {
+                "bounding_box": {
+                    "minimum": {
+                        "r": 128,
+                        "c": 32
+                    },
+                    "maximum": {
+                        "r": 192,
+                        "c": 96
+                    }
+                },
+                "category": "triangle",
+                "mask": null
+            },
+            {
+                "bounding_box": {
+                    "minimum": {
+                        "r": 128,
+                        "c": 128
+                    },
+                    "maximum": {
+                        "r": 192,
+                        "c": 192
+                    }
+                },
+                "category": "square",
+                "mask": null
+            },
+            {
+                "bounding_box": {
+                    "minimum": {
+                        "r": 128,
+                        "c": 224
+                    },
+                    "maximum": {
+                        "r": 192,
+                        "c": 288
+                    }
+                },
+                "category": "circle",
+                "mask": null
+            }
+        ]
+    },
+    {
+        "image": {
+            "checksum": "bd8f97d8fb817ce9c072e6bf6ab02eaa",
+            "pathname": "images/27.png",
+            "shape": {
+                "r": 320,
+                "c": 320,
+                "channels": 3
+            }
+        },
+        "objects": [
+            {
+                "bounding_box": {
+                    "minimum": {
+                        "r": 128,
+                        "c": 32
+                    },
+                    "maximum": {
+                        "r": 192,
+                        "c": 96
+                    }
+                },
+                "category": "triangle",
+                "mask": null
+            },
+            {
+                "bounding_box": {
+                    "minimum": {
+                        "r": 128,
+                        "c": 128
+                    },
+                    "maximum": {
+                        "r": 192,
+                        "c": 192
+                    }
+                },
+                "category": "square",
+                "mask": null
+            },
+            {
+                "bounding_box": {
+                    "minimum": {
+                        "r": 128,
+                        "c": 224
+                    },
+                    "maximum": {
+                        "r": 192,
+                        "c": 288
+                    }
+                },
+                "category": "circle",
+                "mask": null
+            }
+        ]
+    },
+    {
+        "image": {
+            "checksum": "e4dec81d2e31fa7b9b2a92306e46e3db",
+            "pathname": "images/28.png",
+            "shape": {
+                "r": 320,
+                "c": 320,
+                "channels": 3
+            }
+        },
+        "objects": [
+            {
+                "bounding_box": {
+                    "minimum": {
+                        "r": 128,
+                        "c": 32
+                    },
+                    "maximum": {
+                        "r": 192,
+                        "c": 96
+                    }
+                },
+                "category": "triangle",
+                "mask": null
+            },
+            {
+                "bounding_box": {
+                    "minimum": {
+                        "r": 128,
+                        "c": 128
+                    },
+                    "maximum": {
+                        "r": 192,
+                        "c": 192
+                    }
+                },
+                "category": "square",
+                "mask": null
+            },
+            {
+                "bounding_box": {
+                    "minimum": {
+                        "r": 128,
+                        "c": 224
+                    },
+                    "maximum": {
+                        "r": 192,
+                        "c": 288
+                    }
+                },
+                "category": "circle",
+                "mask": null
+            }
+        ]
+    },
+    {
+        "image": {
+            "checksum": "c487e2efd50d5bd9c0e3886159a546f7",
+            "pathname": "images/29.png",
+            "shape": {
+                "r": 320,
+                "c": 320,
+                "channels": 3
+            }
+        },
+        "objects": [
+            {
+                "bounding_box": {
+                    "minimum": {
+                        "r": 128,
+                        "c": 32
+                    },
+                    "maximum": {
+                        "r": 192,
+                        "c": 96
+                    }
+                },
+                "category": "triangle",
+                "mask": null
+            },
+            {
+                "bounding_box": {
+                    "minimum": {
+                        "r": 128,
+                        "c": 128
+                    },
+                    "maximum": {
+                        "r": 192,
+                        "c": 192
+                    }
+                },
+                "category": "square",
+                "mask": null
+            },
+            {
+                "bounding_box": {
+                    "minimum": {
+                        "r": 128,
+                        "c": 224
+                    },
+                    "maximum": {
+                        "r": 192,
+                        "c": 288
+                    }
+                },
+                "category": "circle",
+                "mask": null
+            }
+        ]
+    },
+    {
+        "image": {
+            "checksum": "c92522fa03f50b477c45943605ce3ab1",
+            "pathname": "images/30.png",
+            "shape": {
+                "r": 320,
+                "c": 320,
+                "channels": 3
+            }
+        },
+        "objects": [
+            {
+                "bounding_box": {
+                    "minimum": {
+                        "r": 128,
+                        "c": 32
+                    },
+                    "maximum": {
+                        "r": 192,
+                        "c": 96
+                    }
+                },
+                "category": "triangle",
+                "mask": null
+            },
+            {
+                "bounding_box": {
+                    "minimum": {
+                        "r": 128,
+                        "c": 128
+                    },
+                    "maximum": {
+                        "r": 192,
+                        "c": 192
+                    }
+                },
+                "category": "square",
+                "mask": null
+            },
+            {
+                "bounding_box": {
+                    "minimum": {
+                        "r": 128,
+                        "c": 224
+                    },
+                    "maximum": {
+                        "r": 192,
+                        "c": 288
+                    }
+                },
+                "category": "circle",
+                "mask": null
+            }
+        ]
+    },
+    {
+        "image": {
+            "checksum": "689f3bf619e47c543f58b9ba59010018",
+            "pathname": "images/31.png",
+            "shape": {
+                "r": 320,
+                "c": 320,
+                "channels": 3
+            }
+        },
+        "objects": [
+            {
+                "bounding_box": {
+                    "minimum": {
+                        "r": 128,
+                        "c": 32
+                    },
+                    "maximum": {
+                        "r": 192,
+                        "c": 96
+                    }
+                },
+                "category": "triangle",
+                "mask": null
+            },
+            {
+                "bounding_box": {
+                    "minimum": {
+                        "r": 128,
+                        "c": 128
+                    },
+                    "maximum": {
+                        "r": 192,
+                        "c": 192
+                    }
+                },
+                "category": "square",
+                "mask": null
+            },
+            {
+                "bounding_box": {
+                    "minimum": {
+                        "r": 128,
+                        "c": 224
+                    },
+                    "maximum": {
+                        "r": 192,
+                        "c": 288
+                    }
+                },
+                "category": "circle",
+                "mask": null
+            }
+        ]
+    },
+    {
+        "image": {
+            "checksum": "219bad99c05dc354ee925d7973cafd1b",
+            "pathname": "images/32.png",
+            "shape": {
+                "r": 320,
+                "c": 320,
+                "channels": 3
+            }
+        },
+        "objects": [
+            {
+                "bounding_box": {
+                    "minimum": {
+                        "r": 128,
+                        "c": 32
+                    },
+                    "maximum": {
+                        "r": 192,
+                        "c": 96
+                    }
+                },
+                "category": "triangle",
+                "mask": null
+            },
+            {
+                "bounding_box": {
+                    "minimum": {
+                        "r": 128,
+                        "c": 128
+                    },
+                    "maximum": {
+                        "r": 192,
+                        "c": 192
+                    }
+                },
+                "category": "square",
+                "mask": null
+            },
+            {
+                "bounding_box": {
+                    "minimum": {
+                        "r": 128,
+                        "c": 224
+                    },
+                    "maximum": {
+                        "r": 192,
+                        "c": 288
+                    }
+                },
+                "category": "circle",
+                "mask": null
+            }
+        ]
+    },
+    {
+        "image": {
+            "checksum": "af52cece42ab4552c490e7ea71c4cc63",
+            "pathname": "images/33.png",
+            "shape": {
+                "r": 320,
+                "c": 320,
+                "channels": 3
+            }
+        },
+        "objects": [
+            {
+                "bounding_box": {
+                    "minimum": {
+                        "r": 128,
+                        "c": 32
+                    },
+                    "maximum": {
+                        "r": 192,
+                        "c": 96
+                    }
+                },
+                "category": "triangle",
+                "mask": null
+            },
+            {
+                "bounding_box": {
+                    "minimum": {
+                        "r": 128,
+                        "c": 128
+                    },
+                    "maximum": {
+                        "r": 192,
+                        "c": 192
+                    }
+                },
+                "category": "square",
+                "mask": null
+            },
+            {
+                "bounding_box": {
+                    "minimum": {
+                        "r": 128,
+                        "c": 224
+                    },
+                    "maximum": {
+                        "r": 192,
+                        "c": 288
+                    }
+                },
+                "category": "circle",
+                "mask": null
+            }
+        ]
+    },
+    {
+        "image": {
+            "checksum": "41cf526a414abdb00e569415d273178a",
+            "pathname": "images/34.png",
+            "shape": {
+                "r": 320,
+                "c": 320,
+                "channels": 3
+            }
+        },
+        "objects": [
+            {
+                "bounding_box": {
+                    "minimum": {
+                        "r": 128,
+                        "c": 32
+                    },
+                    "maximum": {
+                        "r": 192,
+                        "c": 96
+                    }
+                },
+                "category": "triangle",
+                "mask": null
+            },
+            {
+                "bounding_box": {
+                    "minimum": {
+                        "r": 128,
+                        "c": 128
+                    },
+                    "maximum": {
+                        "r": 192,
+                        "c": 192
+                    }
+                },
+                "category": "square",
+                "mask": null
+            },
+            {
+                "bounding_box": {
+                    "minimum": {
+                        "r": 128,
+                        "c": 224
+                    },
+                    "maximum": {
+                        "r": 192,
+                        "c": 288
+                    }
+                },
+                "category": "circle",
+                "mask": null
+            }
+        ]
+    },
+    {
+        "image": {
+            "checksum": "e475d733ff9c6028981684a2836609f5",
+            "pathname": "images/35.png",
+            "shape": {
+                "r": 320,
+                "c": 320,
+                "channels": 3
+            }
+        },
+        "objects": [
+            {
+                "bounding_box": {
+                    "minimum": {
+                        "r": 128,
+                        "c": 32
+                    },
+                    "maximum": {
+                        "r": 192,
+                        "c": 96
+                    }
+                },
+                "category": "triangle",
+                "mask": null
+            },
+            {
+                "bounding_box": {
+                    "minimum": {
+                        "r": 128,
+                        "c": 128
+                    },
+                    "maximum": {
+                        "r": 192,
+                        "c": 192
+                    }
+                },
+                "category": "square",
+                "mask": null
+            },
+            {
+                "bounding_box": {
+                    "minimum": {
+                        "r": 128,
+                        "c": 224
+                    },
+                    "maximum": {
+                        "r": 192,
+                        "c": 288
+                    }
+                },
+                "category": "circle",
+                "mask": null
+            }
+        ]
+    },
+    {
+        "image": {
+            "checksum": "fe02bfce1a23f1d6010a252b46e1195c",
+            "pathname": "images/36.png",
+            "shape": {
+                "r": 320,
+                "c": 320,
+                "channels": 3
+            }
+        },
+        "objects": [
+            {
+                "bounding_box": {
+                    "minimum": {
+                        "r": 128,
+                        "c": 32
+                    },
+                    "maximum": {
+                        "r": 192,
+                        "c": 96
+                    }
+                },
+                "category": "triangle",
+                "mask": null
+            },
+            {
+                "bounding_box": {
+                    "minimum": {
+                        "r": 128,
+                        "c": 128
+                    },
+                    "maximum": {
+                        "r": 192,
+                        "c": 192
+                    }
+                },
+                "category": "square",
+                "mask": null
+            },
+            {
+                "bounding_box": {
+                    "minimum": {
+                        "r": 128,
+                        "c": 224
+                    },
+                    "maximum": {
+                        "r": 192,
+                        "c": 288
+                    }
+                },
+                "category": "circle",
+                "mask": null
+            }
+        ]
+    }
+]

@@ -1,37 +1,38 @@
-import numpy
-
-import keras_rcnn.preprocessing._object_detection
-import keras_rcnn.datasets.malaria
-import keras_rcnn.models
-import keras
-
-
-def test_scale_shape():
-    min_size = 200
-    max_size = 300
-    size = (600, 1000)
-
-    size, scale = keras_rcnn.preprocessing._object_detection.scale_size(
-        size, min_size, max_size
-    )
-
-    expected = (180, 300)
-    numpy.testing.assert_equal(size, expected)
-
-    expected = 0.3
-
-    assert numpy.isclose(scale, expected)
-
-
-class TestObjectDetectionGenerator:
-    def test_flow(self):
-        classes = {
-            "rbc": 1,
-            "not":2
-        }
-
-        training, _, _ = keras_rcnn.datasets.malaria.load_data()
-
-        generator = keras_rcnn.preprocessing.ObjectDetectionGenerator()
-
-        generator = generator.flow(training, classes, target_shape=(448, 448), scale=1)
+# import keras_rcnn.datasets.dsb2018
+# import keras_rcnn.models
+# import keras_rcnn.preprocessing
+# import skimage.io
+#
+#
+# class TestObjectDetectionGenerator:
+#     def test_flow_from_dictionary(self):
+#         classes = {
+#             "nucleus": 1
+#         }
+#
+#         training, _ = keras_rcnn.datasets.dsb2018.load_data()
+#
+#         generator = keras_rcnn.preprocessing.ObjectDetectionGenerator()
+#
+#         generator = generator.flow_from_dictionary(training, classes, target_size=(224, 224))
+#
+#         generator.next()
+#
+#         generator = keras_rcnn.preprocessing.ObjectDetectionGenerator(data_format=None)
+#
+#         generator.flow_from_dictionary(training, classes, color_mode="grayscale", target_size=(224, 224))
+#
+#     def test_standardize(self):
+#         training, _ = keras_rcnn.datasets.dsb2018.load_data()
+#
+#         generator = keras_rcnn.preprocessing.ObjectDetectionGenerator()
+#
+#         image = skimage.io.imread(training[0]['image']['pathname'])
+#
+#         generator.standardize(image)
+#
+#     def test_find_scale(self):
+#         pass
+#
+#     def test_get_batches_of_transformed_samples(self):
+#         pass

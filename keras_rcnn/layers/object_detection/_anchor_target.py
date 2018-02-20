@@ -37,7 +37,8 @@ class AnchorTarget(keras.layers.Layer):
     """
 
     def __init__(self, allowed_border=0, clobber_positives=False,
-                 negative_overlap=0.3, positive_overlap=0.7, stride=16, base_size=16, ratios=None, scales=None,
+                 negative_overlap=0.3, positive_overlap=0.7, stride=16,
+                 base_size=16, ratios=None, scales=None,
                  **kwargs):
         self.allowed_border = allowed_border
 
@@ -52,61 +53,82 @@ class AnchorTarget(keras.layers.Layer):
         self.ratios = ratios
         self.scales = scales
 
+        self._shifted_anchors = None
+
         super(AnchorTarget, self).__init__(**kwargs)
+
+    @property
+    def shifted_anchors(self):
+        if self._shifted_anchors:
+            return self._shifted_anchors
+        else:
+            self._shifted_anchors = keras_rcnn.backend.shift(
+                (self.height, self.width), self.stride, self.base_size,
+                self.ratios, self.scales)
+
+            return self._shifted_anchors
 
     def build(self, input_shape):
         super(AnchorTarget, self).build(input_shape)
 
     # TODO: should AnchorTarget only be enabled during training
     def call(self, inputs, **kwargs):
-        scores, gt_boxes, metadata = inputs
+        target_bounding_boxes, metadata, scores = inputs
 
-        metadata = metadata[0, :]  # keras.backend.int_shape(image)[1:]
+        metadata = metadata[0, :]
 
-        gt_boxes = gt_boxes[0]
+        target_bounding_boxes = target_bounding_boxes[0]
 
-        rr = keras.backend.shape(scores)[1]
-        cc = keras.backend.shape(scores)[2]
+        self.height = keras.backend.shape(scores)[1]
+        self.width = keras.backend.shape(scores)[2]
         total_anchors = keras.backend.shape(scores)[3]
-        total_anchors = rr * cc * total_anchors
+        total_anchors = self.height * self.width * total_anchors
 
         # 1. Generate proposals from bbox deltas and shifted anchors
-        all_anchors = keras_rcnn.backend.shift((rr, cc), self.stride, self.base_size, self.ratios, self.scales)
+        all_anchors = self.shifted_anchors
 
         # only keep anchors inside the image
-        inds_inside, anchors = inside_image(all_anchors, metadata,
-                                            self.allowed_border)
+        indices_inside, anchors = inside_image(all_anchors, metadata,
+                                               self.allowed_border)
 
         # 2. obtain indices of gt boxes with the greatest overlap, balanced
-        # labels
-        argmax_overlaps_indices, labels = label(gt_boxes, anchors, inds_inside,
-                                                self.negative_overlap,
-                                                self.positive_overlap,
-                                                self.clobber_positives)
+        # target_categories
+        argmax_overlaps_indices, target_categories = label(
+            target_bounding_boxes, anchors, indices_inside,
+            self.negative_overlap,
+            self.positive_overlap,
+            self.clobber_positives)
 
-        gt_boxes = keras.backend.gather(gt_boxes, argmax_overlaps_indices)
+        target_bounding_boxes = keras.backend.gather(target_bounding_boxes,
+                                                     argmax_overlaps_indices)
 
         # Convert fixed anchors in (x, y, w, h) to (dx, dy, dw, dh)
-        bbox_reg_targets = keras_rcnn.backend.bbox_transform(anchors, gt_boxes)
+        target_bounding_box_targets = keras_rcnn.backend.bbox_transform(
+            anchors, target_bounding_boxes)
 
-        # TODO: Why is bbox_reg_targets' shape (5, ?, 4)? Why is gt_boxes'
+        # TODO: Why is target_bounding_box_targets' shape (5, ?, 4)? Why is target_bounding_boxes'
         # shape (None, None, 4) and not (None, 4)?
-        bbox_reg_targets = keras.backend.reshape(bbox_reg_targets, (-1, 4))
+        target_bounding_box_targets = keras.backend.reshape(
+            target_bounding_box_targets, (-1, 4))
 
         # map up to original set of anchors
-        labels = unmap(labels, total_anchors, inds_inside, fill=-1)
-        bbox_reg_targets = unmap(bbox_reg_targets, total_anchors, inds_inside,
-                                 fill=0)
+        target_categories = unmap(target_categories, total_anchors,
+                                  indices_inside, fill=-1)
+        target_bounding_box_targets = unmap(target_bounding_box_targets,
+                                            total_anchors, indices_inside,
+                                            fill=0)
 
-        labels = keras.backend.expand_dims(labels, axis=0)
-        bbox_reg_targets = keras.backend.expand_dims(bbox_reg_targets, axis=0)
+        target_categories = keras.backend.expand_dims(target_categories,
+                                                      axis=0)
+        target_bounding_box_targets = keras.backend.expand_dims(
+            target_bounding_box_targets, axis=0)
         all_anchors = keras.backend.expand_dims(all_anchors, axis=0)
 
         # TODO: implement inside and outside weights
-        return [all_anchors, labels, bbox_reg_targets]
+        return [all_anchors, target_bounding_box_targets, target_categories]
 
     def compute_output_shape(self, input_shape):
-        return [(1, None, 4), (1, None), (1, None, 4)]
+        return [(1, None, 4), (1, None, 4), (1, None)]
 
     def compute_mask(self, inputs, mask=None):
         # unfortunately this is required
@@ -363,7 +385,8 @@ def inside_image(boxes, im_info, allowed_border=0):
     return indices[:, 0], keras.backend.reshape(gathered, [-1, 4])
 
 
-def inside_and_outside_weights(anchors, subsample, positive_weight, proposed_inside_weights):
+def inside_and_outside_weights(anchors, subsample, positive_weight,
+                               proposed_inside_weights):
     """
     Creates the inside_weights and outside_weights bounding-box weights.
 
@@ -380,7 +403,8 @@ def inside_and_outside_weights(anchors, subsample, positive_weight, proposed_ins
     number_of_anchors = keras.backend.int_shape(anchors)[0]
 
     proposed_inside_weights = keras.backend.constant([proposed_inside_weights])
-    proposed_inside_weights = keras.backend.tile(proposed_inside_weights, (number_of_anchors, 1))
+    proposed_inside_weights = keras.backend.tile(proposed_inside_weights,
+                                                 (number_of_anchors, 1))
 
     positive_condition = keras.backend.equal(subsample, 1)
     negative_condition = keras.backend.equal(subsample, 0)
@@ -388,7 +412,8 @@ def inside_and_outside_weights(anchors, subsample, positive_weight, proposed_ins
     if positive_weight < 0:
         # Assign equal weights to both positive_weights and negative_weights
         # labels.
-        examples = keras.backend.cast(negative_condition, keras.backend.floatx())
+        examples = keras.backend.cast(negative_condition,
+                                      keras.backend.floatx())
         examples = keras.backend.sum(examples)
 
         positive_weights = keras.backend.ones_like(anchors) / examples
@@ -398,20 +423,30 @@ def inside_and_outside_weights(anchors, subsample, positive_weight, proposed_ins
         # negative_weights labels.
         assert (positive_weight > 0) & (positive_weight < 1)
 
-        positive_examples = keras.backend.cast(positive_condition, keras.backend.floatx())
+        positive_examples = keras.backend.cast(positive_condition,
+                                               keras.backend.floatx())
         positive_examples = keras.backend.sum(positive_examples)
 
-        negative_examples = keras.backend.cast(negative_condition, keras.backend.floatx())
+        negative_examples = keras.backend.cast(negative_condition,
+                                               keras.backend.floatx())
         negative_examples = keras.backend.sum(negative_examples)
 
-        positive_weights = keras.backend.ones_like(anchors) * (0 + positive_weight) / positive_examples
-        negative_weights = keras.backend.ones_like(anchors) * (1 - positive_weight) / negative_examples
+        positive_weights = keras.backend.ones_like(anchors) * (
+                    0 + positive_weight) / positive_examples
+        negative_weights = keras.backend.ones_like(anchors) * (
+                    1 - positive_weight) / negative_examples
 
     inside_weights = keras.backend.zeros_like(anchors)
-    inside_weights = keras_rcnn.backend.where(positive_condition, proposed_inside_weights, inside_weights)
+    inside_weights = keras_rcnn.backend.where(positive_condition,
+                                              proposed_inside_weights,
+                                              inside_weights)
 
     outside_weights = keras.backend.zeros_like(anchors)
-    outside_weights = keras_rcnn.backend.where(positive_condition, positive_weights, outside_weights)
-    outside_weights = keras_rcnn.backend.where(negative_condition, negative_weights, outside_weights)
+    outside_weights = keras_rcnn.backend.where(positive_condition,
+                                               positive_weights,
+                                               outside_weights)
+    outside_weights = keras_rcnn.backend.where(negative_condition,
+                                               negative_weights,
+                                               outside_weights)
 
     return inside_weights, outside_weights

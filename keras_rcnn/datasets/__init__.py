@@ -14,30 +14,44 @@ def load_data(name):
         origin=origin,
         untar=True
     )
-    image_path = os.path.join(pathname, "images")
-    
-    filename = os.path.join(pathname, "training.json")
 
-    training = get_file_data(filename, image_path)
+    image_directory = os.path.join(pathname, "images")
 
-    filename = os.path.join(pathname, "validation.json")
+    mask_directory = os.path.join(pathname, "masks")
 
-    validation = get_file_data(filename, image_path)
+    if not os.path.exists(mask_directory):
+        mask_directory = None
 
-    filename = os.path.join(pathname, "test.json")
+    training_pathname = os.path.join(pathname, "training.json")
 
-    test = get_file_data(filename, image_path)
+    training = get_file_data(training_pathname, image_directory, mask_directory)
 
-    return training, validation, test
+    test_pathname = os.path.join(pathname, "test.json")
 
-def get_file_data(filename, image_path):
-    if os.path.exists(filename):
-        with open(filename) as data:
-            partition = json.load(data)
+    test = get_file_data(test_pathname, image_directory, mask_directory)
+
+    return training, test
+
+
+def get_file_data(json_pathname, image_directory, mask_directory):
+    if os.path.exists(json_pathname):
+        with open(json_pathname) as data:
+            dictionaries = json.load(data)
     else:
-        partition = []
-        
-    for dictionary in partition:
-        dictionary["filename"] = os.path.join(image_path, dictionary["filename"])
-    
-    return partition
+        raise ValueError
+
+    for dictionary in dictionaries:
+        image_pathname = dictionary["image"]["pathname"]
+
+        image_pathname = os.path.join(image_directory, image_pathname)
+
+        dictionary["image"]["pathname"] = image_pathname
+
+        for index, instance in enumerate(dictionary["objects"]):
+            mask_pathname = dictionary["objects"][index]["mask"]["pathname"]
+
+            mask_pathname = os.path.join(mask_directory, mask_pathname)
+
+            dictionary["objects"][index]["mask"]["pathname"] = mask_pathname
+
+    return dictionaries

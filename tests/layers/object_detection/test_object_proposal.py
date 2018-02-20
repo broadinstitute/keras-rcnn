@@ -18,7 +18,7 @@ class TestObjectProposal:
 
         object_proposal = keras_rcnn.layers.ObjectProposal()
 
-        object_proposal.call([metadata, deltas, scores, anchors])
+        object_proposal.call([anchors, metadata, deltas, scores])
 
 
 def test_filter_boxes():
@@ -30,8 +30,6 @@ def test_filter_boxes():
 
     minimum = 3
 
-    results = keras_rcnn.layers.object_detection._object_proposal.filter_boxes(
-        proposals, minimum)
+    results = keras_rcnn.layers.object_detection._object_proposal.filter_boxes(proposals, minimum)
 
-    numpy.testing.assert_array_equal(keras.backend.eval(results),
-                                     numpy.array([0, 1]))
+    numpy.testing.assert_array_equal(keras.backend.eval(results), numpy.array([0, 1]))
