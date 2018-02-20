@@ -1,12 +1,13 @@
 # -*- coding: utf-8 -*-
 
 import keras
+import keras_resnet.models
 
 import keras_rcnn.layers
 
 
 class RPN(keras.models.Model):
-    def __init__(self, input_shape, categories):
+    def __init__(self, input_shape, categories, backbone=None):
         n_categories = len(categories) + 1
 
         target_bounding_boxes = keras.layers.Input(
@@ -48,33 +49,10 @@ class RPN(keras.models.Model):
             target_metadata
         ]
 
-        output_features = keras.layers.Conv2D(64, name='block1_conv1', **options)(target_image)
-        output_features = keras.layers.Conv2D(64, name='block1_conv2', **options)(output_features)
-
-        output_features = keras.layers.MaxPooling2D(strides=(2, 2), name='block1_pool')(output_features)
-
-        output_features = keras.layers.Conv2D(128, name='block2_conv1', **options)(output_features)
-        output_features = keras.layers.Conv2D(128, name='block2_conv2', **options)(output_features)
-
-        output_features = keras.layers.MaxPooling2D(strides=(2, 2), name='block2_pool')(output_features)
-
-        output_features = keras.layers.Conv2D(256, name='block3_conv1', **options)(output_features)
-        output_features = keras.layers.Conv2D(256, name='block3_conv2', **options)(output_features)
-        output_features = keras.layers.Conv2D(256, name='block3_conv3', **options)(output_features)
-        output_features = keras.layers.Conv2D(256, name='block3_conv4', **options)(output_features)
-
-        output_features = keras.layers.MaxPooling2D(strides=(2, 2), name='block3_pool')(output_features)
-
-        output_features = keras.layers.Conv2D(512, name='block4_conv1', **options)(output_features)
-        output_features = keras.layers.Conv2D(512, name='block4_conv2', **options)(output_features)
-        output_features = keras.layers.Conv2D(512, name='block4_conv3', **options)(output_features)
-        output_features = keras.layers.Conv2D(512, name='block4_conv4', **options)(output_features)
-
-        output_features = keras.layers.MaxPooling2D(strides=(2, 2), name='block4_pool')(output_features)
-
-        output_features = keras.layers.Conv2D(512, name='block5_conv1', **options)(output_features)
-        output_features = keras.layers.Conv2D(512, name='block5_conv2', **options)(output_features)
-        output_features = keras.layers.Conv2D(512, name='block5_conv3', **options)(output_features)
+        _, _, _, output_features = keras_resnet.models.ResNet50(
+            inputs=target_image,
+            include_top=False
+        ).outputs
 
         convolution_3x3 = keras.layers.Conv2D(64, **options)(output_features)
 
