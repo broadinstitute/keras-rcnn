@@ -1,151 +1,327 @@
 # -*- coding: utf-8 -*-
 
-import keras.backend
 import keras.preprocessing.image
 import numpy
+import skimage.color
+import skimage.exposure
 import skimage.io
 import skimage.transform
-
-
-def scale_size(size, min_size, max_size):
-    """
-    Rescales a given image size such that the larger axis is
-    no larger than max_size and the smallest axis is as close
-    as possible to min_size.
-    """
-    assert (len(size) == 2)
-
-    scale = min_size / numpy.min(size)
-
-    # Prevent the biggest axis from being larger than max_size.
-    if numpy.round(scale * numpy.max(size)) > max_size:
-        scale = max_size / numpy.max(size)
-
-    rows, cols = size
-    rows *= scale
-    cols *= scale
-
-    return (int(rows), int(cols)), scale
 
 
 class DictionaryIterator(keras.preprocessing.image.Iterator):
     def __init__(
             self,
             dictionary,
-            classes,
+            categories,
+            target_size,
             generator,
-            target_shape=None,
-            scale=1,
-            ox=None,
-            oy=None,
             batch_size=1,
-            shuffle=False,
-            seed=None
+            color_mode="rgb",
+            data_format=None,
+            mask_size=(28, 28),
+            seed=None,
+            shuffle=False
     ):
-        self.dictionary = dictionary
-        self.classes = classes
-        self.generator = generator
-
-        assert (len(self.dictionary) != 0)
-
-        rows, cols, channels = dictionary[0]["shape"]
-        self.image_shape = (rows, cols, channels)
-        self.scale = scale
-        self.ox = ox
-        self.oy = oy
+        if color_mode not in {"grayscale", "rgb"}:
+            raise ValueError
 
         self.batch_size = batch_size
 
-        if target_shape is None:
-            self.target_shape, self.scale = scale_size(self.image_shape[0:2], numpy.min(self.image_shape[:2]), numpy.max(self.image_shape[:2]))
+        self.categories = categories
 
-            self.target_shape = self.target_shape + (self.image_shape[2],)
-
+        if color_mode == "rgb":
+            self.channels = 3
         else:
-            self.target_shape = target_shape + (self.image_shape[2],)
+            self.channels = 1
 
-        # Metadata needs to be computed only once.
-        rows, cols, channels = self.target_shape
+        self.color_mode = color_mode
 
-        self.metadata = numpy.array([[rows, cols, self.scale]])
+        if data_format is None:
+            data_format = keras.backend.image_data_format()
 
-        super(DictionaryIterator, self).__init__(len(self.dictionary), batch_size, shuffle, seed)
+        if data_format not in {"channels_first", "channels_last"}:
+            raise ValueError
+
+        self.data_format = data_format
+
+        self.dictionary = dictionary
+
+        self.generator = generator
+
+        if self.color_mode == "grayscale":
+            if self.data_format == "channels_first":
+                self.image_shape = (*target_size, 1)
+            else:
+                self.image_shape = (1, *target_size)
+        else:
+            if self.data_format == "channels_last":
+                self.image_shape = (*target_size, 3)
+            else:
+                self.image_shape = (3, *target_size)
+
+        self.mask_size = mask_size
+
+        self.maximum = numpy.max(target_size)
+
+        self.minimum = numpy.min(target_size)
+
+        self.n_categories = len(self.categories) + 1
+
+        self.n_samples = len(self.dictionary)
+
+        self.target_size = target_size
+
+        super(DictionaryIterator, self).__init__(
+            self.n_samples,
+            batch_size,
+            shuffle,
+            seed
+        )
 
     def next(self):
-        # Lock indexing to prevent race conditions.
         with self.lock:
             selection = next(self.index_generator)
 
         return self._get_batches_of_transformed_samples(selection)
 
+    def find_scale(self, image):
+        r, c, _ = image.shape
+
+        scale = self.minimum / numpy.minimum(r, c)
+
+        if numpy.maximum(r, c) * scale > self.maximum:
+            scale = self.maximum / numpy.maximum(r, c)
+
+        return scale
+
     def _get_batches_of_transformed_samples(self, selection):
-        # Labels has num_classes + 1 elements, since 0 is reserved for
-        # background.
-        num_classes = len(self.classes)
-        images = numpy.zeros((self.batch_size,) + self.target_shape, dtype=keras.backend.floatx())
-        boxes = numpy.zeros((self.batch_size, 0, 4), dtype=keras.backend.floatx())
-        labels = numpy.zeros((self.batch_size, 0, num_classes + 1), dtype=numpy.uint8)
+        self.mask_size = (28, 28)
+
+        target_bounding_boxes = numpy.zeros(
+            (self.batch_size, 0, 4)
+        )
+
+        target_categories = numpy.zeros(
+            (self.batch_size, 0, self.n_categories)
+        )
+
+        target_images = numpy.zeros(
+            (self.batch_size, *self.target_size, self.channels)
+        )
+
+        target_masks = numpy.zeros(
+            (self.batch_size, 0, *self.mask_size)
+        )
+
+        target_metadata = numpy.zeros(
+            (self.batch_size, 3)
+        )
 
         for batch_index, image_index in enumerate(selection):
-            count = 0
+            horizontal_flip = False
 
-            while count == 0:
-                path = self.dictionary[image_index]["filename"]
-                image = skimage.io.imread(path)
+            if self.generator.horizontal_flip:
+                if numpy.random.random() < 0.5:
+                    horizontal_flip = True
 
-                if image.ndim == 2:
-                    image = numpy.expand_dims(image, -1)
+            vertical_flip = False
 
-                # crop
-                if self.ox is None:
-                    offset_x = numpy.random.randint(0, self.image_shape[1] - self.target_shape[1] + 1)
-                else:
-                    offset_x = self.ox
+            if self.generator.vertical_flip:
+                if numpy.random.random() < 0.5:
+                    vertical_flip = True
 
-                if self.oy is None:
-                    offset_y = numpy.random.randint(0, self.image_shape[0] - self.target_shape[0] + 1)
-                else:
-                    offset_y = self.oy
+            pathname = self.dictionary[image_index]["image"]["pathname"]
 
-                image = image[offset_y:self.target_shape[0] + offset_y, offset_x:self.target_shape[1] + offset_x, :]
+            target_image = numpy.zeros((*self.target_size, self.channels))
 
-                # Copy image to batch blob.
-                images[batch_index] = skimage.transform.rescale(image, scale=self.scale, mode="reflect")
+            image = skimage.io.imread(pathname)
 
-                # Set ground truth boxes.
-                for i, b in enumerate(self.dictionary[image_index]["boxes"]):
-                    if b["class"] not in self.classes:
-                        continue
+            scale = self.find_scale(image)
 
-                    x1 = int(b["x1"]) - offset_x
-                    x2 = int(b["x2"]) - offset_x
-                    y1 = int(b["y1"]) - offset_y
-                    y2 = int(b["y2"]) - offset_y
+            image = skimage.transform.rescale(image, scale)
 
-                    if x2 == image.shape[1]:
-                        x2 -= 1
+            image = self.generator.standardize(image)
 
-                    if y2 == image.shape[0]:
-                        y2 -= 1
+            if horizontal_flip:
+                image = numpy.fliplr(image)
 
-                    if x1 >= 0 and x2 < image.shape[1] and y1 >= 0 and y2 < \
-                            image.shape[0]:
-                        count += 1
+            if vertical_flip:
+                image = numpy.flipud(image)
 
-                        box = [x1, y1, x2, y2]
-                        boxes = numpy.append(boxes, [[box]], axis=1)
+            image_r = image.shape[0]
+            image_c = image.shape[1]
 
-                        # Store the labels in one-hot form.
-                        label = [0] * (num_classes + 1)
-                        label[self.classes[b["class"]]] = 1
-                        labels = numpy.append(labels, [[label]], axis=1)
+            target_image[:image_r, :image_c] = image
 
-            # Scale the ground truth boxes to the selected image scale.
-            boxes[batch_index, :, :4] *= self.scale
+            target_images[batch_index] = target_image
 
-        return [boxes, images, labels, self.metadata], None
+            target_metadata[batch_index] = [*self.target_size, 1.0]
+
+            bounding_boxes = self.dictionary[image_index]["image"]["objects"]
+
+            n_objects = len(bounding_boxes)
+
+            target_bounding_boxes = numpy.resize(
+                target_bounding_boxes, (self.batch_size, n_objects, 4)
+            )
+
+            target_masks = numpy.resize(
+                target_masks, (self.batch_size, n_objects, *self.mask_size)
+            )
+
+            target_categories = numpy.resize(
+                target_categories,
+                (self.batch_size, n_objects, self.n_categories)
+            )
+
+            for bounding_box_index, bounding_box in enumerate(bounding_boxes):
+                if bounding_box["category"] not in self.categories:
+                    continue
+
+                minimum_r = bounding_box["bounding_box"]["minimum"]["r"]
+                minimum_c = bounding_box["bounding_box"]["minimum"]["c"]
+
+                maximum_r = bounding_box["bounding_box"]["maximum"]["r"]
+                maximum_c = bounding_box["bounding_box"]["maximum"]["c"]
+
+                minimum_r *= scale
+                minimum_c *= scale
+
+                maximum_r *= scale
+                maximum_c *= scale
+
+                minimum_r = int(minimum_r)
+                minimum_c = int(minimum_c)
+
+                maximum_r = int(maximum_r)
+                maximum_c = int(maximum_c)
+
+                target_bounding_box = [
+                    minimum_r,
+                    minimum_c,
+                    maximum_r,
+                    maximum_c
+                ]
+
+                if horizontal_flip:
+                    target_bounding_box = [
+                        target_bounding_box[0],
+                        image.shape[1] - target_bounding_box[3],
+                        target_bounding_box[2],
+                        image.shape[1] - target_bounding_box[1]
+                    ]
+
+                if vertical_flip:
+                    target_bounding_box = [
+                        image.shape[0] - target_bounding_box[2],
+                        target_bounding_box[1],
+                        image.shape[0] - target_bounding_box[0],
+                        target_bounding_box[3]
+                    ]
+
+                target_bounding_boxes[
+                    batch_index,
+                    bounding_box_index
+                ] = target_bounding_box
+
+                if bounding_box["mask"]:
+                    target_mask = skimage.io.imread(bounding_box["mask"]["pathname"])
+
+                    target_mask = target_mask[minimum_r:maximum_r, minimum_c:maximum_c]
+
+                    target_mask = skimage.transform.resize(target_mask, self.mask_size, order=0)
+
+                    if horizontal_flip:
+                        target_mask = numpy.fliplr(target_mask)
+
+                    if vertical_flip:
+                        target_mask = numpy.flipud(target_mask)
+
+                    target_masks[
+                        batch_index,
+                        bounding_box_index
+                    ] = target_mask
+
+                target_category = numpy.zeros((self.n_categories))
+
+                target_category[self.categories[bounding_box["category"]]] = 1
+
+                target_categories[
+                    batch_index,
+                    bounding_box_index
+                ] = target_category
+
+        x = [
+            target_bounding_boxes,
+            target_categories,
+            target_images,
+            target_masks,
+            target_metadata
+        ]
+
+        return x, None
 
 
 class ObjectDetectionGenerator:
-    def flow(self, dictionary, classes, target_shape=None, scale=None, ox=None, oy=None, batch_size=1, shuffle=True, seed=None):
-        return DictionaryIterator(dictionary, classes, self, target_shape, scale, ox, oy, batch_size, shuffle, seed)
+    def __init__(
+            self,
+            data_format=None,
+            horizontal_flip=False,
+            preprocessing_function=None,
+            rescale=False,
+            rotation_range=0.0,
+            samplewise_center=False,
+            vertical_flip=False
+    ):
+        self.data_format = data_format
+
+        self.horizontal_flip = horizontal_flip
+
+        self.preprocessing_function = preprocessing_function
+
+        self.rescale = rescale
+
+        self.rotation_range = rotation_range
+
+        self.samplewise_center = samplewise_center
+
+        self.vertical_flip = vertical_flip
+
+    def flow_from_dictionary(
+            self,
+            dictionary,
+            categories,
+            target_size,
+            batch_size=1,
+            color_mode="rgb",
+            data_format=None,
+            mask_size=(28, 28),
+            shuffle=True,
+            seed=None
+    ):
+        return DictionaryIterator(
+            dictionary,
+            categories,
+            target_size,
+            self,
+            batch_size,
+            color_mode,
+            data_format,
+            mask_size,
+            seed,
+            shuffle
+        )
+
+    def standardize(self, image):
+        if self.preprocessing_function:
+            image = self.preprocessing_function(image)
+
+        if self.rescale:
+            image *= self.rescale
+
+        if self.samplewise_center:
+            image -= numpy.mean(image, keepdims=True)
+
+        image = skimage.exposure.rescale_intensity(image, out_range=(0.0, 1.0))
+
+        return image

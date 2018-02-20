@@ -1,37 +1,29 @@
-import numpy
-
-import keras_rcnn.preprocessing._object_detection
-import keras_rcnn.datasets.malaria
-import keras_rcnn.models
-import keras
-
-
-def test_scale_shape():
-    min_size = 200
-    max_size = 300
-    size = (600, 1000)
-
-    size, scale = keras_rcnn.preprocessing._object_detection.scale_size(
-        size, min_size, max_size
-    )
-
-    expected = (180, 300)
-    numpy.testing.assert_equal(size, expected)
-
-    expected = 0.3
-
-    assert numpy.isclose(scale, expected)
+import keras_rcnn.preprocessing
 
 
 class TestObjectDetectionGenerator:
-    def test_flow(self):
-        classes = {
-            "rbc": 1,
-            "not":2
-        }
-
-        training, _, _ = keras_rcnn.datasets.malaria.load_data()
-
+    def test_flow_from_dictionary(self, training_dictionary):
         generator = keras_rcnn.preprocessing.ObjectDetectionGenerator()
 
-        generator = generator.flow(training, classes, target_shape=(448, 448), scale=1)
+        categories = {"circle": 1, "square": 2, "triangle": 3}
+
+        generator = generator.flow_from_dictionary(
+            dictionary=training_dictionary,
+            categories=categories,
+            target_size=(224, 224),
+            shuffle=False
+        )
+
+        x, _ = generator.next()
+
+        bounding_boxes, categories, images, masks, metadata = x
+
+        assert bounding_boxes.shape == (1, 17, 4)
+
+        assert categories.shape == (1, 17, 4)
+
+        assert images.shape == (1, 224, 224, 3)
+
+        assert masks.shape == (1, 17, 28, 28)
+
+        assert metadata.shape == (1, 3)
