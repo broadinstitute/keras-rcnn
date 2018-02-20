@@ -18,7 +18,7 @@ class TestObjectProposal:
 
         object_proposal = keras_rcnn.layers.ObjectProposal()
 
-        object_proposal.call([metadata, deltas, scores, anchors])
+        object_proposal.call([anchors, metadata, deltas, scores])
 
 
 def test_filter_boxes():
