@@ -1,6 +1,3 @@
-import keras_rcnn.preprocessing
-
-
 class TestObjectDetectionGenerator:
     def test_flow_from_dictionary(self, generator):
         x, _ = generator.next()
