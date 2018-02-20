@@ -70,28 +70,28 @@ class ProposalTarget(keras.layers.Layer):
         # GT boxes (x1, y1, x2, y2)
         # and other times after box coordinates -- normalize to one format
 
-        # labels (class1, class2, ... , num_classes)
+        # target_categories (class1, class2, ... , num_classes)
         # Include ground-truth boxes in the set of candidate rois
-        proposals, labels, bounding_boxes = inputs
+        target_bounding_boxes, target_categories, output_proposal_bounding_boxes = inputs
 
-        proposals = keras.backend.in_train_phase(
-            x=keras.backend.concatenate((proposals, bounding_boxes), axis=1),
-            alt=proposals,
+        output_proposal_bounding_boxes = keras.backend.in_train_phase(
+            x=keras.backend.concatenate((output_proposal_bounding_boxes, target_bounding_boxes), axis=1),
+            alt=output_proposal_bounding_boxes,
             training=training
         )
 
-        # Sample rois with classification labels and bounding box regression
+        # Sample rois with classification target_categories and bounding box regression
         # targets
 
         # TODO: Fix usage of batch index
         batch_index = 0
 
-        proposals = proposals[batch_index, :, :]
-        bounding_boxes = bounding_boxes[batch_index, :, :]
-        labels = labels[batch_index, :, :]
+        output_proposal_bounding_boxes = output_proposal_bounding_boxes[batch_index, :, :]
+        target_bounding_boxes = target_bounding_boxes[batch_index, :, :]
+        target_categories = target_categories[batch_index, :, :]
 
         # TODO: Fix hack
-        condition = keras.backend.not_equal(keras.backend.sum(bounding_boxes), 0)
+        condition = keras.backend.not_equal(keras.backend.sum(target_bounding_boxes), 0)
 
         def test(proposals, gt_boxes, gt_labels):
             N = keras.backend.shape(proposals)[0]
@@ -100,14 +100,14 @@ class ProposalTarget(keras.layers.Layer):
             return proposals, tensorflow.zeros((N, number_of_classes)), tensorflow.zeros((N, number_of_coordinates))
 
         sample_outputs = keras.backend.switch(condition,
-                                              lambda: self.sample(proposals, bounding_boxes, labels),
-                                              lambda: test(proposals, bounding_boxes, labels))
+                                              lambda: self.sample(output_proposal_bounding_boxes, target_bounding_boxes, target_categories),
+                                              lambda: test(output_proposal_bounding_boxes, target_bounding_boxes, target_categories))
 
-        rois = keras.backend.expand_dims(sample_outputs[0], 0)
-        labels = keras.backend.expand_dims(sample_outputs[1], 0)
-        bbox_targets = keras.backend.expand_dims(sample_outputs[2], 0)
+        output_proposal_bounding_boxes = keras.backend.expand_dims(sample_outputs[0], 0)
+        target_categories = keras.backend.expand_dims(sample_outputs[1], 0)
+        bounding_box_targets = keras.backend.expand_dims(sample_outputs[2], 0)
 
-        return [rois, labels, bbox_targets]
+        return [bounding_box_targets, target_categories, output_proposal_bounding_boxes]
 
     def get_config(self):
         configuration = {
@@ -179,7 +179,7 @@ class ProposalTarget(keras.layers.Layer):
 
         self.batch_size = input_shape[0][0]
 
-        return [(self.batch_size, None, 4), (self.batch_size, None, num_classes), (self.batch_size, None, 4 * num_classes)]
+        return [(self.batch_size, None, 4 * num_classes), (self.batch_size, None, num_classes), (self.batch_size, None, 4)]
 
     def compute_mask(self, inputs, mask=None):
         return [None, None, None]
