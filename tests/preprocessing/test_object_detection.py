@@ -1,3 +1,14 @@
+class TestDictionaryIterator:
+    def find_scale(self):
+        pass
+
+    def test_next(self):
+        pass
+
+    def test__get_batches_of_transformed_samples(self):
+        pass
+
+
 class TestObjectDetectionGenerator:
     def test_flow_from_dictionary(self, generator):
         x, _ = generator.next()
@@ -13,3 +24,6 @@ class TestObjectDetectionGenerator:
         assert masks.shape == (1, 17, 28, 28)
 
         assert metadata.shape == (1, 3)
+
+    def test_standardize(self):
+        pass
