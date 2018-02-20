@@ -1,9 +1,4 @@
-import keras_rcnn.datasets.shape
+def test_load_data(training_dictionary, test_dictionary):
+    assert len(training_dictionary) == 256
 
-
-def test_load_data():
-    training, test = keras_rcnn.datasets.shape.load_data()
-
-    assert len(training) == 256
-
-    assert len(test) == 256
+    assert len(test_dictionary) == 256
