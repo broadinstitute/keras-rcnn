@@ -1,72 +1,75 @@
 {
-    "$schema": "http://json-schema.org/draft-04/schema#",
+    "type": "array",
+    "$schema": "http://json-schema.org/draft-07/schema#",
     "items": {
+        "type": "object",
         "properties": {
-            "id": {
-                "type": "string"
-            },
             "image": {
+                "type": "object",
                 "properties": {
                     "checksum": {
                         "type": "string"
                     },
                     "pathname": {
                         "type": "string"
-                    }
-                },
-                "type": "object"
-            },
-            "objects": {
-                "items": {
-                    "properties": {
-                        "bounding_box": {
-                            "properties": {
-                                "maximum": {
-                                    "properties": {
-                                        "c": {
-                                            "type": "integer"
-                                        },
-                                        "r": {
-                                            "type": "integer"
-                                        }
-                                    },
-                                    "type": "object"
-                                },
-                                "minimum": {
-                                    "properties": {
-                                        "c": {
-                                            "type": "integer"
-                                        },
-                                        "r": {
-                                            "type": "integer"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
+                    },
+                    "shape": {
+                        "type": "object",
+                        "properties": {
+                            "r": {
+                                "type": "integer"
                             },
-                            "type": "object"
-                        },
-                        "class": {
-                            "type": "string"
-                        },
-                        "mask": {
-                            "properties": {
-                                "pathname": {
-                                    "type": [
-                                        "null",
-                                        "string"
-                                    ]
-                                }
+                            "c": {
+                                "type": "integer"
                             },
-                            "type": "object"
+                            "channels": {
+                                "type": "integer"
+                            }
                         }
                     },
-                    "type": "object"
-                },
-                "type": "array"
+                    "objects": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "bounding_box": {
+                                    "type": "object",
+                                    "properties": {
+                                        "minimum": {
+                                            "type": "object",
+                                            "properties": {
+                                                "r": {
+                                                    "type": "integer"
+                                                },
+                                                "c": {
+                                                    "type": "integer"
+                                                }
+                                            }
+                                        },
+                                        "maximum": {
+                                            "type": "object",
+                                            "properties": {
+                                                "r": {
+                                                    "type": "integer"
+                                                },
+                                                "c": {
+                                                    "type": "integer"
+                                                }
+                                            }
+                                        }
+                                    }
+                                },
+                                "category": {
+                                    "type": "string"
+                                },
+                                "mask": {
+                                    "type": "null"
+                                }
+                            }
+                        }
+                    }
+                }
             }
-        },
-        "type": "object"
-    },
-    "type": "array"
+        }
+    }
 }
