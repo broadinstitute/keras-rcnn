@@ -1,47 +1,9 @@
 # -*- coding: utf-8 -*-
 
 import keras
-import keras_resnet.models
 
 import keras_rcnn.layers
-
-
-def ResNet50():
-    def f(x):
-        y = keras_resnet.models.ResNet50(
-            include_top=False,
-            inputs=x
-        )
-
-        _, _, _, convolution_5 = y.outputs
-
-        return convolution_5
-
-    return f
-
-
-def VGG16():
-    def f(x):
-        y = keras.applications.VGG16(
-            include_top=False,
-            input_tensor=x
-        )
-
-        return y.layers[-3].output
-
-    return f
-
-
-def VGG19():
-    def f(x):
-        y = keras.applications.VGG19(
-            include_top=False,
-            input_tensor=x
-        )
-
-        return y.layers[-3].output
-
-    return f
+import keras_rcnn.models.backbone
 
 
 class RCNN(keras.models.Model):
@@ -90,7 +52,7 @@ class RCNN(keras.models.Model):
         if backbone:
             output_features = backbone()(target_image)
         else:
-            output_features = VGG16()(target_image)
+            output_features = keras_rcnn.models.backbone.VGG16()(target_image)
 
         convolution_3x3 = keras.layers.Conv2D(64, **options)(output_features)
 
