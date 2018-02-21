@@ -1,47 +1,45 @@
 # -*- coding: utf-8 -*-
 
 import keras
+import keras_resnet.models
 
 import keras_rcnn.layers
 
 
-def VGG19():
-    options = {
-        "activation": "relu",
-        "kernel_size": (3, 3),
-        "padding": "same"
-    }
-
+def ResNet50():
     def f(x):
-        y = keras.layers.Conv2D(64, name='block1_conv1', **options)(x)
-        y = keras.layers.Conv2D(64, name='block1_conv2', **options)(y)
+        y = keras_resnet.models.ResNet50(
+            include_top=False,
+            inputs=x
+        )
 
-        y = keras.layers.MaxPooling2D(strides=(2, 2), name='block1_pool')(y)
+        _, _, _, convolution_5 = y.outputs
 
-        y = keras.layers.Conv2D(128, name='block2_conv1', **options)(y)
-        y = keras.layers.Conv2D(128, name='block2_conv2', **options)(y)
+        return convolution_5
 
-        y = keras.layers.MaxPooling2D(strides=(2, 2), name='block2_pool')(y)
+    return f
 
-        y = keras.layers.Conv2D(256, name='block3_conv1', **options)(y)
-        y = keras.layers.Conv2D(256, name='block3_conv2', **options)(y)
-        y = keras.layers.Conv2D(256, name='block3_conv3', **options)(y)
-        y = keras.layers.Conv2D(256, name='block3_conv4', **options)(y)
 
-        y = keras.layers.MaxPooling2D(strides=(2, 2), name='block3_pool')(y)
+def VGG16():
+    def f(x):
+        y = keras.applications.VGG16(
+            include_top=False,
+            input_tensor=x
+        )
 
-        y = keras.layers.Conv2D(512, name='block4_conv1', **options)(y)
-        y = keras.layers.Conv2D(512, name='block4_conv2', **options)(y)
-        y = keras.layers.Conv2D(512, name='block4_conv3', **options)(y)
-        y = keras.layers.Conv2D(512, name='block4_conv4', **options)(y)
+        return y.layers[-3].output
 
-        y = keras.layers.MaxPooling2D(strides=(2, 2), name='block4_pool')(y)
+    return f
 
-        y = keras.layers.Conv2D(512, name='block5_conv1', **options)(y)
-        y = keras.layers.Conv2D(512, name='block5_conv2', **options)(y)
-        y = keras.layers.Conv2D(512, name='block5_conv3', **options)(y)
 
-        return y
+def VGG19():
+    def f(x):
+        y = keras.applications.VGG19(
+            include_top=False,
+            input_tensor=x
+        )
+
+        return y.layers[-3].output
 
     return f
 
@@ -92,7 +90,7 @@ class RCNN(keras.models.Model):
         if backbone:
             output_features = backbone()(target_image)
         else:
-            output_features = VGG19()(target_image)
+            output_features = VGG16()(target_image)
 
         convolution_3x3 = keras.layers.Conv2D(64, **options)(output_features)
 
