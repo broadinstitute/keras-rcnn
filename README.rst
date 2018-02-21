@@ -17,69 +17,78 @@ Let’s read:
 
 .. code:: python
 
-    training, validation, test = keras_rcnn.datasets.malaria_phenotypes.load_data()
+    training_dictionary, test_dictionary = keras_rcnn.datasets.shape.load_data()
 
-    classes = {
-        "rbc": 1, "leu": 2, "ring": 3, "tro": 4, "sch": 5, "gam": 6
-    }
+    categories = {"circle": 1, "rectangle": 2, "triangle": 3}
 
     generator = keras_rcnn.preprocessing.ObjectDetectionGenerator()
 
-    generator = generator.flow(training, classes)
+    generator = generator.flow_from_dictionary(
+        dictionary=training_dictionary,
+        categories=categories,
+        target_size=(224, 224)
+    )
 
     validation_data = keras_rcnn.preprocessing.ObjectDetectionGenerator()
 
-    validation_data = validation_data.flow(validation, classes)
+    validation_data = validation_data.flow_from_dictionary(
+        dictionary=test_dictionary,
+        categories=categories,
+        target_size=(224, 224)
+    )
 
 and inspect our training data:
 
 .. code:: python
 
-    (target_bounding_boxes, target_image, target_scores, _), _ = generator.next()
+    x, _ = generator.next()
+    
+    target_bounding_boxes, target_categories, target_images, target_masks, target_metadata = x
 
     target_bounding_boxes = numpy.squeeze(target_bounding_boxes)
 
-    target_image = numpy.squeeze(target_image)
+    target_images = numpy.squeeze(target_images)
 
-    target_scores = numpy.argmax(target_scores, -1)
+    target_categories = numpy.argmax(target_categories, -1)
 
-    target_scores = numpy.squeeze(target_scores)
+    target_categories = numpy.squeeze(target_categories)
 
     _, axis = matplotlib.pyplot.subplots(1, figsize=(12, 8))
 
-    axis.imshow(target_image)
+    axis.imshow(target_images)
 
-    for target_index, target_score in enumerate(target_scores):
-        if target_score > 0:
-            xy = [
-                target_bounding_boxes[target_index][0],
-                target_bounding_boxes[target_index][1]
-            ]
+    for target_index, target_category in enumerate(target_categories):
+        xy = [
+            target_bounding_boxes[target_index][1],
+            target_bounding_boxes[target_index][0]
+        ]
 
-            w = target_bounding_boxes[target_index][2] - target_bounding_boxes[target_index][0]
-            h = target_bounding_boxes[target_index][3] - target_bounding_boxes[target_index][1]
+        w = target_bounding_boxes[target_index][3] - target_bounding_boxes[target_index][1]
+        h = target_bounding_boxes[target_index][2] - target_bounding_boxes[target_index][0]
 
-            rectangle = matplotlib.patches.Rectangle(xy, w, h, edgecolor="r", facecolor="none")
+        rectangle = matplotlib.patches.Rectangle(xy, w, h, edgecolor="r", facecolor="none")
 
-            axis.add_patch(rectangle)
+        axis.add_patch(rectangle)
 
     matplotlib.pyplot.show()
 
-.. image:: https://storage.googleapis.com/keras-rcnn-website/example.png
 
 Let’s create an RCNN instance:
 
 .. code:: python
 
-    image = keras.layers.Input((None, None, 3))
+    target_image = keras.layers.Input(
+        shape=(224, 224, 3),
+        name="target_image"
+    )
 
-    model = keras_rcnn.models.RCNN(image, classes=len(classes) + 1)
+    y = keras.applications.VGG19(include_top=False, input_tensor=target_image).layers[:-2]
 
 and pass our preferred optimizer to the `compile` method:
 
 .. code:: python
 
-    optimizer = keras.optimizers.Adam(0.0001)
+    optimizer = keras.optimizers.Adam(0.000001)
 
     model.compile(optimizer)
 
@@ -87,7 +96,11 @@ Finally, let’s use the `fit_generator` method to train our network:
 
 .. code:: python
 
-    model.fit_generator(generator)
+    model.fit_generator(    
+        epochs=10,
+        generator=generator,
+        validation_data=validation_data
+    )
 
 Slack
 -----
