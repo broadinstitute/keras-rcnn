@@ -77,18 +77,13 @@ Let’s create an RCNN instance:
 
 .. code:: python
 
-    target_image = keras.layers.Input(
-        shape=(224, 224, 3),
-        name="target_image"
-    )
-
-    y = keras.applications.VGG19(include_top=False, input_tensor=target_image).layers[:-2]
+    model = keras_rcnn.models.RCNN((224, 224, 3), ["circle", "rectangle", "triangle"])
 
 and pass our preferred optimizer to the `compile` method:
 
 .. code:: python
 
-    optimizer = keras.optimizers.Adam(0.000001)
+    optimizer = keras.optimizers.Adam()
 
     model.compile(optimizer)
 
