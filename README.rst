@@ -97,6 +97,20 @@ Finally, let’s use the `fit_generator` method to train our network:
         validation_data=validation_data
     )
 
+Backbone
+--------
+
+A backbone is the convolutional neural network (CNN) that’s responsible for 
+extracting the features that’re used by the RCNN. Keras-RCNN provides a number 
+of popular backbones like ResNet and VGG. You can use a backbone by passing a 
+backbone function to the RCNN constructor:
+
+.. code:: python
+
+    backbone = keras_rcnn.models.backbone.VGG16
+
+    model = keras_rcnn.models.RCNN((224, 224, 3), ["circle", "rectangle", "triangle"], backbone)
+
 Slack
 -----
 
