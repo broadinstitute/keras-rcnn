@@ -110,7 +110,7 @@ class RCNN(keras.models.Model):
 
         output_features = keras.layers.TimeDistributed(
             keras.layers.Dense(
-                units=256,
+                units=512,
                 activation="relu"
             )
         )(output_features)
