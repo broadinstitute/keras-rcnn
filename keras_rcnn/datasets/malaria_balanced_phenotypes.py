@@ -15,4 +15,4 @@ def load_data():
     non rbc cells were rotated to better balance the classes.
     """
 
-    return keras_rcnn.datasets.load_data("malaria_balanced")
+    return keras_rcnn.datasets.load_data("malaria_balanced_phenotypes")
