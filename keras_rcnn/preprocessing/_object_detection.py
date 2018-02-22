@@ -157,7 +157,7 @@ class DictionaryIterator(keras.preprocessing.image.Iterator):
 
             target_metadata[batch_index] = [*self.target_size, 1.0]
 
-            bounding_boxes = self.dictionary[image_index]["image"]["objects"]
+            bounding_boxes = self.dictionary[image_index]["objects"]
 
             n_objects = len(bounding_boxes)
 
@@ -224,7 +224,7 @@ class DictionaryIterator(keras.preprocessing.image.Iterator):
                     bounding_box_index
                 ] = target_bounding_box
 
-                if bounding_box["mask"]:
+                if "mask" in bounding_box:
                     target_mask = skimage.io.imread(bounding_box["mask"]["pathname"])
 
                     target_mask = target_mask[minimum_r:maximum_r, minimum_c:maximum_c]

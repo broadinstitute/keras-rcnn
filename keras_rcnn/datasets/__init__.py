@@ -14,6 +14,7 @@ def load_data(name):
         origin=origin,
         untar=True
     )
+
     image_path = os.path.join(pathname, "images")
     
     filename = os.path.join(pathname, "training.json")
@@ -29,6 +30,7 @@ def load_data(name):
     test = get_file_data(filename, image_path)
 
     return training, validation, test
+
 
 def get_file_data(filename, image_path):
     if os.path.exists(filename):

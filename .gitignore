@@ -1,5 +1,6 @@
 *$py.class
 *,cover
+*.DS_Store
 *.egg
 *.egg-info/
 *.log
@@ -18,6 +19,7 @@
 .idea/
 .installed.cfg
 .ipynb_checkpoints
+.pytest_cache/
 .Python
 .python-version
 .ropeproject
