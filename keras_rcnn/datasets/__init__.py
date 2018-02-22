@@ -2,6 +2,7 @@
 
 import json
 import os
+import keras.utils.data_utils
 
 def load_data(name):
     origin = "http://keras-rcnn.storage.googleapis.com/{}.tar.gz".format(name)
