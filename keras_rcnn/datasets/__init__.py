@@ -1,10 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import json
-import os.path
-
-import keras.utils.data_utils
-
+import os
 
 def load_data(name):
     origin = "http://keras-rcnn.storage.googleapis.com/{}.tar.gz".format(name)
@@ -14,23 +11,16 @@ def load_data(name):
         origin=origin,
         untar=True
     )
-
-    image_path = os.path.join(pathname, "images")
     
     filename = os.path.join(pathname, "training.json")
 
-    training = get_file_data(filename, image_path)
-
-    filename = os.path.join(pathname, "validation.json")
-
-    validation = get_file_data(filename, image_path)
+    training = get_file_data(filename, pathname)
 
     filename = os.path.join(pathname, "test.json")
 
-    test = get_file_data(filename, image_path)
+    test = get_file_data(filename, pathname)
 
-    return training, validation, test
-
+    return training, test
 
 def get_file_data(filename, image_path):
     if os.path.exists(filename):
@@ -40,6 +30,7 @@ def get_file_data(filename, image_path):
         partition = []
         
     for dictionary in partition:
-        dictionary["filename"] = os.path.join(image_path, dictionary["filename"])
+
+        dictionary["image"]["pathname"] = image_path + dictionary["image"]["pathname"]
     
     return partition
