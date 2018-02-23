@@ -35,7 +35,7 @@ def __main__():
         for _ in range(256):
             identifier = uuid.uuid4()
 
-            image, objects = skimage.draw.random_shapes((r, c), 32, 8, 16)
+            image, objects = skimage.draw.random_shapes((r, c), 32, 2, 32)
 
             filename = "{}.png".format(identifier)
 
@@ -64,12 +64,12 @@ def __main__():
                     object_dictionary = {
                         "bounding_box": {
                             "minimum": {
-                                "r": minimum_r,
-                                "c": minimum_c
+                                "r": minimum_r - 1,
+                                "c": minimum_c - 1
                             },
                             "maximum": {
-                                "r": maximum_r,
-                                "c": maximum_c
+                                "r": maximum_r - 1,
+                                "c": maximum_c - 1
                             }
                         },
                         "category": category
