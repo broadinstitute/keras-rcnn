@@ -13,7 +13,7 @@ neural networks.
 Getting Started
 ---------------
 
-Let’s read:
+Let’s read and inspect some data:
 
 .. code:: python
 
@@ -37,13 +37,9 @@ Let’s read:
         target_size=(224, 224)
     )
 
-and inspect our training data:
-
-.. code:: python
-
-    x, _ = generator.next()
+    target, _ = generator.next()
     
-    target_bounding_boxes, target_categories, target_images, target_masks, target_metadata = x
+    target_bounding_boxes, target_categories, target_images, target_masks, target_metadata = target
 
     target_bounding_boxes = numpy.squeeze(target_bounding_boxes)
 
@@ -53,24 +49,7 @@ and inspect our training data:
 
     target_categories = numpy.squeeze(target_categories)
 
-    _, axis = matplotlib.pyplot.subplots(1, figsize=(12, 8))
-
-    axis.imshow(target_images)
-
-    for target_index, target_category in enumerate(target_categories):
-        xy = [
-            target_bounding_boxes[target_index][1],
-            target_bounding_boxes[target_index][0]
-        ]
-
-        w = target_bounding_boxes[target_index][3] - target_bounding_boxes[target_index][1]
-        h = target_bounding_boxes[target_index][2] - target_bounding_boxes[target_index][0]
-
-        rectangle = matplotlib.patches.Rectangle(xy, w, h, edgecolor="r", facecolor="none")
-
-        axis.add_patch(rectangle)
-
-    matplotlib.pyplot.show()
+    keras_rcnn.util.show_bounding_boxes(target_image, target_bounding_boxes, target_categories)
 
 
 Let’s create an RCNN instance:
