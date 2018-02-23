@@ -10,7 +10,7 @@ def _get_cmap(n, name="hsv"):
 
 # TODO: commit upstream to `scikit-image`.
 def show_bounding_boxes(image, bounding_boxes, categories=None):
-    _, axis = matplotlib.pyplot.subplots(1)
+    axis = matplotlib.pyplot.gca()
 
     n = bounding_boxes.shape[0]
 
