@@ -7,8 +7,21 @@ import keras_rcnn.models.backbone
 
 
 class RCNN(keras.models.Model):
-    def __init__(self, input_shape, categories, backbone=None):
+    def __init__(self, input_shape, categories, backbone=None, **kwargs):
         n_categories = len(categories) + 1
+
+        aspect_ratios = [0.5, 1.0, 2.0]
+
+        scales = [4, 8, 16]
+
+        if "anchor_target" in kwargs:
+            if "aspect_ratios" in kwargs["anchor_target"]:
+                aspect_ratios = kwargs["anchor_target"]["aspect_ratios"]
+
+            if "scales" in kwargs["anchor_target"]:
+                scales = kwargs["anchor_target"]["scales"]
+
+        k = len(aspect_ratios) * len(scales)
 
         target_bounding_boxes = keras.layers.Input(
             shape=(None, 4),
@@ -57,7 +70,7 @@ class RCNN(keras.models.Model):
         convolution_3x3 = keras.layers.Conv2D(64, **options)(output_features)
 
         output_deltas = keras.layers.Conv2D(
-            filters=9 * 4,
+            filters=k * 4,
             kernel_size=(1, 1),
             activation="linear",
             kernel_initializer="zero",
@@ -65,14 +78,17 @@ class RCNN(keras.models.Model):
         )(convolution_3x3)
 
         output_scores = keras.layers.Conv2D(
-            filters=9 * 1,
+            filters=k * 1,
             kernel_size=(1, 1),
             activation="sigmoid",
             kernel_initializer="uniform",
             name="scores"
         )(convolution_3x3)
 
-        target_anchors, target_proposal_bounding_boxes, target_proposal_categories = keras_rcnn.layers.AnchorTarget()([
+        target_anchors, target_proposal_bounding_boxes, target_proposal_categories = AnchorTarget(
+            aspect_ratios=aspect_ratios,
+            scales=scales
+        )([
             target_bounding_boxes,
             target_metadata,
             output_scores

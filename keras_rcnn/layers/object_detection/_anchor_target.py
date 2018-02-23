@@ -35,11 +35,24 @@ class AnchorTarget(keras.layers.Layer):
 
         (samples, ), (samples, 4)
     """
+    def __init__(
+            self,
+            allowed_border=0,
+            aspect_ratios=None,
+            base_size=16,
+            clobber_positives=False,
+            negative_overlap=0.3,
+            positive_overlap=0.7,
+            scales=None,
+            stride=16,
+            **kwargs
+    ):
+        if aspect_ratios is None:
+            aspect_ratios = [0.5, 1, 2]  # [1:2, 1:1, 2:1]
 
-    def __init__(self, allowed_border=0, clobber_positives=False,
-                 negative_overlap=0.3, positive_overlap=0.7, stride=16,
-                 base_size=16, ratios=None, scales=None,
-                 **kwargs):
+        if scales is None:
+            scales = [4, 8, 16]  # [128^{2}, 256^{2}, 512^{2}]
+
         self.allowed_border = allowed_border
 
         self.clobber_positives = clobber_positives
@@ -50,8 +63,10 @@ class AnchorTarget(keras.layers.Layer):
         self.stride = stride
 
         self.base_size = base_size
-        self.ratios = ratios
-        self.scales = scales
+
+        self.aspect_ratios = keras.backend.variable(aspect_ratios)
+
+        self.scales = keras.backend.variable(scales)
 
         self._shifted_anchors = None
 
@@ -63,8 +78,12 @@ class AnchorTarget(keras.layers.Layer):
             return self._shifted_anchors
         else:
             self._shifted_anchors = keras_rcnn.backend.shift(
-                (self.height, self.width), self.stride, self.base_size,
-                self.ratios, self.scales)
+                (self.height, self.width),
+                self.stride,
+                self.base_size,
+                self.aspect_ratios,
+                self.scales
+            )
 
             return self._shifted_anchors
 
