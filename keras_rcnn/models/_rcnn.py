@@ -85,7 +85,7 @@ class RCNN(keras.models.Model):
             name="scores"
         )(convolution_3x3)
 
-        target_anchors, target_proposal_bounding_boxes, target_proposal_categories = AnchorTarget(
+        target_anchors, target_proposal_bounding_boxes, target_proposal_categories = keras_rcnn.layers.AnchorTarget(
             aspect_ratios=aspect_ratios,
             scales=scales
         )([
