@@ -5,12 +5,8 @@
 
 .. module:: keras_rcnn
 
-Layers
-======
+.. toctree::
+   :maxdepth: 2
+   :caption: Contents:
 
-Pooling
--------
-
-.. autoclass:: keras_rcnn.layers.pooling.ROI
-
-.. autoclass:: keras_rcnn.layers.pooling.SpatialPyramid
+   ../../README

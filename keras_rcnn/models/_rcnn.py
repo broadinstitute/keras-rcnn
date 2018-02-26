@@ -7,19 +7,95 @@ import keras_rcnn.models.backbone
 
 
 class RCNN(keras.models.Model):
-    def __init__(self, input_shape, categories, backbone=None, **kwargs):
+    def __init__(
+            self,
+            input_shape,
+            categories,
+            aspect_ratios=None,
+            backbone=None,
+            base_size=16,
+            dense_units=512,
+            mask_shape=(28, 28),
+            scales=None
+    ):
+        """
+        A Region-based Convolutional Neural Network (RCNN)
+
+        Parameters
+        ----------
+
+        input_shape : A shape tuple (integer) without the batch dimension.
+
+            For example:
+
+                `input_shape=(224, 224, 3)`
+
+            specifies that the input are batches of $224 × 224$ RGB images.
+
+            Likewise:
+
+                `input_shape=(224, 224)`
+
+            specifies that the input are batches of $224 × 224$ grayscale
+            images.
+
+        categories : An array-like with shape:
+
+                $$(categories,)$$.
+
+            For example:
+
+                `categories=["circle", "square", "triangle"]`
+
+            specifies that the detected objects belong to either the
+            “circle,” “square,” or “triangle” category.
+
+        aspect_ratios : An array-like with shape:
+
+                $$(aspect_ratios,)$$
+
+            used to generate anchors.
+
+            For example:
+
+                `aspect_ratios=[0.5, 1., 2.]`
+
+            corresponds to 1:2, 1:1, and 2:1 respectively.
+
+        backbone :
+
+        base_size : Integer that specifies an anchor’s base area:
+
+                $$base_area = base_size^{2}$$.
+
+        dense_units : Integer that specifies the dimensionality of the
+            fully-connected layer.
+
+            The fully-connected layer is the layer that precedes the
+            fully-connected layers for the classification, regression and
+            segmentation target functions.
+
+            Increasing the number of dense units will increase the
+            expressiveness of the network and consequently the ability to
+            correctly learn the target functions, but it’ll substantially
+            increase the number of learnable parameters and memory needed by
+            the model.
+
+        mask_shape : A shape tuple (integer).
+
+        scales : An array-like with shape:
+
+                $$(scales,)$$
+
+            used to generate anchors.
+        """
+        if aspect_ratios is None:
+            aspect_ratios = [0.5, 1.0, 2.0]
+
+        if scales is None:
+            scales = [4, 8, 16]
+
         n_categories = len(categories) + 1
-
-        aspect_ratios = [0.5, 1.0, 2.0]
-
-        scales = [4, 8, 16]
-
-        if "anchor_target" in kwargs:
-            if "aspect_ratios" in kwargs["anchor_target"]:
-                aspect_ratios = kwargs["anchor_target"]["aspect_ratios"]
-
-            if "scales" in kwargs["anchor_target"]:
-                scales = kwargs["anchor_target"]["scales"]
 
         k = len(aspect_ratios) * len(scales)
 
@@ -39,7 +115,7 @@ class RCNN(keras.models.Model):
         )
 
         target_masks = keras.layers.Input(
-            shape=(None, 28, 28),
+            shape=(None,) + mask_shape,
             name="target_masks"
         )
 
@@ -67,7 +143,10 @@ class RCNN(keras.models.Model):
         else:
             output_features = keras_rcnn.models.backbone.VGG16()(target_image)
 
-        convolution_3x3 = keras.layers.Conv2D(64, **options)(output_features)
+        convolution_3x3 = keras.layers.Conv2D(
+            filters=64,
+            **options
+        )(output_features)
 
         output_deltas = keras.layers.Conv2D(
             filters=k * 4,
@@ -87,6 +166,7 @@ class RCNN(keras.models.Model):
 
         target_anchors, target_proposal_bounding_boxes, target_proposal_categories = keras_rcnn.layers.AnchorTarget(
             aspect_ratios=aspect_ratios,
+            base_size=base_size,
             scales=scales
         )([
             target_bounding_boxes,
@@ -126,7 +206,7 @@ class RCNN(keras.models.Model):
 
         output_features = keras.layers.TimeDistributed(
             keras.layers.Dense(
-                units=512,
+                units=dense_units,
                 activation="relu"
             )
         )(output_features)
