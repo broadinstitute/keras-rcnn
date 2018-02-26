@@ -11,12 +11,14 @@ class RCNN(keras.models.Model):
             self,
             input_shape,
             categories,
-            aspect_ratios=None,
+            anchor_aspect_ratios=None,
+            anchor_base_size=16,
+            anchor_scales=None,
             backbone=None,
-            base_size=16,
             dense_units=512,
             mask_shape=(28, 28),
-            scales=None
+            maximum_proposals=300,
+            minimum_size=16
     ):
         """
         A Region-based Convolutional Neural Network (RCNN)
@@ -50,7 +52,7 @@ class RCNN(keras.models.Model):
             specifies that the detected objects belong to either the
             “circle,” “square,” or “triangle” category.
 
-        aspect_ratios : An array-like with shape:
+        anchor_aspect_ratios : An array-like with shape:
 
                 $$(aspect_ratios,)$$
 
@@ -62,14 +64,22 @@ class RCNN(keras.models.Model):
 
             corresponds to 1:2, 1:1, and 2:1 respectively.
 
-        backbone :
-
-        base_size : Integer that specifies an anchor’s base area:
+        anchor_base_size : Integer that specifies an anchor’s base area:
 
                 $$base_area = base_size^{2}$$.
 
-        dense_units : Integer that specifies the dimensionality of the
-            fully-connected layer.
+        anchor_scales : An array-like with shape:
+
+                $$(scales,)$$
+
+            used to generate anchors. A scale corresponds to:
+
+                $$area_{scale}=\sqrt{\frac{area_{anchor}}{area_{base}}}$$.
+
+        backbone :
+
+        dense_units : A positive integer that specifies the dimensionality of
+            the fully-connected layer.
 
             The fully-connected layer is the layer that precedes the
             fully-connected layers for the classification, regression and
@@ -83,21 +93,35 @@ class RCNN(keras.models.Model):
 
         mask_shape : A shape tuple (integer).
 
-        scales : An array-like with shape:
+        maximum_proposals : A positive integer that specifies the maximum
+            number of object proposals returned from the model.
 
-                $$(scales,)$$
+            The model always return an array-like with shape:
 
-            used to generate anchors.
+                $$(maximum_proposals, 4)$$
+
+            regardless of the number of object proposals returned after
+            non-maximum suppression is performed. If the number of object
+            proposals returned from non-maximum suppression is less than the
+            number of objects specified by the `maximum_proposals` parameter,
+            the model will return bounding boxes with the value:
+
+                `[0., 0., 0., 0.]`
+
+            and scores with the value `[0.]`.
+
+        minimum_size : A positive integer that specifies the maximum width
+            or height for each object proposal.
         """
-        if aspect_ratios is None:
-            aspect_ratios = [0.5, 1.0, 2.0]
+        if anchor_aspect_ratios is None:
+            anchor_aspect_ratios = [0.5, 1.0, 2.0]
 
-        if scales is None:
-            scales = [4, 8, 16]
+        if anchor_scales is None:
+            anchor_scales = [4, 8, 16]
 
         n_categories = len(categories) + 1
 
-        k = len(aspect_ratios) * len(scales)
+        k = len(anchor_aspect_ratios) * len(anchor_scales)
 
         target_bounding_boxes = keras.layers.Input(
             shape=(None, 4),
@@ -165,9 +189,9 @@ class RCNN(keras.models.Model):
         )(convolution_3x3)
 
         target_anchors, target_proposal_bounding_boxes, target_proposal_categories = keras_rcnn.layers.AnchorTarget(
-            aspect_ratios=aspect_ratios,
-            base_size=base_size,
-            scales=scales
+            aspect_ratios=anchor_aspect_ratios,
+            base_size=anchor_base_size,
+            scales=anchor_scales
         )([
             target_bounding_boxes,
             target_metadata,
@@ -234,7 +258,10 @@ class RCNN(keras.models.Model):
             output_scores
         ])
 
-        output_bounding_boxes, output_categories = keras_rcnn.layers.ObjectDetection()([
+        output_bounding_boxes, output_categories = keras_rcnn.layers.ObjectDetection(
+            maximum_proposals=maximum_proposals,
+            minimum_size=minimum_size
+        )([
             output_proposal_bounding_boxes,
             output_deltas,
             output_scores,
