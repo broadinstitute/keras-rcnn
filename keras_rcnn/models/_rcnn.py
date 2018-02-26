@@ -14,6 +14,7 @@ class RCNN(keras.models.Model):
             anchor_aspect_ratios=None,
             anchor_base_size=16,
             anchor_scales=None,
+            anchor_stride=16,
             backbone=None,
             dense_units=512,
             mask_shape=(28, 28),
@@ -75,6 +76,8 @@ class RCNN(keras.models.Model):
             used to generate anchors. A scale corresponds to:
 
                 $$area_{scale}=\sqrt{\frac{area_{anchor}}{area_{base}}}$$.
+
+        anchor_stride : A positive integer
 
         backbone :
 
@@ -191,7 +194,8 @@ class RCNN(keras.models.Model):
         target_anchors, target_proposal_bounding_boxes, target_proposal_categories = keras_rcnn.layers.AnchorTarget(
             aspect_ratios=anchor_aspect_ratios,
             base_size=anchor_base_size,
-            scales=anchor_scales
+            scales=anchor_scales,
+            stride=anchor_stride
         )([
             target_bounding_boxes,
             target_metadata,
