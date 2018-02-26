@@ -251,11 +251,18 @@ class DictionaryIterator(keras.preprocessing.image.Iterator):
                     bounding_box_index
                 ] = target_category
 
+        n = target_bounding_boxes.shape[1]
+
+        if self.shuffle:
+            indicies = numpy.random.permutation(n)
+        else:
+            indicies = numpy.arange(0, n)
+
         x = [
-            target_bounding_boxes,
-            target_categories,
+            target_bounding_boxes[:, indicies],
+            target_categories[:, indicies],
             target_images,
-            target_masks,
+            target_masks[:, indicies],
             target_metadata
         ]
 
