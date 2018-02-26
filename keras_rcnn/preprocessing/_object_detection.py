@@ -225,11 +225,20 @@ class DictionaryIterator(keras.preprocessing.image.Iterator):
                 ] = target_bounding_box
 
                 if "mask" in bounding_box:
-                    target_mask = skimage.io.imread(bounding_box["mask"]["pathname"])
+                    target_mask = skimage.io.imread(
+                        bounding_box["mask"]["pathname"]
+                    )
 
-                    target_mask = target_mask[minimum_r:maximum_r, minimum_c:maximum_c]
+                    target_mask = target_mask[
+                          minimum_r:maximum_r,
+                          minimum_c:maximum_c
+                    ]
 
-                    target_mask = skimage.transform.resize(target_mask, self.mask_size, order=0)
+                    target_mask = skimage.transform.resize(
+                        target_mask,
+                        self.mask_size,
+                        order=0
+                    )
 
                     if horizontal_flip:
                         target_mask = numpy.fliplr(target_mask)
@@ -242,7 +251,7 @@ class DictionaryIterator(keras.preprocessing.image.Iterator):
                         bounding_box_index
                     ] = target_mask
 
-                target_category = numpy.zeros((self.n_categories))
+                target_category = numpy.zeros(self.n_categories)
 
                 target_category[self.categories[bounding_box["category"]]] = 1
 
