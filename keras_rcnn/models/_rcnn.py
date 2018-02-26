@@ -205,7 +205,10 @@ class RCNN(keras.models.Model):
             output_scores
         ])
 
-        output_proposal_bounding_boxes = keras_rcnn.layers.ObjectProposal()([
+        output_proposal_bounding_boxes = keras_rcnn.layers.ObjectProposal(
+            maximum_proposals=maximum_proposals,
+            minimum_size=minimum_size
+        )([
             target_anchors,
             target_metadata,
             output_deltas,
@@ -258,10 +261,7 @@ class RCNN(keras.models.Model):
             output_scores
         ])
 
-        output_bounding_boxes, output_categories = keras_rcnn.layers.ObjectDetection(
-            maximum_proposals=maximum_proposals,
-            minimum_size=minimum_size
-        )([
+        output_bounding_boxes, output_categories = keras_rcnn.layers.ObjectDetection()([
             output_proposal_bounding_boxes,
             output_deltas,
             output_scores,
