@@ -23,6 +23,8 @@ def anchor(base_size=16, ratios=None, scales=None):
 
     anchors = _scale_enum(ratio_anchors, scales)
 
+    anchors = keras.backend.round(anchors)
+
     return anchors
 
 
@@ -121,9 +123,9 @@ def _ratio_enum(anchor, ratios):
     """
     w, h, x_ctr, y_ctr = _whctrs(anchor)
     size = w * h
-    size_ratios = size / ratios
-    ws = keras.backend.round(keras.backend.sqrt(size_ratios))
-    hs = keras.backend.round(ws * ratios)
+    size_ratios = size * ratios
+    ws = keras.backend.sqrt(size_ratios)
+    hs = ws / ratios
     anchors = _mkanchors(ws, hs, x_ctr, y_ctr)
     return anchors
 
