@@ -15,13 +15,15 @@ def anchor(base_size=16, ratios=None, scales=None):
     if scales is None:
         scales = keras.backend.cast([4, 8, 16], keras.backend.floatx())
 
-    base_anchor = keras.backend.cast([0, 0, base_size, base_size], keras.backend.floatx())
+    base_anchor = keras.backend.cast([-base_size / 2, -base_size / 2, base_size / 2, base_size / 2], keras.backend.floatx())
 
     base_anchor = keras.backend.expand_dims(base_anchor, 0)
 
     ratio_anchors = _ratio_enum(base_anchor, ratios)
 
     anchors = _scale_enum(ratio_anchors, scales)
+
+    anchors = keras.backend.round(anchors)
 
     return anchors
 
@@ -121,9 +123,9 @@ def _ratio_enum(anchor, ratios):
     """
     w, h, x_ctr, y_ctr = _whctrs(anchor)
     size = w * h
-    size_ratios = size / ratios
-    ws = keras.backend.round(keras.backend.sqrt(size_ratios))
-    hs = keras.backend.round(ws * ratios)
+    size_ratios = size * ratios
+    ws = keras.backend.sqrt(size_ratios)
+    hs = ws / ratios
     anchors = _mkanchors(ws, hs, x_ctr, y_ctr)
     return anchors
 
@@ -155,8 +157,8 @@ def shift(shape, stride, base_size=16, ratios=None, scales=None):
     """
     Produce shifted anchors based on shape of the map and stride size
     """
-    shift_x = keras.backend.arange(0, shape[1]) * stride
-    shift_y = keras.backend.arange(0, shape[0]) * stride
+    shift_x = keras.backend.arange(0, shape[0] * stride, stride)
+    shift_y = keras.backend.arange(0, shape[1] * stride, stride)
 
     shift_x, shift_y = keras_rcnn.backend.meshgrid(shift_x, shift_y)
     shift_x = keras.backend.reshape(shift_x, [-1])
@@ -171,7 +173,7 @@ def shift(shape, stride, base_size=16, ratios=None, scales=None):
 
     shifts = keras.backend.transpose(shifts)
 
-    anchors = keras_rcnn.backend.anchor(base_size=base_size, ratios=ratios, scales=scales)
+    anchors = anchor(base_size=base_size, ratios=ratios, scales=scales)
 
     number_of_anchors = keras.backend.shape(anchors)[0]
 

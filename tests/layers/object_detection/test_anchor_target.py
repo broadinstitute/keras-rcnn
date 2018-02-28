@@ -11,40 +11,42 @@ import keras_rcnn.layers.object_detection._anchor_target as anchor_target
 
 def test_label():
     stride = 16
-    feat_h, feat_w = (14, 14)
-    img_info = keras.backend.variable([[224, 224, 3]])
+    feat_h, feat_w = (7, 7)
+    img_info = keras.backend.variable([[112, 112, 3]])
 
     gt_boxes = keras.backend.variable(100 * numpy.random.random((91, 4)))
     gt_boxes = tensorflow.convert_to_tensor(gt_boxes, dtype=tensorflow.float32)
 
-    all_bbox = keras_rcnn.backend.shift((feat_h, feat_w), stride)
+    all_anchors = keras_rcnn.backend.shift((feat_h, feat_w), stride)
 
-    inds_inside, all_inside_bbox = anchor_target.inside_image(
-        all_bbox, img_info[0])
+    inds_inside, all_inside_anchors = anchor_target.inside_image(
+        all_anchors, img_info[0], allowed_border=1)
 
-    argmax_overlaps_inds, bbox_labels = anchor_target.label(
-        gt_boxes, all_inside_bbox, inds_inside)
+    all_inside_anchors = keras_rcnn.backend.clip(all_inside_anchors, img_info[0][:2])
+
+    argmax_overlaps_inds, anchor_labels = anchor_target.label(
+        gt_boxes, all_inside_anchors, inds_inside)
 
     result1 = keras.backend.eval(argmax_overlaps_inds)
-    result2 = keras.backend.eval(bbox_labels)
+    result2 = keras.backend.eval(anchor_labels)
 
-    assert result1.shape == (376,)
+    assert result1.shape == (32,), keras.backend.eval(inds_inside).shape
 
-    assert result2.shape == (376,)
+    assert result2.shape == (32,)
 
     assert numpy.max(result2) <= 1
 
     assert numpy.min(result2) >= -1
 
-    argmax_overlaps_inds, bbox_labels = anchor_target.label(
-        gt_boxes, all_inside_bbox, inds_inside, clobber_positives=False)
+    argmax_overlaps_inds, anchor_labels = anchor_target.label(
+        gt_boxes, all_inside_anchors, inds_inside, clobber_positives=False)
 
     result1 = keras.backend.eval(argmax_overlaps_inds)
-    result2 = keras.backend.eval(bbox_labels)
+    result2 = keras.backend.eval(anchor_labels)
 
-    assert result1.shape == (376,)
+    assert result1.shape == (32,)
 
-    assert result2.shape == (376,)
+    assert result2.shape == (32,)
 
     assert numpy.max(result2) <= 1
 
@@ -52,14 +54,15 @@ def test_label():
 
     gt_boxes = keras.backend.variable(224 * numpy.random.random((55, 4)))
     gt_boxes = tensorflow.convert_to_tensor(gt_boxes, dtype=tensorflow.float32)
-    argmax_overlaps_inds, bbox_labels = anchor_target.label(
-        gt_boxes, all_inside_bbox, inds_inside, clobber_positives=False)
+    argmax_overlaps_inds, anchor_labels = anchor_target.label(
+        gt_boxes, all_inside_anchors, inds_inside, clobber_positives=False)
+
     result1 = keras.backend.eval(argmax_overlaps_inds)
-    result2 = keras.backend.eval(bbox_labels)
+    result2 = keras.backend.eval(anchor_labels)
 
-    assert result1.shape == (376,)
+    assert result1.shape == (32,)
 
-    assert result2.shape == (376,)
+    assert result2.shape == (32,)
 
     assert numpy.max(result2) <= 1
 
@@ -132,16 +135,17 @@ def test_balance():
 
 def test_overlapping():
     stride = 16
-    features = (14, 14)
-    img_info = keras.backend.variable([[224, 224, 3]])
+    features = (7, 7)
+    img_info = keras.backend.variable([[112, 112, 3]])
     gt_boxes = numpy.zeros((91, 4))
     gt_boxes = keras.backend.variable(gt_boxes)
-    img_info = img_info[0]
 
     all_anchors = keras_rcnn.backend.shift(features, stride)
 
     inds_inside, all_inside_anchors = anchor_target.inside_image(
-        all_anchors, img_info)
+        all_anchors, img_info[0], allowed_border=1)
+
+    all_inside_anchors = keras_rcnn.backend.clip(all_inside_anchors, img_info[0][:2])
 
     a, max_overlaps, gt_argmax_overlaps_inds = anchor_target.overlapping(
         all_inside_anchors, gt_boxes, inds_inside)
@@ -150,9 +154,9 @@ def test_overlapping():
     max_overlaps = keras.backend.eval(max_overlaps)
     gt_argmax_overlaps_inds = keras.backend.eval(gt_argmax_overlaps_inds)
 
-    assert a.shape == (376,)
+    assert a.shape == (32,)
 
-    assert max_overlaps.shape == (376,)
+    assert max_overlaps.shape == (32,)
 
     assert gt_argmax_overlaps_inds.shape == (91,)
 
@@ -169,7 +173,9 @@ def test_unmap():
     all_anchors = keras_rcnn.backend.shift(features, stride)
 
     inds_inside, all_inside_anchors = anchor_target.inside_image(
-        all_anchors, img_info[0])
+        all_anchors, img_info[0], allowed_border=1)
+
+    all_inside_anchors = keras_rcnn.backend.clip(all_inside_anchors, img_info[0][:2])
 
     argmax_overlaps_indices, labels = anchor_target.label(
         gt_boxes, all_inside_anchors, inds_inside)
@@ -191,22 +197,24 @@ def test_unmap():
 
 def test_inside_image():
     stride = 16
-    features = (14, 14)
+    features = (7, 7)
 
     all_anchors = keras_rcnn.backend.shift(features, stride)
 
-    img_info = (224, 224, 1)
+    img_info = numpy.array([[112, 112, 1]])
 
     inds_inside, all_inside_anchors = anchor_target.inside_image(
-        all_anchors, img_info)
+        all_anchors, img_info[0], allowed_border=1)
+
+    all_inside_anchors = keras_rcnn.backend.clip(all_inside_anchors, img_info[0][:2])
 
     inds_inside = keras.backend.eval(inds_inside)
 
-    assert inds_inside.shape == (376,)
+    assert inds_inside.shape == (32,), keras.backend.eval(all_inside_anchors)
 
     all_inside_anchors = keras.backend.eval(all_inside_anchors)
 
-    assert all_inside_anchors.shape == (376, 4)
+    assert all_inside_anchors.shape == (32, 4)
 
 
 def test_inside_and_outside_weights_1():

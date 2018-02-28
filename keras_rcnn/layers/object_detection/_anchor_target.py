@@ -108,7 +108,9 @@ class AnchorTarget(keras.layers.Layer):
 
         # only keep anchors inside the image
         indices_inside, anchors = inside_image(all_anchors, metadata,
-                                               self.allowed_border)
+                                               self.allowed_border, allowed_border=1)
+
+        anchors = keras_rcnn.backend.clip(anchors, metadata[:2])
 
         # 2. obtain indices of gt boxes with the greatest overlap, balanced
         # target_categories
@@ -393,8 +395,8 @@ def inside_image(boxes, im_info, allowed_border=0):
     indices = keras_rcnn.backend.where(
         (boxes[:, 0] >= -allowed_border) &
         (boxes[:, 1] >= -allowed_border) &
-        (boxes[:, 2] < allowed_border + im_info[1]) &  # width
-        (boxes[:, 3] < allowed_border + im_info[0])  # height
+        (boxes[:, 2] < allowed_border + im_info[0]) &  # width
+        (boxes[:, 3] < allowed_border + im_info[1])  # height
     )
 
     indices = keras.backend.cast(indices, "int32")
