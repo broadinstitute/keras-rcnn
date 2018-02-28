@@ -108,7 +108,9 @@ class AnchorTarget(keras.layers.Layer):
 
         # only keep anchors inside the image
         indices_inside, anchors = inside_image(all_anchors, metadata,
-                                               self.allowed_border)
+                                               self.allowed_border, allowed_border=1)
+
+        anchors = keras_rcnn.backend.clip(anchors, metadata[:2])
 
         # 2. obtain indices of gt boxes with the greatest overlap, balanced
         # target_categories
