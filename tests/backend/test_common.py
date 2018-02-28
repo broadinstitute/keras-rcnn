@@ -10,22 +10,23 @@ import keras_rcnn.layers.object_detection._object_proposal
 
 def test_anchor():
     x = numpy.array(
-        [[  0.,   0.,  16.,  16.],
-         [ -8.,  -8.,  24.,  24.],
-         [-16., -16.,  32.,  32.],
-         [ -3.,   2.,  19.,  14.],
-         [-15.,  -3.,  31.,  19.],
-         [-26.,  -9.,  42.,  25.],
-         [ -6.,   3.,  22.,  13.],
-         [-20.,  -1.,  36.,  17.],
-         [-34.,  -6.,  50.,  22.]]
+        [[  -8.,   -8.,  8.,  8.],
+         [ -16.,  -16.,  16.,  16.],
+         [-24., -24.,  24.,  24.],
+         [ -11.,   -6.,  11.,  6.],
+         [-23.,  -11.,  23.,  11.],
+         [-34.,  -17.,  34.,  17.],
+         [ -14.,   -5.,  14., 5.],
+         [-28.,  -9.,  28.,  9.],
+         [-42.,  -14.,  42.,  14.]]
     )
 
     y = keras_rcnn.backend.anchor(
         ratios=keras.backend.cast([1, 2, 3], keras.backend.floatx()),
         scales=keras.backend.cast([1, 2, 3], keras.backend.floatx()))
     y = keras.backend.eval(y)
-    numpy.testing.assert_array_almost_equal(x, y)
+
+    numpy.testing.assert_array_almost_equal(x, y, 0)
 
 
 def test_clip():
@@ -175,7 +176,7 @@ def test_whctrs():
 def test_shift():
     y = keras_rcnn.backend.shift((14, 14), 16)
 
-    assert keras.backend.int_shape(y) == (1764, 4)
+    assert keras.backend.eval(y).shape == (1764, 4), keras.backend.eval(y).shape
 
     assert y.dtype == keras.backend.floatx()
 
