@@ -90,6 +90,37 @@ backbone function to the RCNN constructor:
 
     model = keras_rcnn.models.RCNN((224, 224, 3), ["circle", "rectangle", "triangle"], backbone)
 
+External Data
+--------
+The data is made up of a list of dictionaries corresponding to images. 
+
+* For each image, add a dictionary with keys 'image', 'objects'
+    * 'image' is a dictionary, which contains keys 'checksum', 'pathname', and 'shape'
+        * 'checksum' is the md5 checksum of the image
+        * 'pathname' is the pathname of the image, put in full pathname
+        * 'shape' is a dictionary with keys 'r', 'c', and 'channels'
+            * 'c': number of columns
+            * 'r': number of rows
+            * 'channels': number of channels
+    * 'objects' is a list of dictionaries, where each dictionary has keys 'bounding_box', 'category'
+        * 'bounding_box' is a dictionary with keys 'minimum' and 'maximum'
+            * 'minimum': dictionary with keys 'r' and 'c'
+                * 'r': smallest bounding box row
+                * 'c': smallest bounding box column
+            * 'maximum': dictionary with keys 'r' and 'c'
+                * 'r': largest bounding box row
+                * 'c': largest bounding box column
+        * 'category' is a string denoting the class name
+
+Suppose this data is save in a file called training.json. To load data,
+
+.. code:: python
+    import json
+
+    with open('training.json') as f:
+        d = json.load(f)
+
+
 Slack
 -----
 
