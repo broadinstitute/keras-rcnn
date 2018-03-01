@@ -108,7 +108,7 @@ class AnchorTarget(keras.layers.Layer):
 
         # only keep anchors inside the image
         indices_inside, anchors = inside_image(all_anchors, metadata,
-                                               self.allowed_border, allowed_border=1)
+                                               self.allowed_border)
 
         anchors = keras_rcnn.backend.clip(anchors, metadata[:2])
 
