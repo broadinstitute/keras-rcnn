@@ -91,7 +91,8 @@ backbone function to the RCNN constructor:
     model = keras_rcnn.models.RCNN((224, 224, 3), ["circle", "rectangle", "triangle"], backbone)
 
 External Data
---------
+-------------
+
 The data is made up of a list of dictionaries corresponding to images. 
 
 * For each image, add a dictionary with keys 'image', 'objects'
@@ -115,6 +116,7 @@ The data is made up of a list of dictionaries corresponding to images.
 Suppose this data is save in a file called training.json. To load data,
 
 .. code:: python
+
     import json
 
     with open('training.json') as f:
