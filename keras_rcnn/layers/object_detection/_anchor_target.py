@@ -37,11 +37,11 @@ class AnchorTarget(keras.layers.Layer):
     """
     def __init__(
             self,
-            allowed_border=0,
             aspect_ratios=None,
             base_size=16,
             clobber_positives=False,
             negative_overlap=0.3,
+            padding=0,
             positive_overlap=0.7,
             scales=None,
             stride=16,
@@ -53,7 +53,7 @@ class AnchorTarget(keras.layers.Layer):
         if scales is None:
             scales = [4, 8, 16]  # [128^{2}, 256^{2}, 512^{2}]
 
-        self.allowed_border = allowed_border
+        self.allowed_border = padding
 
         self.clobber_positives = clobber_positives
 

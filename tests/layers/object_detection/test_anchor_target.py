@@ -8,6 +8,7 @@ import keras_rcnn.backend
 import keras_rcnn.layers
 import keras_rcnn.layers.object_detection._anchor_target as anchor_target
 
+
 class TestAnchorTarget:
     def test_call(self):
         target_bounding_boxes = numpy.random.random((1, 10, 4))
@@ -18,7 +19,9 @@ class TestAnchorTarget:
         output_scores = numpy.random.random((1, 14, 14, 9 * 2))
         output_scores = keras.backend.variable(output_scores)
 
-        target_anchors, target_proposal_bounding_boxes, target_proposal_categories = keras_rcnn.layers.AnchorTarget(allowed_border=1)([
+        _, _, _ = keras_rcnn.layers.AnchorTarget(
+            padding=1
+        )([
             target_bounding_boxes,
             target_metadata,
             output_scores

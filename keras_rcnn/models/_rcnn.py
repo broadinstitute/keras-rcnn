@@ -11,9 +11,9 @@ class RCNN(keras.models.Model):
             self,
             input_shape,
             categories,
-            anchor_allowed_border=1,
             anchor_aspect_ratios=None,
             anchor_base_size=16,
+            anchor_padding=1,
             anchor_scales=None,
             anchor_stride=16,
             backbone=None,
@@ -193,7 +193,7 @@ class RCNN(keras.models.Model):
         )(convolution_3x3)
 
         target_anchors, target_proposal_bounding_boxes, target_proposal_categories = keras_rcnn.layers.AnchorTarget(
-            allowed_border=anchor_allowed_border,
+            padding=anchor_padding,
             aspect_ratios=anchor_aspect_ratios,
             base_size=anchor_base_size,
             scales=anchor_scales,
