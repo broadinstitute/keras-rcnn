@@ -2,16 +2,18 @@ keras-rcnn was written by Allen Goodman.
 
 keras-rcnn is maintained by Allen Goodman and various contributors:
 
-Hans Gaiser <j.c.gaiser@delftrobotics.com> @hgaiser
+Claire McQuin <mcquincl@gmail.com> @mcquin
 
-Yann Henon <yannhenon@gmail.com> @yhenon
+Hans Gaiser <j.c.gaiser@delftrobotics.com> @hgaiser
 
 Jane Hung <jyenhung@gmail.com> @jhung0
 
 Jihong Ju <daniel.jihong.ju@gmail.com> @jujihong
 
+Mihai Morariu <mihaimorariu@gmail.com> @mihaimorariu
+
+Robert Harrington <robert.harrington@tessella.com> @harrd-tessella
+
 Victor Kulikovv <kulikov.victor@gmail.com>
 
-Claire McQuin <mcquincl@gmail.com> @mcquin
-
-Mihai Morariu <mihaimorariu@gmail.com> @mihaimorariu
+Yann Henon <yannhenon@gmail.com> @yhenon

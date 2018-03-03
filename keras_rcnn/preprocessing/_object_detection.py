@@ -230,8 +230,8 @@ class DictionaryIterator(keras.preprocessing.image.Iterator):
                     )
 
                     target_mask = target_mask[
-                          minimum_r:maximum_r,
-                          minimum_c:maximum_c
+                          minimum_r:maximum_r + 1,
+                          minimum_c:maximum_c + 1
                     ]
 
                     target_mask = skimage.transform.resize(
