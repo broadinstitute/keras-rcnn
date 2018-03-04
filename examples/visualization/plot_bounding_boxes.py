@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 
 """
-Visualizing bounding boxes
-==========================
+Bounding boxes
+==============
 
 A simple example for ploting two figures of a exponential
 function in order to test the autonomy of the gallery
@@ -10,7 +10,6 @@ stacking multiple images.
 """
 
 import numpy
-import matplotlib.pyplot
 import keras_rcnn.datasets.shape
 import keras_rcnn.preprocessing
 import keras_rcnn.utils
@@ -43,8 +42,6 @@ def main():
     target_categories = numpy.squeeze(target_categories)
 
     keras_rcnn.utils.show_bounding_boxes(target_images, target_bounding_boxes, target_categories)
-
-    matplotlib.pyplot.show()
 
 
 if __name__ == '__main__':
