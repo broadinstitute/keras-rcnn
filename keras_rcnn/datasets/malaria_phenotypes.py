@@ -13,4 +13,4 @@ def load_data():
     corresponding class labels that describe each cell’s phenotype.
     """
 
-    return keras_rcnn.datasets.load_data("malaria")
+    return keras_rcnn.datasets.load_data("malaria_phenotypes")
