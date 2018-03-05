@@ -2,6 +2,7 @@
 
 import keras.backend
 import keras.engine
+import tensorflow
 
 import keras_rcnn.backend
 import keras_rcnn.layers
@@ -249,7 +250,7 @@ class Anchor(keras.layers.Layer):
             indices = keras.backend.reshape(bg_inds, (-1,))
             indices = keras_rcnn.backend.shuffle(indices)[:size]
 
-            updates = keras.backend.ones((size,)) * -1
+            updates = tensorflow.ones((size,)) * -1
 
             inverse_labels = keras.backend.gather(labels, indices) * -1
 
@@ -283,7 +284,7 @@ class Anchor(keras.layers.Layer):
             indices = keras.backend.reshape(fg_inds, (-1,))
             indices = keras_rcnn.backend.shuffle(indices)[:size]
 
-            updates = keras.backend.ones((size,)) * -1
+            updates = tensorflow.ones((size,)) * -1
 
             inverse_labels = keras.backend.gather(labels, indices) * -1
 
@@ -302,12 +303,12 @@ class Anchor(keras.layers.Layer):
         size count) """
 
         if keras.backend.ndim(data) == 1:
-            ret = keras.backend.ones((self.k,), dtype=keras.backend.floatx()) * fill
+            ret = tensorflow.ones((self.k,), dtype=keras.backend.floatx()) * fill
 
             inds_nd = keras.backend.expand_dims(inds_inside)
         else:
             ret = (self.k, keras.backend.shape(data)[1])
-            ret = keras.backend.ones(ret, dtype=keras.backend.floatx()) * fill
+            ret = tensorflow.ones(ret, dtype=keras.backend.floatx()) * fill
 
             data = keras.backend.transpose(data)
             data = keras.backend.reshape(data, (-1,))
