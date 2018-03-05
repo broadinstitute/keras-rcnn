@@ -1,5 +1,6 @@
 import numpy
 
+
 def average_precision(tp, fp, n):
     """
 
@@ -29,6 +30,7 @@ def average_precision(tp, fp, n):
     indices = numpy.where(r[1:] != r[:-1])[0]
 
     return numpy.sum((r[indices + 1] - r[indices]) * p[indices + 1])
+
 
 def intersection_over_union(target, output):
     """
@@ -63,6 +65,7 @@ def intersection_over_union(target, output):
     union = target_union + numpy.transpose(output_union)
 
     return numpy.maximum(0.0, intersection / (union - intersection))
+
 
 def mean_average_precision(target, output, class_descriptions):
     """
