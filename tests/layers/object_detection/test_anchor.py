@@ -186,6 +186,7 @@ class TestAnchor:
 
         anchor_layer.padding = 1
         anchor_layer.metadata = img_info[0]
+        anchor_layer.k = total_anchors
 
         inds_inside, all_inside_anchors = anchor_layer._inside_image(all_anchors)
 
@@ -195,9 +196,9 @@ class TestAnchor:
 
         bbox_reg_targets = keras_rcnn.backend.bbox_transform(all_inside_anchors, keras.backend.gather(gt_boxes, argmax_overlaps_indices))
 
-        labels = anchor_layer._unmap(labels, total_anchors, inds_inside, fill=-1)
+        labels = anchor_layer._unmap(labels, inds_inside, fill=-1)
 
-        bbox_reg_targets = anchor_layer._unmap(bbox_reg_targets, total_anchors, inds_inside, fill=0)
+        bbox_reg_targets = anchor_layer._unmap(bbox_reg_targets, inds_inside, fill=0)
 
         assert keras.backend.eval(labels).shape == (total_anchors,)
         assert keras.backend.eval(bbox_reg_targets).shape == (total_anchors, 4)

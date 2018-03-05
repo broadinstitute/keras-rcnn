@@ -29,6 +29,9 @@ class Anchor(keras.layers.Layer):
 
         self.padding = padding
 
+        self.r = None
+        self.c = None
+
         self.clobber_positives = clobber_positives
 
         self.negative_overlap = negative_overlap
@@ -54,7 +57,7 @@ class Anchor(keras.layers.Layer):
             return self.__shifted_anchors
         else:
             self.__shifted_anchors = keras_rcnn.backend.shift(
-                (self.height, self.width),
+                (self.r, self.c),
                 self.stride,
                 self.base_size,
                 self.aspect_ratios,
@@ -74,16 +77,16 @@ class Anchor(keras.layers.Layer):
 
         target_bounding_boxes = target_bounding_boxes[0]
 
-        self.height = keras.backend.shape(scores)[1]
-        self.width = keras.backend.shape(scores)[2]
-        total_anchors = keras.backend.shape(scores)[3]
-        total_anchors = self.height * self.width * total_anchors
+        self.r = keras.backend.shape(scores)[1]
+        self.c = keras.backend.shape(scores)[2]
+
+        self.k = self.r * self.c * keras.backend.shape(scores)[3]
 
         # 1. Generate proposals from bbox deltas and shifted anchors
-        all_anchors = self._shifted_anchors
+        output_bounding_boxes = self._shifted_anchors
 
         # only keep anchors inside the image
-        indices_inside, anchors = self._inside_image(all_anchors)
+        indices_inside, anchors = self._inside_image(output_bounding_boxes)
 
         anchors = keras_rcnn.backend.clip(anchors, self.metadata[:2])
 
@@ -94,25 +97,25 @@ class Anchor(keras.layers.Layer):
         target_bounding_boxes = keras.backend.gather(target_bounding_boxes, argmax_overlaps_indices)
 
         # Convert fixed anchors in (x, y, w, h) to (dx, dy, dw, dh)
-        target_bounding_box_targets = keras_rcnn.backend.bbox_transform(anchors, target_bounding_boxes)
+        target_bounding_boxes = keras_rcnn.backend.bbox_transform(anchors, target_bounding_boxes)
 
         # TODO: Why is target_bounding_box_targets' shape (5, ?, 4)? Why is target_bounding_boxes'
         # shape (None, None, 4) and not (None, 4)?
-        target_bounding_box_targets = keras.backend.reshape(target_bounding_box_targets, (-1, 4))
+        target_bounding_boxes = keras.backend.reshape(target_bounding_boxes, (-1, 4))
 
         # map up to original set of anchors
-        target_categories = self._unmap(target_categories, total_anchors, indices_inside, fill=-1)
+        target_categories = self._unmap(target_categories, indices_inside, fill=-1)
 
-        target_bounding_box_targets = self._unmap(target_bounding_box_targets, total_anchors, indices_inside, fill=0)
+        target_bounding_boxes = self._unmap(target_bounding_boxes, indices_inside, fill=0)
 
         target_categories = keras.backend.expand_dims(target_categories, axis=0)
 
-        target_bounding_box_targets = keras.backend.expand_dims(target_bounding_box_targets, axis=0)
+        target_bounding_boxes = keras.backend.expand_dims(target_bounding_boxes, axis=0)
 
-        all_anchors = keras.backend.expand_dims(all_anchors, axis=0)
+        output_bounding_boxes = keras.backend.expand_dims(output_bounding_boxes, axis=0)
 
         # TODO: implement inside and outside weights
-        return [all_anchors, target_bounding_box_targets, target_categories]
+        return [output_bounding_boxes, target_bounding_boxes, target_categories]
 
     def compute_output_shape(self, input_shape):
         return [(1, None, 4), (1, None, 4), (1, None)]
@@ -148,7 +151,7 @@ class Anchor(keras.layers.Layer):
 
         return labels
 
-    def _label(self, y_true, y_pred, inds_inside):
+    def _label(self, target, output, inds_inside):
         """
         Create bbox labels.
         label: 1 is positive, 0 is negative, -1 is do not care
@@ -157,8 +160,8 @@ class Anchor(keras.layers.Layer):
         :param positive_overlap:
         :param negative_overlap:
         :param inds_inside: indices of anchors inside image
-        :param y_pred: anchors
-        :param y_true: ground truth objects
+        :param output: anchors
+        :param target: ground truth objects
 
         :return: indices of gt boxes with the greatest overlap, balanced labels
         """
@@ -166,7 +169,7 @@ class Anchor(keras.layers.Layer):
         labels = ones * -1
         zeros = keras.backend.zeros_like(inds_inside, dtype=keras.backend.floatx())
 
-        argmax_overlaps_inds, max_overlaps, gt_argmax_overlaps_inds = self._overlapping(y_pred, y_true, inds_inside)
+        argmax_overlaps_inds, max_overlaps, gt_argmax_overlaps_inds = self._overlapping(output, target, inds_inside)
 
         # Assign background labels first so that positive labels can clobber them.
         if not self.clobber_positives:
@@ -196,19 +199,19 @@ class Anchor(keras.layers.Layer):
         return argmax_overlaps_inds, self._balance(labels)
 
     @staticmethod
-    def _overlapping(anchors, gt_boxes, inds_inside):
+    def _overlapping(output, target, inds_inside):
         """
         overlaps between the anchors and the gt boxes
-        :param anchors: Generated anchors
-        :param gt_boxes: Ground truth bounding boxes
+        :param output: Generated anchors
+        :param target: Ground truth bounding boxes
         :param inds_inside:
         :return:
         """
 
-        assert keras.backend.ndim(anchors) == 2
-        assert keras.backend.ndim(gt_boxes) == 2
+        assert keras.backend.ndim(output) == 2
+        assert keras.backend.ndim(target) == 2
 
-        reference = keras_rcnn.backend.intersection_over_union(anchors, gt_boxes)
+        reference = keras_rcnn.backend.intersection_over_union(output, target)
 
         gt_argmax_overlaps_inds = keras.backend.argmax(reference, axis=0)
 
@@ -295,17 +298,16 @@ class Anchor(keras.layers.Layer):
 
         return keras.backend.switch(condition, labels, lambda: more_positive())
 
-    @staticmethod
-    def _unmap(data, count, inds_inside, fill=0):
+    def _unmap(self, data, inds_inside, fill=0):
         """ Unmap a subset of item (data) back to the original set of items (of
         size count) """
 
         if keras.backend.ndim(data) == 1:
-            ret = tensorflow.ones((count,), dtype=keras.backend.floatx()) * fill
+            ret = tensorflow.ones((self.k,), dtype=keras.backend.floatx()) * fill
 
             inds_nd = keras.backend.expand_dims(inds_inside)
         else:
-            ret = (count, keras.backend.shape(data)[1])
+            ret = (self.k, keras.backend.shape(data)[1])
             ret = tensorflow.ones(ret, dtype=keras.backend.floatx()) * fill
 
             data = keras.backend.transpose(data)
@@ -314,11 +316,9 @@ class Anchor(keras.layers.Layer):
             inds_ii = keras.backend.tile(inds_inside, [4])
             inds_ii = keras.backend.expand_dims(inds_ii)
 
-            ones = keras.backend.expand_dims(keras.backend.ones_like(inds_inside),
-                                             1)
+            ones = keras.backend.expand_dims(keras.backend.ones_like(inds_inside), 1)
 
-            inds_coords = keras.backend.concatenate(
-                [ones * 0, ones, ones * 2, ones * 3], 0)
+            inds_coords = keras.backend.concatenate([ones * 0, ones, ones * 2, ones * 3], 0)
 
             inds_nd = keras.backend.concatenate([inds_ii, inds_coords], 1)
 
@@ -326,6 +326,7 @@ class Anchor(keras.layers.Layer):
         inverse_ret = keras_rcnn.backend.squeeze(inverse_ret)
 
         updates = inverse_ret + data
+
         ret = keras_rcnn.backend.scatter_add_tensor(ret, inds_nd, updates)
 
         return ret
