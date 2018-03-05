@@ -9,32 +9,6 @@ import keras_rcnn.layers
 
 
 class AnchorTarget(keras.layers.Layer):
-    """
-    Calculate proposal anchor targets and corresponding labels (label: 1 is
-    positive, 0 is negative, -1 is do not care) for ground truth boxes
-
-    Arguments
-
-        allowed_border: allow boxes to be outside the image by
-        allowed_border pixels
-
-        clobber_positives: if an anchor statisfied by positive and negative
-        conditions given to negative label
-
-        negative_overlap: IoU threshold below which labels should be given
-        negative label
-
-        positive_overlap: IoU threshold above which labels should be given
-        positive label
-
-    Input shape
-
-        (samples, width, height, 2 * anchors), (samples, 4), (3)
-
-    Output shape
-
-        (samples, ), (samples, 4)
-    """
     def __init__(
             self,
             aspect_ratios=None,

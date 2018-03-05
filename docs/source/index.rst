@@ -6,9 +6,10 @@
    :caption: Getting Started
 
    installation
+   auto_examples/index
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
    :hidden:
    :caption: API Documentation
 
@@ -17,10 +18,3 @@
    api/layers
    api/models
    api/preprocessing
-
-.. toctree::
-   :maxdepth: 2
-   :hidden:
-   :caption: Gallery
-
-   auto_examples/index
