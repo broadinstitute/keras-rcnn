@@ -1,7 +1,13 @@
 import pytest
 
 import keras_rcnn.datasets.shape
+import keras_rcnn.layers
 import keras_rcnn.preprocessing
+
+
+@pytest.fixture()
+def anchor_layer():
+    return keras_rcnn.layers.Anchor()
 
 
 @pytest.fixture()

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from ._anchor_target import AnchorTarget
+from ._anchor import Anchor
 
 from ._object_proposal import ObjectProposal
 

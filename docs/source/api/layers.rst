@@ -4,10 +4,10 @@ Layers
 .. contents:: Table of Contents
    :depth: 2
 
-AnchorTarget
-============
+Anchor
+======
 
-The AnchorTarget layer generates multi-aspect ratio and multiscale anchor bounding boxes with a corresponding category that classifies each anchor bounding box as an object or non-object.
+The Anchor layer generates multi-aspect ratio and multiscale anchor bounding boxes with a corresponding category that classifies each anchor bounding box as an object or non-object.
 
 Introduction
 ------------
@@ -43,7 +43,7 @@ The AnchorTarget layer ignores anchors that cross an image’s boundaries so the
 
 For a typical 1,000 × 600 image, there will be roughly 20,000 (≈ 60 × 40 × 9) anchors in total. With the cross-boundary anchors ignored, there are about 6,000 anchors per image for training. If the boundary-crossing outliers are not ignored in training, they introduce large, difficult to correct error terms in the objective and training won’t converge. However, since the fully-convolutional region proposal network is applied to the entire image, cross-boundary object proposal bounding boxes might be generated but they are clipped to the image shape by the PropoalTarget layer.
 
-.. autoclass:: keras_rcnn.layers.AnchorTarget
+.. autoclass:: keras_rcnn.layers.Anchor
 
 ObjectDetection
 ===============

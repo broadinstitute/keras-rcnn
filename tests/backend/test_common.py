@@ -4,7 +4,7 @@ import numpy.testing
 
 import keras_rcnn.backend
 import keras_rcnn.backend.common
-import keras_rcnn.layers.object_detection._anchor_target
+import keras_rcnn.layers.object_detection._anchor
 import keras_rcnn.layers.object_detection._object_proposal
 
 
