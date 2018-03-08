@@ -19,13 +19,12 @@ class ObjectDetection(keras.engine.topology.Layer):
     def call(self, x, training=None, **kwargs):
         """
         # Inputs
-        proposals: output of proposal target (1, N, 4)
-        deltas: predicted deltas (1, N, 4*classes)
-        scores: score distributions (1, N, classes)
         metadata: image information (1, 3)
-
+        deltas: predicted deltas (1, N, 4*classes)
+        proposals: output of proposal target (1, N, 4)
+        scores: score distributions (1, N, classes)
+        
         # Returns
-
         bounding_boxes: predicted boxes (1, N, 4 * classes)
 
         scores: score distribution over all classes (1, N, classes),
@@ -85,9 +84,9 @@ class ObjectDetection(keras.engine.topology.Layer):
 
             return detections[num_output]
 
-        bounding_boxes = keras.backend.in_train_phase(x[0], lambda: detections(0), training=training)
+        bounding_boxes = keras.backend.in_train_phase(x[2], lambda: detections(0), training=training)
 
-        scores = keras.backend.in_train_phase(x[2], lambda: detections(1), training=training)
+        scores = keras.backend.in_train_phase(x[3], lambda: detections(1), training=training)
 
         return [bounding_boxes, scores]
 
