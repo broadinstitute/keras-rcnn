@@ -175,7 +175,7 @@ class DictionaryIterator(keras.preprocessing.image.Iterator):
             )
 
             for bounding_box_index, bounding_box in enumerate(bounding_boxes):
-                if bounding_box["class"] not in self.categories:
+                if bounding_box["category"] not in self.categories:
                     continue
 
                 minimum_r = bounding_box["bounding_box"]["minimum"]["r"]
@@ -243,7 +243,7 @@ class DictionaryIterator(keras.preprocessing.image.Iterator):
 
                 target_category = numpy.zeros((self.n_categories))
 
-                target_category[self.categories[bounding_box["class"]]] = 1
+                target_category[self.categories[bounding_box["category"]]] = 1
 
                 target_categories[
                     batch_index,
