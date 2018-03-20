@@ -44,3 +44,5 @@ def load_data():
 
         for instance in dictionary["objects"]:
             instance["mask"]["pathname"] = pathname + instance["mask"]["pathname"]
+
+    return training, test
