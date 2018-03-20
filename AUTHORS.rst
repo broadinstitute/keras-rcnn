@@ -14,6 +14,6 @@ Mihai Morariu <mihaimorariu@gmail.com> @mihaimorariu
 
 Robert Harrington <robert.harrington@tessella.com> @harrd-tessella
 
-Victor Kulikovv <kulikov.victor@gmail.com>
+Victor Kulikovv <v.kulikov@skoltech.ru>
 
 Yann Henon <yannhenon@gmail.com> @yhenon
