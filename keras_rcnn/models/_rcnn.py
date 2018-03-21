@@ -268,10 +268,10 @@ class RCNN(keras.models.Model):
         ])
 
         output_bounding_boxes, output_categories = keras_rcnn.layers.ObjectDetection()([
-            output_proposal_bounding_boxes,
+            target_metadata,
             output_deltas,
-            output_scores,
-            target_metadata
+            output_proposal_bounding_boxes,
+            output_scores
         ])
 
         outputs = [
