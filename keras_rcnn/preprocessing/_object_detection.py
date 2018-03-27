@@ -330,6 +330,9 @@ class ObjectDetectionGenerator:
         )
 
     def standardize(self, image):
+        
+        image = skimage.exposure.rescale_intensity(image, out_range=(0.0, 1.0))
+        
         if self.preprocessing_function:
             image = self.preprocessing_function(image)
 
@@ -338,7 +341,5 @@ class ObjectDetectionGenerator:
 
         if self.samplewise_center:
             image -= numpy.mean(image, keepdims=True)
-
-        image = skimage.exposure.rescale_intensity(image, out_range=(0.0, 1.0))
 
         return image
