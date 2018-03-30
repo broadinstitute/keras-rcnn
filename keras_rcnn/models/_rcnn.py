@@ -173,6 +173,7 @@ class RCNN(keras.models.Model):
 
         convolution_3x3 = keras.layers.Conv2D(
             filters=64,
+            name="3x3",
             **options
         )(output_features)
 
@@ -181,7 +182,7 @@ class RCNN(keras.models.Model):
             kernel_size=(1, 1),
             activation="linear",
             kernel_initializer="zero",
-            name="deltas"
+            name="deltas1"
         )(convolution_3x3)
 
         output_scores = keras.layers.Conv2D(
@@ -189,7 +190,7 @@ class RCNN(keras.models.Model):
             kernel_size=(1, 1),
             activation="sigmoid",
             kernel_initializer="uniform",
-            name="scores"
+            name="scores1"
         )(convolution_3x3)
 
         target_anchors, target_proposal_bounding_boxes, target_proposal_categories = keras_rcnn.layers.Anchor(
@@ -240,7 +241,8 @@ class RCNN(keras.models.Model):
         output_features = keras.layers.TimeDistributed(
             keras.layers.Dense(
                 units=dense_units,
-                activation="relu"
+                activation="relu",
+                name="fc1"
             )
         )(output_features)
 
@@ -248,7 +250,8 @@ class RCNN(keras.models.Model):
             keras.layers.Dense(
                 units=4 * n_categories,
                 activation="linear",
-                kernel_initializer="zero"
+                kernel_initializer="zero",
+                name="deltas2"
             )
         )(output_features)
 
@@ -256,7 +259,8 @@ class RCNN(keras.models.Model):
             keras.layers.Dense(
                 units=1 * n_categories,
                 activation="softmax",
-                kernel_initializer="zero"
+                kernel_initializer="zero",
+                name="scores2"
             )
         )(output_features)
 
