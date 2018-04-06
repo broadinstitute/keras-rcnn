@@ -182,7 +182,10 @@ class RCNN(keras.models.Model):
         else:
             output_features = keras_rcnn.models.backbone.VGG16()(source_image)
 
-        output_features = keras_rcnn.layers.GradientReversal()(output_features)
+        if adaptive:
+            output_features = keras_rcnn.layers.GradientReversal()(
+                output_features
+            )
 
         convolution_3x3 = keras.layers.Conv2D(
             filters=64,
@@ -247,7 +250,10 @@ class RCNN(keras.models.Model):
             output_proposal_bounding_boxes
         ])
 
-        output_features = keras_rcnn.layers.GradientReversal()(output_features)
+        if adaptive:
+            output_features = keras_rcnn.layers.GradientReversal()(
+                output_features
+            )
 
         output_features = keras.layers.TimeDistributed(
             keras.layers.Flatten()
