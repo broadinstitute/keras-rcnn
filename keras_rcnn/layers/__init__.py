@@ -1,3 +1,5 @@
+from .adaptors import (ImageAdaptor, InstanceAdaptor)
+
 from .losses import (RCNN, RPN)
 
 from .object_detection import (Anchor, ObjectProposal, ProposalTarget)
