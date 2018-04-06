@@ -72,7 +72,7 @@ def test_scatter_add_tensor():
     result = keras_rcnn.backend.scatter_add_tensor(ref, indices, updates)
     result = keras.backend.eval(result)
     expected = numpy.ones((4, 5))
-    expected[0, :4] = numpy.arange(4) * 2
+    expected[0, :4] += numpy.arange(4) * 2
     numpy.testing.assert_array_almost_equal(result, expected)
 
 
