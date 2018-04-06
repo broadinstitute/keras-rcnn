@@ -44,7 +44,7 @@ def reverse_gradient(x, hp_lambda):
     name = "GradientReversal{:d}".format(reverse_gradient.num_calls)
 
     @tensorflow.RegisterGradient(name)
-    def _flip_gradients(op, grad):
+    def _reverse_gradients(op, grad):
         return [tensorflow.negative(grad) * hp_lambda]
 
     graph = keras.backend.get_session().graph

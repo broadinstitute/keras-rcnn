@@ -7,19 +7,21 @@ import keras_rcnn.backend.common
 
 
 def test_reverse_gradient():
-    x = numpy.random.random((4, 2))
-    x = keras.backend.variable(x)
+    a = numpy.random.random((4, 2))
+    a = keras.backend.variable(a)
 
-    y = x ** 2
+    b = a ** 2
 
     loss = keras.backend.variable(0.5)
-    loss = keras_rcnn.backend.reverse_gradient(keras.backend.sum(y), loss)
+    loss = keras_rcnn.backend.reverse_gradient(keras.backend.sum(b), loss)
 
-    gradient = keras.backend.gradients(loss, [x])
+    x = keras.backend.gradients(loss, [a])
+    x = keras.backend.eval(x[0])
 
-    gradient = keras.backend.eval(gradient[0])
+    y = -2 * 0.5 * a
+    y = keras.backend.eval(y)
 
-    numpy.testing.assert_allclose(gradient, -2 * 0.5 * x, atol=1e-05)
+    numpy.testing.assert_array_equal(x, y)
 
 
 def test_transpose():
