@@ -127,29 +127,34 @@ class RCNN(keras.models.Model):
 
         k = len(anchor_aspect_ratios) * len(anchor_scales)
 
-        target_bounding_boxes = keras.layers.Input(
+        source_bounding_boxes = keras.layers.Input(
             shape=(None, 4),
-            name="target_bounding_boxes"
+            name="source_bounding_boxes"
         )
 
-        target_categories = keras.layers.Input(
+        source_categories = keras.layers.Input(
             shape=(None, n_categories),
-            name="target_categories"
+            name="source_categories"
+        )
+
+        source_image = keras.layers.Input(
+            shape=input_shape,
+            name="source_image"
+        )
+
+        source_masks = keras.layers.Input(
+            shape=(None,) + mask_shape,
+            name="source_masks"
+        )
+
+        source_metadata = keras.layers.Input(
+            shape=(3,),
+            name="source_metadata"
         )
 
         target_image = keras.layers.Input(
             shape=input_shape,
             name="target_image"
-        )
-
-        target_masks = keras.layers.Input(
-            shape=(None,) + mask_shape,
-            name="target_masks"
-        )
-
-        target_metadata = keras.layers.Input(
-            shape=(3,),
-            name="target_metadata"
         )
 
         options = {
@@ -159,17 +164,17 @@ class RCNN(keras.models.Model):
         }
 
         inputs = [
-            target_bounding_boxes,
-            target_categories,
-            target_image,
-            target_masks,
-            target_metadata
+            source_bounding_boxes,
+            source_categories,
+            source_image,
+            source_masks,
+            source_metadata
         ]
 
         if backbone:
-            output_features = backbone()(target_image)
+            output_features = backbone()(source_image)
         else:
-            output_features = keras_rcnn.models.backbone.VGG16()(target_image)
+            output_features = keras_rcnn.models.backbone.VGG16()(source_image)
 
         output_features = keras_rcnn.layers.GradientReversal()(output_features)
 
@@ -195,21 +200,21 @@ class RCNN(keras.models.Model):
             name="scores1"
         )(convolution_3x3)
 
-        target_anchors, target_proposal_bounding_boxes, target_proposal_categories = keras_rcnn.layers.Anchor(
+        source_anchors, source_proposal_bounding_boxes, source_proposal_categories = keras_rcnn.layers.Anchor(
             padding=anchor_padding,
             aspect_ratios=anchor_aspect_ratios,
             base_size=anchor_base_size,
             scales=anchor_scales,
             stride=anchor_stride,
         )([
-            target_bounding_boxes,
-            target_metadata,
+            source_bounding_boxes,
+            source_metadata,
             output_scores
         ])
 
         output_deltas, output_scores = keras_rcnn.layers.RPN()([
-            target_proposal_bounding_boxes,
-            target_proposal_categories,
+            source_proposal_bounding_boxes,
+            source_proposal_categories,
             output_deltas,
             output_scores
         ])
@@ -218,20 +223,20 @@ class RCNN(keras.models.Model):
             maximum_proposals=maximum_proposals,
             minimum_size=minimum_size
         )([
-            target_anchors,
-            target_metadata,
+            source_anchors,
+            source_metadata,
             output_deltas,
             output_scores
         ])
 
-        target_proposal_bounding_boxes, target_proposal_categories, output_proposal_bounding_boxes = keras_rcnn.layers.ProposalTarget()([
-            target_bounding_boxes,
-            target_categories,
+        source_proposal_bounding_boxes, source_proposal_categories, output_proposal_bounding_boxes = keras_rcnn.layers.ProposalTarget()([
+            source_bounding_boxes,
+            source_categories,
             output_proposal_bounding_boxes
         ])
 
         output_features = keras_rcnn.layers.RegionOfInterest((14, 14))([
-            target_metadata,
+            source_metadata,
             output_features,
             output_proposal_bounding_boxes
         ])
@@ -269,14 +274,14 @@ class RCNN(keras.models.Model):
         )(output_features)
 
         output_deltas, output_scores = keras_rcnn.layers.RCNN()([
-            target_proposal_bounding_boxes,
-            target_proposal_categories,
+            source_proposal_bounding_boxes,
+            source_proposal_categories,
             output_deltas,
             output_scores
         ])
 
         output_bounding_boxes, output_categories = keras_rcnn.layers.ObjectDetection()([
-            target_metadata,
+            source_metadata,
             output_deltas,
             output_proposal_bounding_boxes,
             output_scores
