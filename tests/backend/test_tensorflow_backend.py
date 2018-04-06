@@ -12,13 +12,11 @@ def test_reverse_gradient():
 
     b = a ** 2
 
-    loss = keras.backend.variable(0.5)
-    loss = keras_rcnn.backend.reverse_gradient(keras.backend.sum(b), loss)
-
-    x = keras.backend.gradients(loss, [a])
+    x = keras_rcnn.backend.reverse_gradient(keras.backend.sum(b))
+    x = keras.backend.gradients(x, [a])
     x = keras.backend.eval(x[0])
 
-    y = -2 * 0.5 * a
+    y = -2 * a
     y = keras.backend.eval(y)
 
     numpy.testing.assert_array_equal(x, y)

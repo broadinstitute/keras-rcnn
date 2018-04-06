@@ -13,7 +13,7 @@ def pad(x, pad_width, mode, **kwargs):
     raise NotImplementedError
 
 
-def reverse_gradient(x, hp_lambda):
+def reverse_gradient(x):
     raise NotImplementedError
 
 

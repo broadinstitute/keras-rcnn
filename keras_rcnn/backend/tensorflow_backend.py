@@ -35,7 +35,7 @@ def resize(image, output_shape):
     return tensorflow.image.resize_images(image, output_shape)
 
 
-def reverse_gradient(x, hp_lambda):
+def reverse_gradient(x):
     try:
         reverse_gradient.num_calls += 1
     except AttributeError:
@@ -45,7 +45,7 @@ def reverse_gradient(x, hp_lambda):
 
     @tensorflow.RegisterGradient(name)
     def _reverse_gradients(op, grad):
-        return [tensorflow.negative(grad) * hp_lambda]
+        return [tensorflow.negative(grad)]
 
     graph = keras.backend.get_session().graph
 

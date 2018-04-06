@@ -171,6 +171,13 @@ class RCNN(keras.models.Model):
         else:
             output_features = keras_rcnn.models.backbone.VGG16()(target_image)
 
+        output_features = keras_rcnn.layers.GradientReversal(
+            1.0,
+            name="image_gradient_reversal"
+        )(
+            output_features
+        )
+
         convolution_3x3 = keras.layers.Conv2D(
             filters=64,
             name="3x3",
