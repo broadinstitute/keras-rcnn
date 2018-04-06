@@ -6,6 +6,22 @@ import keras_rcnn.backend.tensorflow_backend
 import keras_rcnn.backend.common
 
 
+def test_reverse_gradient():
+    x = numpy.random.random((4, 2))
+    x = keras.backend.variable(x)
+
+    y = x ** 2
+
+    loss = keras.backend.variable(0.5)
+    loss = keras_rcnn.backend.reverse_gradient(keras.backend.sum(y), loss)
+
+    gradient = keras.backend.gradients(loss, [x])
+
+    gradient = keras.backend.eval(gradient[0])
+
+    numpy.testing.assert_allclose(gradient, -2 * 0.5 * x, atol=1e-05)
+
+
 def test_transpose():
     x = numpy.arange(4).reshape((2, 2))
 
@@ -56,7 +72,7 @@ def test_scatter_add_tensor():
     result = keras_rcnn.backend.scatter_add_tensor(ref, indices, updates)
     result = keras.backend.eval(result)
     expected = numpy.ones((4, 5))
-    expected[0, :4] += numpy.arange(4) * 2
+    expected[0, :4] = numpy.arange(4) * 2
     numpy.testing.assert_array_almost_equal(result, expected)
 
 

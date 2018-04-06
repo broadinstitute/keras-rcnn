@@ -35,6 +35,26 @@ def resize(image, output_shape):
     return tensorflow.image.resize_images(image, output_shape)
 
 
+def reverse_gradient(x, hp_lambda):
+    try:
+        reverse_gradient.num_calls += 1
+    except AttributeError:
+        reverse_gradient.num_calls = 1
+
+    name = "GradientReversal{:d}".format(reverse_gradient.num_calls)
+
+    @tensorflow.RegisterGradient(name)
+    def _flip_gradients(op, grad):
+        return [tensorflow.negative(grad) * hp_lambda]
+
+    graph = keras.backend.get_session().graph
+
+    with graph.gradient_override_map({'Identity': name}):
+        y = tensorflow.identity(x)
+
+    return y
+
+
 def transpose(x, axes=None):
     """
     Permute the dimensions of an array.
