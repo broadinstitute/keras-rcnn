@@ -39,6 +39,8 @@ class RCNN(keras.models.Model):
         specifies that the detected objects belong to either the
         “circle,” “square,” or “triangle” category.
 
+    adaptive :
+
     anchor_aspect_ratios : An array-like with shape:
 
             $$(aspect_ratios,)$$
@@ -106,6 +108,7 @@ class RCNN(keras.models.Model):
             self,
             input_shape,
             categories,
+            adaptive=False,
             anchor_aspect_ratios=None,
             anchor_base_size=16,
             anchor_padding=1,
@@ -152,11 +155,6 @@ class RCNN(keras.models.Model):
             name="source_metadata"
         )
 
-        target_image = keras.layers.Input(
-            shape=input_shape,
-            name="target_image"
-        )
-
         options = {
             "activation": "relu",
             "kernel_size": (3, 3),
@@ -170,6 +168,14 @@ class RCNN(keras.models.Model):
             source_masks,
             source_metadata
         ]
+
+        if adaptive:
+            target_image = keras.layers.Input(
+                shape=input_shape,
+                name="target_image"
+            )
+
+            inputs += [target_image]
 
         if backbone:
             output_features = backbone()(source_image)
