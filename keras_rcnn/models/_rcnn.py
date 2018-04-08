@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import keras
+import numpy
 
 import keras_rcnn.layers
 import keras_rcnn.models.backbone
@@ -123,7 +124,9 @@ class RCNN(keras.models.Model):
         if anchor_scales is None:
             anchor_scales = [4, 8, 16]
 
-        n_categories = len(categories) + 1
+        self.mask_shape = mask_shape
+
+        self.n_categories = len(categories) + 1
 
         k = len(anchor_aspect_ratios) * len(anchor_scales)
 
@@ -133,7 +136,7 @@ class RCNN(keras.models.Model):
         )
 
         target_categories = keras.layers.Input(
-            shape=(None, n_categories),
+            shape=(None, self.n_categories),
             name="target_categories"
         )
 
@@ -248,7 +251,7 @@ class RCNN(keras.models.Model):
 
         output_deltas = keras.layers.TimeDistributed(
             keras.layers.Dense(
-                units=4 * n_categories,
+                units=4 * self.n_categories,
                 activation="linear",
                 kernel_initializer="zero",
                 name="deltas2"
@@ -257,7 +260,7 @@ class RCNN(keras.models.Model):
 
         output_scores = keras.layers.TimeDistributed(
             keras.layers.Dense(
-                units=1 * n_categories,
+                units=1 * self.n_categories,
                 activation="softmax",
                 kernel_initializer="zero",
                 name="scores2"
@@ -287,3 +290,22 @@ class RCNN(keras.models.Model):
 
     def compile(self, optimizer, **kwargs):
         super(RCNN, self).compile(optimizer, None)
+
+    def predict(self, x, batch_size=None, verbose=0, steps=None):
+        target_bounding_boxes = numpy.zeros((x.shape[0], 1, 4))
+
+        target_categories = numpy.zeros((x.shape[0], 1, self.n_categories))
+
+        target_mask = numpy.zeros((1, 1, *self.mask_shape))
+
+        target_metadata = numpy.array([[x.shape[1], x.shape[2], 1.0]])
+
+        x = [
+            target_bounding_boxes,
+            target_categories,
+            x,
+            target_mask,
+            target_metadata
+        ]
+
+        return super(RCNN, self).predict(x, batch_size, verbose, steps)
