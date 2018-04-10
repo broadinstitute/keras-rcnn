@@ -326,9 +326,6 @@ class DictionaryIterator(keras.preprocessing.image.Iterator):
 
         target_bounding_boxes = target_bounding_boxes[:, ~missing]
 
-        target_bounding_boxes = numpy.reshape(target_bounding_boxes,
-                                              (self.batch_size, -1, 4))
-
         target_categories = target_categories[:, ~missing]
 
         target_masks = target_masks[:, ~missing]
