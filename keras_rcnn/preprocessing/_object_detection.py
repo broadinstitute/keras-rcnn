@@ -322,16 +322,16 @@ class DictionaryIterator(keras.preprocessing.image.Iterator):
             dimensions
         )
 
-        missing = numpy.all(target_bounding_boxes[..., :] == 0, axis=2)
+        missing = numpy.all(target_bounding_boxes[..., :] == 0, axis=2)[0]
 
-        target_bounding_boxes = target_bounding_boxes[~missing]
+        target_bounding_boxes = target_bounding_boxes[:, ~missing]
 
         target_bounding_boxes = numpy.reshape(target_bounding_boxes,
                                               (self.batch_size, -1, 4))
 
-        #         target_categories = target_categories[~missing]
+        target_categories = target_categories[:, ~missing]
 
-        #         target_masks = target_masks[~indicies]
+        target_masks = target_masks[:, ~missing]
 
         n = target_bounding_boxes.shape[1]
 
