@@ -94,46 +94,51 @@ class DictionaryIterator(keras.preprocessing.image.Iterator):
 
         return scale
 
-    @staticmethod
-    def _crop_bounding_box(bounding_box, boundary):
+    def _crop_bounding_boxes(bounding_boxes, boundary):
         cropped_bounding_boxes = numpy.array(boundary)
 
-        mask = numpy.ones(1, dtype=bool)
+        bounding_boxes = bounding_boxes.copy()
 
-        bounding_boxes = bounding_box.copy()
+        bounding_boxes[..., :2] = numpy.maximum(bounding_boxes[..., :2],
+                                                cropped_bounding_boxes[:2])
+        bounding_boxes[..., 2:] = numpy.minimum(bounding_boxes[..., 2:],
+                                                cropped_bounding_boxes[2:])
 
-        bounding_boxes[:2] = numpy.maximum(bounding_boxes[:2],
-                                           cropped_bounding_boxes[:2])
-        bounding_boxes[2:] = numpy.minimum(bounding_boxes[2:],
-                                           cropped_bounding_boxes[2:])
+        bounding_boxes[..., :2] -= cropped_bounding_boxes[:2]
+        bounding_boxes[..., 2:] -= cropped_bounding_boxes[:2]
 
-        bounding_boxes[:2] -= cropped_bounding_boxes[:2]
-        bounding_boxes[2:] -= cropped_bounding_boxes[:2]
+        mask = numpy.all(bounding_boxes[..., :2] < bounding_boxes[..., 2:],
+                         axis=2)
 
-        bounding_boxes = numpy.reshape(bounding_boxes, (1, 4))
-
-        mask = numpy.logical_and(mask, numpy.all(
-            bounding_boxes[:, :2] < bounding_boxes[:, 2:], axis=1))
-
-        bounding_boxes = bounding_boxes[mask]
-
-        if bounding_boxes.shape == (0, 4):
-            return numpy.zeros(4, )
-
-        bounding_boxes = numpy.reshape(bounding_boxes, (4,))
+        bounding_boxes[~mask] = numpy.zeros((4,))
 
         return bounding_boxes
 
-    @staticmethod
-    def _crop_image(image, shape):
-        cropped_r = numpy.random.randint(0, image.shape[0] - shape[0] - 1)
-        cropped_c = numpy.random.randint(0, image.shape[1] - shape[1] - 1)
+    def _crop_image(self, image):
+        crop_r = numpy.random.randint(
+            0,
+            image.shape[0] - self.generator.crop_size[0] - 1
+        )
 
-        cropped_image = image[cropped_r:cropped_r + shape[0],
-                        cropped_c:cropped_c + shape[1], ...]
+        crop_c = numpy.random.randint(
+            0,
+            image.shape[1] - self.generator.crop_size[1] - 1
+        )
 
-        return cropped_image, (
-        cropped_r, cropped_c, cropped_r + shape[0], cropped_c + shape[1])
+        crop = image[
+               crop_r:crop_r + self.generator.crop_size[0],
+               crop_c:crop_c + self.generator.crop_size[1],
+               ...
+               ]
+
+        dimensions = numpy.array([
+            crop_r,
+            crop_c,
+            crop_r + self.generator.crop_size[0],
+            crop_c + self.generator.crop_size[1]
+        ])
+
+        return crop, dimensions
 
     def _get_batches_of_transformed_samples(self, selection):
         target_bounding_boxes = numpy.zeros(
@@ -175,16 +180,18 @@ class DictionaryIterator(keras.preprocessing.image.Iterator):
 
             image = skimage.io.imread(pathname)
 
-            crop_boundary = None
+            dimensions = numpy.array([0, 0, image.shape[0], image.shape[1]])
 
             if self.generator.crop_size:
-                cropped_r, cropped_c = self.generator.crop_size
+                if image.shape[0] > self.generator.crop_size[0] and \
+                        image.shape[1] > self.generator.crop_size[1]:
+                    image, dimensions = self._crop_image(image)
 
-                if image.shape[0] > cropped_r and image.shape[1] > cropped_c:
-                    image, crop_boundary = self._crop_image(image,
-                                                            self.generator.crop_size)
+            dimensions = dimensions.astype(numpy.float16)
 
             scale = self.find_scale(image)
+
+            dimensions *= scale
 
             image = skimage.transform.rescale(image, scale)
 
@@ -244,12 +251,12 @@ class DictionaryIterator(keras.preprocessing.image.Iterator):
                 maximum_r = int(maximum_r)
                 maximum_c = int(maximum_c)
 
-                target_bounding_box = numpy.array([
+                target_bounding_box = [
                     minimum_r,
                     minimum_c,
                     maximum_r,
                     maximum_c
-                ])
+                ]
 
                 if horizontal_flip:
                     target_bounding_box = [
@@ -266,10 +273,6 @@ class DictionaryIterator(keras.preprocessing.image.Iterator):
                         image.shape[0] - target_bounding_box[0],
                         target_bounding_box[3]
                     ]
-
-                if crop_boundary:
-                    target_bounding_box = self._crop_bounding_box(
-                        target_bounding_box, crop_boundary)
 
                 target_bounding_boxes[
                     batch_index,
@@ -314,25 +317,10 @@ class DictionaryIterator(keras.preprocessing.image.Iterator):
                     bounding_box_index
                 ] = target_category
 
-        # remove out-of-area objects (i.e. [0., 0., 0., 0.])
-        indicies = numpy.where(
-            (target_bounding_boxes[:, :, 0] != 0) &
-            (target_bounding_boxes[:, :, 1] != 0) &
-            (target_bounding_boxes[:, :, 2] != 0) &
-            (target_bounding_boxes[:, :, 3] != 0)
+        target_bounding_boxes = _crop_bounding_boxes(
+            target_bounding_boxes,
+            dimensions
         )
-
-        target_bounding_boxes = target_bounding_boxes[indicies]
-
-        target_bounding_boxes = numpy.expand_dims(target_bounding_boxes, 0)
-
-        target_categories = target_categories[indicies]
-
-        target_categories = numpy.expand_dims(target_categories, 0)
-
-        target_masks = target_masks[indicies]
-
-        target_masks = numpy.expand_dims(target_masks, 0)
 
         n = target_bounding_boxes.shape[1]
 
@@ -355,8 +343,8 @@ class DictionaryIterator(keras.preprocessing.image.Iterator):
 class ObjectDetectionGenerator:
     def __init__(
             self,
-            data_format=None,
             crop_size=None,
+            data_format=None,
             horizontal_flip=False,
             preprocessing_function=None,
             rescale=False,
@@ -406,10 +394,7 @@ class ObjectDetectionGenerator:
         )
 
     def standardize(self, image):
-        image = skimage.exposure.rescale_intensity(
-            image,
-            out_range=(0.0, 1.0)
-        )
+        image = skimage.exposure.rescale_intensity(image, out_range=(0.0, 1.0))
 
         if self.preprocessing_function:
             image = self.preprocessing_function(image)
