@@ -322,18 +322,24 @@ class DictionaryIterator(keras.preprocessing.image.Iterator):
 
         x_bounding_boxes, x_categories, x_masks = x
 
-        x_bounding_boxes = self._crop_bounding_boxes(x_bounding_boxes, dimensions)
+        x_bounding_boxes = self._crop_bounding_boxes(x_bounding_boxes,
+                                                     dimensions)
 
         cropped = self._cropped_objects(x_bounding_boxes)
 
         x_bounding_boxes = x_bounding_boxes[:, ~cropped]
 
         if x_bounding_boxes.shape == (self.batch_size, 0, 4):
-            x_bounding_boxes = numpy.array([[[0., 0., 1., 1.]]])
+            x_bounding_boxes = numpy.zeros((self.batch_size, 1, 4))
 
-            x_categories = numpy.array([[[0., 1.]]])
+            x_bounding_boxes[..., 0, 1] = 1
+            x_bounding_boxes[..., 0, 3] = 1
 
-            x_masks = numpy.ones((1, 1, 28, 28))
+            x_categories = numpy.zeros((self.batch_size, 0, self.n_categories))
+
+            x_categories[..., 0, 0] = 1
+
+            x_masks = numpy.ones((self.batch_size, 1, *self.mask_size))
         else:
             x_categories = x_categories[:, ~cropped]
 
