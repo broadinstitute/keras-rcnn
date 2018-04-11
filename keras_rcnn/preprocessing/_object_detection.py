@@ -100,16 +100,13 @@ class DictionaryIterator(keras.preprocessing.image.Iterator):
 
         bounding_boxes = bounding_boxes.copy()
 
-        bounding_boxes[..., :2] = numpy.maximum(bounding_boxes[..., :2],
-                                                cropped_bounding_boxes[:2])
-        bounding_boxes[..., 2:] = numpy.minimum(bounding_boxes[..., 2:],
-                                                cropped_bounding_boxes[2:])
+        bounding_boxes[..., :2] = numpy.maximum(bounding_boxes[..., :2], cropped_bounding_boxes[:2])
+        bounding_boxes[..., 2:] = numpy.minimum(bounding_boxes[..., 2:], cropped_bounding_boxes[2:])
 
         bounding_boxes[..., :2] -= cropped_bounding_boxes[:2]
         bounding_boxes[..., 2:] -= cropped_bounding_boxes[:2]
 
-        mask = numpy.all(bounding_boxes[..., :2] < bounding_boxes[..., 2:],
-                         axis=2)
+        mask = numpy.all(bounding_boxes[..., :2] < bounding_boxes[..., 2:], axis=2)
 
         bounding_boxes[~mask] = numpy.zeros((4,))
 
@@ -184,8 +181,7 @@ class DictionaryIterator(keras.preprocessing.image.Iterator):
             dimensions = numpy.array([0, 0, image.shape[0], image.shape[1]])
 
             if self.generator.crop_size:
-                if image.shape[0] > self.generator.crop_size[0] and \
-                        image.shape[1] > self.generator.crop_size[1]:
+                if image.shape[0] > self.generator.crop_size[0] and image.shape[1] > self.generator.crop_size[1]:
                     image, dimensions = self._crop_image(image)
 
             dimensions = dimensions.astype(numpy.float16)
@@ -288,9 +284,9 @@ class DictionaryIterator(keras.preprocessing.image.Iterator):
                     target_mask = skimage.transform.rescale(target_mask, scale)
 
                     target_mask = target_mask[
-                                  minimum_r:maximum_r + 1,
-                                  minimum_c:maximum_c + 1
-                                  ]
+                        minimum_r:maximum_r + 1,
+                        minimum_c:maximum_c + 1
+                    ]
 
                     target_mask = skimage.transform.resize(
                         target_mask,
@@ -322,8 +318,7 @@ class DictionaryIterator(keras.preprocessing.image.Iterator):
 
         x_bounding_boxes, x_categories, x_masks = x
 
-        x_bounding_boxes = self._crop_bounding_boxes(x_bounding_boxes,
-                                                     dimensions)
+        x_bounding_boxes = self._crop_bounding_boxes(x_bounding_boxes, dimensions)
 
         cropped = self._cropped_objects(x_bounding_boxes)
 
@@ -332,12 +327,12 @@ class DictionaryIterator(keras.preprocessing.image.Iterator):
         if x_bounding_boxes.shape == (self.batch_size, 0, 4):
             x_bounding_boxes = numpy.zeros((self.batch_size, 1, 4))
 
-            x_bounding_boxes[..., 0, 1] = 1
-            x_bounding_boxes[..., 0, 3] = 1
+            x_bounding_boxes[..., 1] = self.target_size[0]
+            x_bounding_boxes[..., 3] = self.target_size[1]
 
-            x_categories = numpy.zeros((self.batch_size, 0, self.n_categories))
+            x_categories = numpy.zeros((self.batch_size, 1, self.n_categories))
 
-            x_categories[..., 0, 0] = 1
+            x_categories[..., -1] = 1.0
 
             x_masks = numpy.ones((self.batch_size, 1, *self.mask_size))
         else:
