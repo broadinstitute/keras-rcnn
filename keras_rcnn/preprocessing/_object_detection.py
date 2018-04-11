@@ -181,7 +181,7 @@ class DictionaryIterator(keras.preprocessing.image.Iterator):
             dimensions = numpy.array([0, 0, image.shape[0], image.shape[1]])
 
             if self.generator.crop_size:
-                if image.shape[0] >= self.generator.crop_size[0] and image.shape[1] >= self.generator.crop_size[1]:
+                if image.shape[0] > self.generator.crop_size[0] and image.shape[1] > self.generator.crop_size[1]:
                     image, dimensions = self._crop_image(image)
 
             dimensions = dimensions.astype(numpy.float16)
