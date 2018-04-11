@@ -326,9 +326,17 @@ class DictionaryIterator(keras.preprocessing.image.Iterator):
 
         if x_bounding_boxes.shape == (self.batch_size, 0, 4):
             x_bounding_boxes = numpy.zeros((self.batch_size, 1, 4))
+            
+            minimum_r = numpy.random.randint(0, self.target_size[0])
+            minimum_c = numpy.random.randint(0, self.target_size[1])
+            
+            maximum_r = numpy.random.randint(minimum_r, self.target_size[0])
+            maximum_c = numpy.random.randint(minimum_c, self.target_size[1])
 
-            x_bounding_boxes[..., 1] = self.target_size[0]
-            x_bounding_boxes[..., 3] = self.target_size[1]
+            x_bounding_boxes[..., 0] = minimum_r
+            x_bounding_boxes[..., 1] = minimum_c
+            x_bounding_boxes[..., 2] = maximum_r
+            x_bounding_boxes[..., 3] = maximum_c
 
             x_categories = numpy.zeros((self.batch_size, 1, self.n_categories))
 
