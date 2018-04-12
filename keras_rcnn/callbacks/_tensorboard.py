@@ -2,6 +2,7 @@ import os.path
 
 import keras.callbacks
 import matplotlib.pyplot
+import numpy
 
 import keras_rcnn.utils
 
@@ -47,10 +48,15 @@ def _save_images(generator, pathname):
 
 
 class TensorBoard(keras.callbacks.TensorBoard):
-    def __init__(self, **kwargs):
-        super(TensorBoard, self).__init__(kwargs)
+    """
 
-    def on_epoch_end(self, epoch, **kwargs):
+    """
+    def __init__(self, generator):
+        self.generator = generator
+
+        super(TensorBoard, self).__init__()
+
+    def on_epoch_end(self, epoch, logs=None):
         import tensorflow
 
         score = 0.0
@@ -61,6 +67,21 @@ class TensorBoard(keras.callbacks.TensorBoard):
 
         summary_value.simple_value = score
 
-        summary_value.tag = "mAP"
+        summary_value.tag = "mean average precision (mAP)"
 
         self.writer.add_summary(summary, epoch)
+
+        images = numpy.zeros((self.generator.n, 256, 256, 3))
+
+        for generator_index in range(self.generator.n):
+            x, _ = self.generator.next()
+
+            target_bounding_boxes, _, target_images, _, _ = x
+
+            images[generator_index] = target_images
+
+        images = keras.backend.variable(images)
+
+        summary = tensorflow.summary.image("training", images)
+
+        self.writer.add_summary(keras.backend.eval(summary))
