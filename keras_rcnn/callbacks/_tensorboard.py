@@ -8,68 +8,25 @@ import tensorflow
 import keras_rcnn.utils
 
 
+# TODO: use skimage.draw to circumvent matplotlib
 def _generate_image(image, bounding_boxes):
-    figure = matplotlib.pyplot.figure(figsize=(8, 8))
+    figure = matplotlib.pyplot.figure()
 
     axis = figure.gca()
 
     axis.set_axis_off()
 
+    bbox_inches = axis.get_window_extent().transformed(matplotlib.pyplot.gcf().dpi_scale_trans.inverted())
+
     keras_rcnn.utils.show_bounding_boxes(image, bounding_boxes)
 
     buffer = io.BytesIO()
-
-    window_extent = axis.get_window_extent()
-
-    inverted = axis.dpi_scale_trans.inverted()
-
-    bbox_inches = window_extent.transformed(inverted)
 
     matplotlib.pyplot.savefig(buffer, bbox_inches=bbox_inches)
 
     buffer.seek(0)
 
     return buffer
-
-
-def _save_images(generator, pathname):
-    generator.shuffle = False
-
-    matplotlib.pyplot.ioff()
-
-    for generator_index in range(generator.n):
-        (target_bounding_boxes, _, target_images, _, _), _ = generator.next()
-
-        batch_size = target_bounding_boxes.shape[0]
-
-        for batch_index in range(batch_size):
-            figure = matplotlib.pyplot.figure(
-                figsize=(8, 8)
-            )
-
-            axis = figure.gca()
-
-            axis.set_axis_off()
-
-            keras_rcnn.utils.show_bounding_boxes(
-                target_images[batch_index],
-                target_bounding_boxes[batch_index]
-            )
-
-            filename = "{}-{}.png".format(generator_index, batch_index)
-
-            window_extent = axis.get_window_extent()
-
-            inverted = axis.dpi_scale_trans.inverted()
-
-            bbox_inches = window_extent.transformed(inverted)
-
-            matplotlib.pyplot.savefig(
-                os.path.join(pathname, filename),
-                bbox_inches=bbox_inches
-            )
-
-            matplotlib.pyplot.close(figure)
 
 
 class TensorBoard(keras.callbacks.TensorBoard):
@@ -102,13 +59,9 @@ class TensorBoard(keras.callbacks.TensorBoard):
         self.writer.add_summary(summary)
 
     def _summarize_image(self):
-        shape = (
-            self.generator.n,
-            *self.generator.target_size,
-            self.generator.channels
-        )
+        shape = (self.generator.n, *self.generator.target_size, self.generator.channels)
 
-        images = tensorflow.zeros(shape)
+        images = numpy.zeros((self.generator.n, 224, 341, 4))
 
         for generator_index in range(self.generator.n):
             x, _ = self.generator.next()
@@ -117,9 +70,11 @@ class TensorBoard(keras.callbacks.TensorBoard):
 
             buffer = _generate_image(target_images[0], target_bounding_boxes[0])
 
-            image = tensorflow.image.decode_png(buffer.getvalue(), channels=3)
+            image = tensorflow.image.decode_png(buffer.getvalue(), channels=4)
 
             image = tensorflow.expand_dims(image, 0)
+
+            image = keras.backend.eval(image)
 
             images[generator_index] = image
 
