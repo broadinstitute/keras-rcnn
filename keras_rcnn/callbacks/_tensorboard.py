@@ -3,6 +3,7 @@ import os.path
 import keras.callbacks
 import matplotlib.pyplot
 import numpy
+import tensorflow
 
 import keras_rcnn.utils
 
@@ -51,14 +52,13 @@ class TensorBoard(keras.callbacks.TensorBoard):
     """
 
     """
+
     def __init__(self, generator):
         self.generator = generator
 
         super(TensorBoard, self).__init__()
 
     def on_epoch_end(self, epoch, logs=None):
-        import tensorflow
-
         score = 0.0
 
         summary = tensorflow.Summary()
@@ -71,7 +71,20 @@ class TensorBoard(keras.callbacks.TensorBoard):
 
         self.writer.add_summary(summary, epoch)
 
-        images = numpy.zeros((self.generator.n, 256, 256, 3))
+        summary = self._summarize_image()
+
+        summary = keras.backend.eval(summary)
+
+        self.writer.add_summary(summary)
+
+    def _summarize_image(self):
+        shape = (
+            self.generator.n,
+            *self.generator.target_size,
+            self.generator.channels
+        )
+
+        images = numpy.zeros(shape)
 
         for generator_index in range(self.generator.n):
             x, _ = self.generator.next()
@@ -82,6 +95,4 @@ class TensorBoard(keras.callbacks.TensorBoard):
 
         images = keras.backend.variable(images)
 
-        summary = tensorflow.summary.image("training", images)
-
-        self.writer.add_summary(keras.backend.eval(summary))
+        return tensorflow.summary.image("training", images)
