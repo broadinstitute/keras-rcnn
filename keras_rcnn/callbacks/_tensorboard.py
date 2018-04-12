@@ -1,11 +1,35 @@
 import os.path
-
+import io
 import keras.callbacks
 import matplotlib.pyplot
 import numpy
 import tensorflow
 
 import keras_rcnn.utils
+
+
+def _generate_image(image, bounding_boxes):
+    figure = matplotlib.pyplot.figure(figsize=(8, 8))
+
+    axis = figure.gca()
+
+    axis.set_axis_off()
+
+    keras_rcnn.utils.show_bounding_boxes(image, bounding_boxes)
+
+    buffer = io.BytesIO()
+
+    window_extent = axis.get_window_extent()
+
+    inverted = axis.dpi_scale_trans.inverted()
+
+    bbox_inches = window_extent.transformed(inverted)
+
+    matplotlib.pyplot.savefig(buffer, bbox_inches=bbox_inches)
+
+    buffer.seek(0)
+
+    return buffer
 
 
 def _save_images(generator, pathname):
@@ -84,15 +108,19 @@ class TensorBoard(keras.callbacks.TensorBoard):
             self.generator.channels
         )
 
-        images = numpy.zeros(shape)
+        images = tensorflow.zeros(shape)
 
         for generator_index in range(self.generator.n):
             x, _ = self.generator.next()
 
             target_bounding_boxes, _, target_images, _, _ = x
 
-            images[generator_index] = target_images
+            buffer = _generate_image(target_images[0], target_bounding_boxes[0])
 
-        images = keras.backend.variable(images)
+            image = tensorflow.image.decode_png(buffer.getvalue(), channels=3)
+
+            image = tensorflow.expand_dims(image, 0)
+
+            images[generator_index] = image
 
         return tensorflow.summary.image("training", images)
