@@ -108,3 +108,10 @@ class ObjectDetection(keras.engine.topology.Layer):
         paddings = ((0, 0), (0, difference), (0, 0))
 
         return tensorflow.pad(x, paddings, mode="constant")
+
+    def get_config(self):
+        configuration = {
+            "padding": self.padding
+        }
+
+        return {**super(ObjectDetection, self).get_config(), **configuration}

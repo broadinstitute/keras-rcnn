@@ -47,11 +47,6 @@ class RCNN(keras.layers.Layer):
 
         return [output_deltas, output_scores]
 
-    def get_config(self):
-        configuration = {}
-
-        return {**super(RCNN, self).get_config(), **configuration}
-
 
 class RPN(keras.layers.Layer):
     def __init__(self, **kwargs):
@@ -122,8 +117,3 @@ class RPN(keras.layers.Layer):
         loss = weight * (keras.backend.sum(a) / keras.backend.maximum(keras.backend.epsilon(), keras.backend.sum(p_star_i)))
 
         return loss
-
-    def get_config(self):
-        configuration = {}
-
-        return {**super(RPN, self).get_config(), **configuration}

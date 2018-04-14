@@ -25,7 +25,14 @@ class ProposalTarget(keras.layers.Layer):
     # Output shape
     [(None, None, 4), (None, None, classes), (None, None, 4)]
     """
-    def __init__(self, foreground=0.5, foreground_threshold=(0.5, 1.0), background_threshold=(0.1, 0.5), maximum_proposals=32, **kwargs):
+    def __init__(
+            self,
+            foreground=0.5,
+            foreground_threshold=(0.5, 1.0),
+            background_threshold=(0.1, 0.5),
+            maximum_proposals=32,
+            **kwargs
+    ):
         """
         :param foreground:
         :param foreground_threshold:

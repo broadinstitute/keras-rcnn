@@ -126,10 +126,13 @@ class Anchor(keras.layers.Layer):
 
     def get_config(self):
         configuration = {
-            "allowed_border": self.padding,
+            "aspect_ratios": self.aspect_ratios,
+            "base_size": self.base_size,
             "clobber_positives": self.clobber_positives,
             "negative_overlap": self.negative_overlap,
+            "padding": self.padding,
             "positive_overlap": self.positive_overlap,
+            "scales": self.scales,
             "stride": self.stride
         }
 
