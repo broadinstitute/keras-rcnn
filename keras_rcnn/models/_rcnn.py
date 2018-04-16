@@ -231,15 +231,22 @@ class RCNN(keras.models.Model):
             output_proposal_bounding_boxes
         ])
 
-        output_features = keras_rcnn.layers.RegionOfInterest((7, 7))([
+        mask_features = self._mask_network()(
+            [
+                target_metadata,
+                output_features,
+                output_proposal_bounding_boxes
+            ]
+        )
+
+        output_features = keras_rcnn.layers.RegionOfInterest(
+            extent=(7, 7),
+            strides=1
+        )([
             target_metadata,
             output_features,
             output_proposal_bounding_boxes
         ])
-
-        mask_features = self._mask_features()(output_features)
-
-        # RCNN sub-networks
 
         output_features = keras.layers.TimeDistributed(
             keras.layers.Flatten()
@@ -300,8 +307,19 @@ class RCNN(keras.models.Model):
 
         super(RCNN, self).__init__(inputs, outputs)
 
-    def _mask_features(self):
+    def _mask_network(self):
         def f(x):
+            target_metadata, output_features, output_proposal_bounding_boxes = x
+
+            mask_features = keras_rcnn.layers.RegionOfInterest(
+                extent=(14, 14),
+                strides=2
+            )([
+                target_metadata,
+                output_features,
+                output_proposal_bounding_boxes
+            ])
+
             mask_features = keras.layers.TimeDistributed(
                 keras.layers.Conv2D(
                     activation="relu",
@@ -309,7 +327,7 @@ class RCNN(keras.models.Model):
                     kernel_size=(3, 3),
                     padding="same"
                 )
-            )(x)
+            )(mask_features)
 
             mask_features = keras.layers.TimeDistributed(
                 keras.layers.Conv2D(

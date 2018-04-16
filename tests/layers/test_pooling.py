@@ -11,7 +11,7 @@ def test_roi():
 
     metadata = keras.backend.variable([[28, 14, 3]])
 
-    roi_align = keras_rcnn.layers.RegionOfInterest(extent=[7, 7], stride=1)
+    roi_align = keras_rcnn.layers.RegionOfInterest(extent=[7, 7], strides=1)
 
     slices = roi_align([metadata, image, boxes])
 

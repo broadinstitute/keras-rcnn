@@ -14,12 +14,12 @@ class RegionOfInterest(keras.engine.topology.Layer):
     :return: slices: 5D Tensor (number of regions, slice_height,
     slice_width, channels)
     """
-    def __init__(self, extent=(14, 14), stride=1, **kwargs):
+    def __init__(self, extent=(14, 14), strides=1, **kwargs):
         self.channels = None
 
         self.extent = extent
 
-        self.stride = stride
+        self.stride = strides
 
         super(RegionOfInterest, self).__init__(**kwargs)
 
