@@ -175,7 +175,7 @@ class RCNN(keras.models.Model):
             output_features = keras_rcnn.models.backbone.VGG16()(target_image)
 
         convolution_3x3 = keras.layers.Conv2D(
-            filters=64,
+            filters=512,
             name="3x3",
             **options
         )(output_features)
@@ -231,11 +231,15 @@ class RCNN(keras.models.Model):
             output_proposal_bounding_boxes
         ])
 
-        output_features = keras_rcnn.layers.RegionOfInterest((14, 14))([
+        output_features = keras_rcnn.layers.RegionOfInterest((7, 7))([
             target_metadata,
             output_features,
             output_proposal_bounding_boxes
         ])
+
+        mask_features = self._mask_features()(output_features)
+
+        # RCNN sub-networks
 
         output_features = keras.layers.TimeDistributed(
             keras.layers.Flatten()
@@ -295,6 +299,57 @@ class RCNN(keras.models.Model):
         ]
 
         super(RCNN, self).__init__(inputs, outputs)
+
+    def _mask_features(self):
+        def f(x):
+            mask_features = keras.layers.TimeDistributed(
+                keras.layers.Conv2D(
+                    activation="relu",
+                    filters=256,
+                    kernel_size=(3, 3),
+                    padding="same"
+                )
+            )(x)
+
+            mask_features = keras.layers.TimeDistributed(
+                keras.layers.Conv2D(
+                    activation="relu",
+                    filters=256,
+                    kernel_size=(3, 3),
+                    padding="same"
+                )
+            )(mask_features)
+
+            mask_features = keras.layers.TimeDistributed(
+                keras.layers.Conv2D(
+                    activation="relu",
+                    filters=256,
+                    kernel_size=(3, 3),
+                    padding="same"
+                )
+            )(mask_features)
+
+            mask_features = keras.layers.TimeDistributed(
+                keras.layers.Conv2DTranspose(
+                    activation="relu",
+                    filters=256,
+                    kernel_size=(2, 2),
+                    strides=2
+                )
+            )(mask_features)
+
+            mask_features = keras.layers.TimeDistributed(
+                keras.layers.Conv2D(
+                    activation="sigmoid",
+                    filters=self.n_categories,
+                    kernel_size=(1, 1),
+                    strides=1
+                )
+            )(mask_features)
+
+            return mask_features
+
+        return f
 
     def compile(self, optimizer, **kwargs):
         super(RCNN, self).compile(optimizer, None)
