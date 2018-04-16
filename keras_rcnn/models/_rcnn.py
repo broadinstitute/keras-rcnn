@@ -69,9 +69,9 @@ class RCNN(keras.models.Model):
     backbone :
 
     dense_units : A positive integer that specifies the dimensionality of
-        the fully-connected layer.
+        the fully-connected layers.
 
-        The fully-connected layer is the layer that precedes the
+        The fully-connected layers are the layers that precede the
         fully-connected layers for the classification, regression and
         segmentation target functions.
 
@@ -113,7 +113,7 @@ class RCNN(keras.models.Model):
             anchor_scales=None,
             anchor_stride=16,
             backbone=None,
-            dense_units=512,
+            dense_units=1024,
             mask_shape=(28, 28),
             maximum_proposals=300,
             minimum_size=16
@@ -246,6 +246,14 @@ class RCNN(keras.models.Model):
                 units=dense_units,
                 activation="relu",
                 name="fc1"
+            )
+        )(output_features)
+
+        output_features = keras.layers.TimeDistributed(
+            keras.layers.Dense(
+                units=dense_units,
+                activation="relu",
+                name="fc2"
             )
         )(output_features)
 
