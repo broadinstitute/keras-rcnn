@@ -260,14 +260,6 @@ class RCNN(keras.models.Model):
             )
         )(output_features)
 
-        output_features = keras.layers.TimeDistributed(
-            keras.layers.Dense(
-                units=dense_units,
-                activation="relu",
-                name="fc2"
-            )
-        )(output_features)
-
         output_deltas = keras.layers.TimeDistributed(
             keras.layers.Dense(
                 units=4 * self.n_categories,
