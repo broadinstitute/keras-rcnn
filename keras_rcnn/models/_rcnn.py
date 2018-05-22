@@ -175,7 +175,7 @@ class RCNN(keras.models.Model):
             output_features = keras_rcnn.models.backbone.VGG16()(target_image)
 
         convolution_3x3 = keras.layers.Conv2D(
-            filters=512,
+            filters=64, 
             name="3x3",
             **options
         )(output_features)
