@@ -240,7 +240,7 @@ class RCNN(keras.models.Model):
         )
 
         output_features = keras_rcnn.layers.RegionOfInterest(
-            extent=(7, 7),
+            extent=(14, 14),
             strides=1
         )([
             target_metadata,
