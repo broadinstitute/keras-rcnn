@@ -116,7 +116,8 @@ class RCNN(keras.models.Model):
             dense_units=1024,
             mask_shape=(28, 28),
             maximum_proposals=300,
-            minimum_size=16
+            minimum_size=16,
+            balanced=True
     ):
         if anchor_aspect_ratios is None:
             anchor_aspect_ratios = [0.5, 1.0, 2.0]
@@ -283,7 +284,7 @@ class RCNN(keras.models.Model):
             target_proposal_categories,
             output_deltas,
             output_scores
-        ])
+        ], balanced=balanced)
 
         output_bounding_boxes, output_categories = keras_rcnn.layers.ObjectDetection()([
             target_metadata,

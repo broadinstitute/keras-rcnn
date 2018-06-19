@@ -5,13 +5,14 @@ import keras.layers
 
 import keras_rcnn.backend
 
-
 class RCNN(keras.layers.Layer):
     def __init__(self, **kwargs):
         super(RCNN, self).__init__(**kwargs)
 
     def classification_loss(self):
         loss = keras_rcnn.backend.softmax_classification(self.target_scores, self.output_scores, anchored=True)
+
+        loss *= self.balanced_weights
 
         return keras.backend.mean(loss)
 
@@ -32,7 +33,7 @@ class RCNN(keras.layers.Layer):
 
         return keras.backend.sum(loss) / keras.backend.maximum(keras.backend.epsilon(), keras.backend.sum(target_scores))
 
-    def call(self, inputs, **kwargs):
+    def call(self, inputs, balanced=None, **kwargs):
         target_deltas, target_scores, output_deltas, output_scores = inputs
 
         self.target_deltas = target_deltas
@@ -40,6 +41,14 @@ class RCNN(keras.layers.Layer):
 
         self.output_deltas = output_deltas
         self.output_scores = output_scores
+
+        self.N = keras.backend.shape(output_deltas)[1]
+        self.balanced_weights = keras.backend.ones((self.N, ), dtype=keras.backend.floatx())
+        if balanced is not None:
+            weights = keras.backend.dot(self.target_scores[0], keras.backend.reshape(keras.backend.sum(self.target_scores, axis=1), (-1, 1)))
+            weights = keras.backend.reshape(weights, (-1,))
+            weights = 1./keras.backend.maximum(keras.backend.ones_like(weights) * keras.backend.epsilon(), weights)
+            self.balanced_weights = weights
 
         loss = self.classification_loss() + self.regression_loss()
 
