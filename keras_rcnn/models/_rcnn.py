@@ -173,31 +173,83 @@ class RCNN(keras.models.Model):
         ]
 
         if backbone:
-            output_features = backbone()(target_image)
+            convolution_2, convolution_3, convolution_4, convolution_5 = backbone()(target_image)
         else:
-            output_features = keras_rcnn.models.backbone.ResNet50()(target_image)
+            convolution_2, convolution_3, convolution_4, convolution_5 = keras_rcnn.models.backbone.ResNet50()(target_image)
 
-        convolution_3x3 = keras.layers.Conv2D(
-            filters=64,
-            name="3x3",
-            **options
-        )(output_features)
+        # Feature Pyramid Network (FPN)
 
-        output_deltas = keras.layers.Conv2D(
-            filters=k * 4,
-            kernel_size=(1, 1),
-            activation="linear",
-            kernel_initializer="zero",
-            name="deltas1"
-        )(convolution_3x3)
+        pyramid_5 = keras.layers.Conv2D(256, (1, 1))(convolution_5)
 
-        output_scores = keras.layers.Conv2D(
-            filters=k * 1,
-            kernel_size=(1, 1),
-            activation="sigmoid",
-            kernel_initializer="uniform",
-            name="scores1"
-        )(convolution_3x3)
+        pyramid_4 = keras.layers.Add()(
+            [
+                keras.layers.UpSampling2D((2, 2))(pyramid_5),
+                keras.layers.Conv2D(256, (1, 1))(convolution_4)
+            ]
+        )
+
+        pyramid_3 = keras.layers.Add()(
+            [
+                keras.layers.UpSampling2D((2, 2))(pyramid_4),
+                keras.layers.Conv2D(256, (1, 1))(convolution_3)
+            ]
+        )
+
+        pyramid_2 = keras.layers.Add()(
+            [
+                keras.layers.UpSampling2D((2, 2))(pyramid_3),
+                keras.layers.Conv2D(256, (1, 1))(convolution_2)
+            ]
+        )
+
+        pyramid_2 = keras.layers.Conv2D(256, (3, 3), padding="same")(pyramid_2)
+        pyramid_3 = keras.layers.Conv2D(256, (3, 3), padding="same")(pyramid_3)
+        pyramid_4 = keras.layers.Conv2D(256, (3, 3), padding="same")(pyramid_4)
+        pyramid_5 = keras.layers.Conv2D(256, (3, 3), padding="same")(pyramid_5)
+
+        pyramid_6 = keras.layers.MaxPooling2D((1, 1), strides=2)(pyramid_5)
+
+        proposal_features = [
+            pyramid_2,
+            pyramid_3,
+            pyramid_4,
+            pyramid_5,
+            pyramid_6
+        ]
+
+        output_features = [
+            pyramid_2,
+            pyramid_3,
+            pyramid_4,
+            pyramid_5
+        ]
+
+        # Region Proposal Network (RPN)
+
+        proposals = []
+
+        for features in proposal_features:
+            output_deltas = keras.layers.Conv2D(
+                filters=k * 4,
+                kernel_size=(1, 1),
+                activation="linear",
+                kernel_initializer="zero"
+            )(features)
+
+            output_scores = keras.layers.Conv2D(
+                filters=k * 1,
+                kernel_size=(1, 1),
+                activation="sigmoid",
+                kernel_initializer="uniform"
+            )(features)
+
+            proposals += [output_deltas, output_scores]
+
+        proposals = list(zip(*proposals))
+
+        outputs = [keras.layers.Concatenate(axis=1, name=n)(list(o)) for o, n in zip(outputs, ["output_deltas", "output_scores"])]
+
+        output_deltas, output_scores = outputs
 
         target_anchors, target_proposal_bounding_boxes, target_proposal_categories = keras_rcnn.layers.Anchor(
             padding=anchor_padding,
