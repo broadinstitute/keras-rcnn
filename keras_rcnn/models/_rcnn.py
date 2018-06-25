@@ -81,6 +81,8 @@ class RCNN(keras.models.Model):
         increase the number of learnable parameters and memory needed by
         the model.
 
+    extent : A shape tuple (integer).
+
     mask_shape : A shape tuple (integer).
 
     maximum_proposals : A positive integer that specifies the maximum
@@ -114,6 +116,7 @@ class RCNN(keras.models.Model):
             anchor_stride=16,
             backbone=None,
             dense_units=1024,
+            extent=(14, 14),
             mask_shape=(28, 28),
             maximum_proposals=300,
             minimum_size=16
@@ -172,10 +175,10 @@ class RCNN(keras.models.Model):
         if backbone:
             output_features = backbone()(target_image)
         else:
-            output_features = keras_rcnn.models.backbone.VGG16()(target_image)
+            output_features = keras_rcnn.models.backbone.ResNet50()(target_image)
 
         convolution_3x3 = keras.layers.Conv2D(
-            filters=64, 
+            filters=64,
             name="3x3",
             **options
         )(output_features)
@@ -240,7 +243,7 @@ class RCNN(keras.models.Model):
         )
 
         output_features = keras_rcnn.layers.RegionOfInterest(
-            extent=(14, 14),
+            extent=extent,
             strides=1
         )([
             target_metadata,
@@ -249,7 +252,11 @@ class RCNN(keras.models.Model):
         ])
 
         output_features = keras.layers.TimeDistributed(
-            keras.layers.Flatten()
+            keras.layers.Dense(
+                units=dense_units,
+                activation="relu",
+                name="fc1"
+            )
         )(output_features)
 
         output_features = keras.layers.TimeDistributed(
@@ -258,6 +265,10 @@ class RCNN(keras.models.Model):
                 activation="relu",
                 name="fc1"
             )
+        )(output_features)
+
+        output_features = keras.layers.TimeDistributed(
+            keras.layers.Flatten()
         )(output_features)
 
         output_deltas = keras.layers.TimeDistributed(
