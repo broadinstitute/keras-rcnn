@@ -247,7 +247,7 @@ class RCNN(keras.models.Model):
 
         proposals = list(zip(*proposals))
 
-        outputs = [keras.layers.Concatenate(axis=1, name=n)(list(o)) for o, n in zip(outputs, ["output_deltas", "output_scores"])]
+        outputs = [keras.layers.Concatenate(axis=1, name=n)(list(o)) for o, n in zip(proposals, ["output_deltas", "output_scores"])]
 
         output_deltas, output_scores = outputs
 
