@@ -243,13 +243,18 @@ class RCNN(keras.models.Model):
                 kernel_initializer="uniform"
             )(features)
 
-            proposals += [output_deltas, output_scores]
+            proposals += [(output_deltas, output_scores)]
 
         proposals = list(zip(*proposals))
 
-        outputs = [keras.layers.Concatenate(axis=1, name=n)(list(o)) for o, n in zip(proposals, ["output_deltas", "output_scores"])]
+        #         names = [
+        #             "output_deltas",
+        #             "output_scores"
+        #         ]
 
-        output_deltas, output_scores = outputs
+        #         outputs = [keras.layers.Concatenate(axis=1, name=n)(list(o)) for o, n in zip(proposals, names)]
+
+        output_deltas, output_scores = proposals
 
         anchors = []
 
@@ -266,21 +271,22 @@ class RCNN(keras.models.Model):
                 scores
             ])
 
-            anchors += [
-                target_anchors,
-                target_proposal_bounding_boxes,
-                target_proposal_categories
-            ]
+            anchors += [(target_anchors, target_proposal_bounding_boxes, target_proposal_categories)]
+
+        anchors = list(zip(*anchors))
 
         names = [
             "target_anchors",
-            "target_proposal_bounding_boxes"
+            "target_proposal_bounding_boxes",
             "target_proposal_categories"
         ]
 
         anchors = [keras.layers.Concatenate(axis=1, name=n)(list(o)) for o, n in zip(anchors, names)]
 
         target_anchors, target_proposal_bounding_boxes, target_proposal_categories = anchors
+
+        # FIXME: concatenate `output_deltas` and `output_scores`
+        output_deltas, output_scores = output_deltas[0], output_scores[0]
 
         output_deltas, output_scores = keras_rcnn.layers.RPN()([
             target_proposal_bounding_boxes,
