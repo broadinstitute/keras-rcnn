@@ -7,7 +7,7 @@ import tensorflow
 import keras_rcnn.backend
 
 
-class ObjectDetection(keras.engine.topology.Layer):
+class ObjectDetection(keras.layers.Layer):
     def __init__(self, padding=300, **kwargs):
         self.padding = padding
 
