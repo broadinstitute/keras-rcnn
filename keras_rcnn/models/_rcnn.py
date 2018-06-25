@@ -251,17 +251,36 @@ class RCNN(keras.models.Model):
 
         output_deltas, output_scores = outputs
 
-        target_anchors, target_proposal_bounding_boxes, target_proposal_categories = keras_rcnn.layers.Anchor(
-            padding=anchor_padding,
-            aspect_ratios=anchor_aspect_ratios,
-            base_size=anchor_base_size,
-            scales=anchor_scales,
-            stride=anchor_stride,
-        )([
-            target_bounding_boxes,
-            target_metadata,
-            output_scores
-        ])
+        anchors = []
+
+        for scores in output_scores:
+            target_anchors, target_proposal_bounding_boxes, target_proposal_categories = keras_rcnn.layers.Anchor(
+                padding=anchor_padding,
+                aspect_ratios=anchor_aspect_ratios,
+                base_size=anchor_base_size,
+                scales=anchor_scales,
+                stride=anchor_stride,
+            )([
+                target_bounding_boxes,
+                target_metadata,
+                scores
+            ])
+
+            anchors += [
+                target_anchors,
+                target_proposal_bounding_boxes,
+                target_proposal_categories
+            ]
+
+        names = [
+            "target_anchors",
+            "target_proposal_bounding_boxes"
+            "target_proposal_categories"
+        ]
+
+        anchors = [keras.layers.Concatenate(axis=1, name=n)(list(o)) for o, n in zip(anchors, names)]
+
+        target_anchors, target_proposal_bounding_boxes, target_proposal_categories = anchors
 
         output_deltas, output_scores = keras_rcnn.layers.RPN()([
             target_proposal_bounding_boxes,
