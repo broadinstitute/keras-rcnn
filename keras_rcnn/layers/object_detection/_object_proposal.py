@@ -7,7 +7,7 @@ import keras_rcnn.backend
 import keras_rcnn.layers
 
 
-class ObjectProposal(keras.engine.topology.Layer):
+class ObjectProposal(keras.layers.Layer):
     """Propose object-containing regions from anchors
 
     # Arguments

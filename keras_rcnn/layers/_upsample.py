@@ -5,7 +5,7 @@ import keras.engine.topology
 import keras_rcnn.backend
 
 
-class Upsample(keras.engine.topology.Layer):
+class Upsample(keras.layers.Layer):
     def __init__(self, **kwargs):
         super(Upsample, self).__init__(**kwargs)
 

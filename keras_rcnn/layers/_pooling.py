@@ -5,7 +5,7 @@ import keras.engine.topology
 import keras_rcnn.backend
 
 
-class RegionOfInterest(keras.engine.topology.Layer):
+class RegionOfInterest(keras.layers.Layer):
     """
     ROI pooling layer proposed in Mask R-CNN (Kaiming He et. al.).
 
