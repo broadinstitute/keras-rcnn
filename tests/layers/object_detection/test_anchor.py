@@ -49,9 +49,9 @@ class TestAnchor:
         result1 = keras.backend.eval(argmax_overlaps_inds)
         result2 = keras.backend.eval(anchor_labels)
 
-        assert result1.shape == (32,), keras.backend.eval(inds_inside).shape
+        assert result1.shape == (224,), keras.backend.eval(inds_inside).shape
 
-        assert result2.shape == (32,)
+        assert result2.shape == (224,)
 
         assert numpy.max(result2) <= 1
 
@@ -62,9 +62,9 @@ class TestAnchor:
         result1 = keras.backend.eval(argmax_overlaps_inds)
         result2 = keras.backend.eval(anchor_labels)
 
-        assert result1.shape == (32,)
+        assert result1.shape == (224,)
 
-        assert result2.shape == (32,)
+        assert result2.shape == (224,)
 
         assert numpy.max(result2) <= 1
 
@@ -78,9 +78,9 @@ class TestAnchor:
         result1 = keras.backend.eval(argmax_overlaps_inds)
         result2 = keras.backend.eval(anchor_labels)
 
-        assert result1.shape == (32,)
+        assert result1.shape == (224,)
 
-        assert result2.shape == (32,)
+        assert result2.shape == (224,)
 
         assert numpy.max(result2) <= 1
 
@@ -167,16 +167,16 @@ class TestAnchor:
         max_overlaps = keras.backend.eval(max_overlaps)
         gt_argmax_overlaps_inds = keras.backend.eval(gt_argmax_overlaps_inds)
 
-        assert a.shape == (32,)
+        assert a.shape == (224,)
 
-        assert max_overlaps.shape == (32,)
+        assert max_overlaps.shape == (224,)
 
         assert gt_argmax_overlaps_inds.shape == (91,)
 
     def test_unmap(self, anchor_layer):
         stride = 16
         features = (14, 14)
-        anchors = 9
+        anchors = 15
         total_anchors = features[0] * features[1] * anchors
         img_info = keras.backend.variable([[224, 224, 3]])
         gt_boxes = numpy.zeros((91, 4))
@@ -220,11 +220,11 @@ class TestAnchor:
 
         inds_inside = keras.backend.eval(inds_inside)
 
-        assert inds_inside.shape == (32,), keras.backend.eval(all_inside_anchors)
+        assert inds_inside.shape == (224,), keras.backend.eval(all_inside_anchors)
 
         all_inside_anchors = keras.backend.eval(all_inside_anchors)
 
-        assert all_inside_anchors.shape == (32, 4)
+        assert all_inside_anchors.shape == (224, 4)
 
     def test_inside_and_outside_weights_1(self, anchor_layer):
         anchors = numpy.array(
