@@ -25,7 +25,7 @@ class Anchor(keras.layers.Layer):
             aspect_ratios = [0.5, 1, 2]  # [1:2, 1:1, 2:1]
 
         if scales is None:
-            scales = [4, 8, 16]  # [128^{2}, 256^{2}, 512^{2}]
+            scales = [1, 2, 4, 8, 16]  # [32^{2}, 64^{2}, 128^{2}, 256^{2}, 512^{2}]
 
         self.padding = padding
 
