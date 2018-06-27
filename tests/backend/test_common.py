@@ -176,18 +176,18 @@ def test_whctrs():
 def test_shift():
     y = keras_rcnn.backend.shift((14, 14), 16)
 
-    assert keras.backend.eval(y).shape == (1764, 4), keras.backend.eval(y).shape
+    assert keras.backend.eval(y).shape == (2940, 4), keras.backend.eval(y).shape
 
     assert y.dtype == keras.backend.floatx()
 
 
 def test_bbox_transform_inv():
-    anchors = 9
+    anchors = 15
     features = (14, 14)
     shifted = keras_rcnn.backend.shift(features, 16)
     deltas = numpy.zeros((features[0] * features[1] * anchors, 4), numpy.float32)
     pred_boxes = keras_rcnn.backend.bbox_transform_inv(shifted, deltas)
-    assert keras.backend.eval(pred_boxes).shape == (1764, 4)
+    assert keras.backend.eval(pred_boxes).shape == (2940, 4)
 
     rois = numpy.array([[ 55.456726,  67.949135,  86.19536 ,  98.13131 ],
        [101.945526,   0.      , 125.88675 ,  37.465652],
