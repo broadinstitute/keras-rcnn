@@ -49,7 +49,7 @@ Let’s read and inspect some data:
 
     target_categories = numpy.squeeze(target_categories)
 
-    keras_rcnn.util.show_bounding_boxes(target_image, target_bounding_boxes, target_categories)
+    keras_rcnn.utils.show_bounding_boxes(target_images, target_bounding_boxes, target_categories)
 
 
 Let’s create an RCNN instance:
