@@ -3,7 +3,6 @@
 import keras.backend
 import keras.layers
 
-
 class RCNNMaskLoss(keras.layers.Layer):
     def __init__(self, threshold=0.5, **kwargs):
         self.threshold = threshold
@@ -24,6 +23,7 @@ class RCNNMaskLoss(keras.layers.Layer):
             training=training
         )
         """
+
         loss = self.compute_mask_loss(
             target_bounding_box=target_boxes,
             output_bounding_box=predicred_boxes,
@@ -91,7 +91,9 @@ class RCNNMaskLoss(keras.layers.Layer):
         """
         epsilon = keras.backend.epsilon()
 
-        intermediate = keras.backend.dot(target, keras.backend.transpose(keras.backend.log(output + epsilon))) + keras.backend.dot((1. - target), keras.backend.transpose(keras.backend.log(1. - output + epsilon)))
+        intermediate = keras.backend.dot(target, keras.backend.transpose(keras.backend.log(output + epsilon))) \
+                       + keras.backend.dot((1. - target),
+                                           keras.backend.transpose(keras.backend.log(1. - output + epsilon)))
 
         return - intermediate / keras.backend.cast(keras.backend.shape(target)[1], dtype=keras.backend.floatx())
 
@@ -100,17 +102,18 @@ class RCNNMaskLoss(keras.layers.Layer):
         """
         Args:
             _sentinel: internal use only
-            output: network output after softmax or sigmoid of size (n_masks1,N)
-            labels: target image (n_masks2,N)
+            labels: target image (n_masks1,N)
+            output: network output after softmax or sigmoid of size (n_masks2,N)
         Returns:
             Tensor with shape (n_masks1, n_masks2)
-            with the categorial cross entropy between probs and labels
+            with the categorical cross entropy between probs and labels
             in [i,j]
         """
         epsilon = keras.backend.epsilon()
+        cce = -keras.backend.dot(target, keras.backend.transpose(keras.backend.log(output + epsilon)))
 
         # TODO: normalize dot product, size of the logits / number of classes
-        return -keras.backend.dot(target, keras.backend.transpose(keras.backend.log(output + epsilon)))
+        return cce
 
     @staticmethod
     def compute_mask_loss(_sentinel=None, target_bounding_box=None, output_bounding_box=None, target_mask=None, output_mask=None, threshold=0.5):
@@ -119,31 +122,36 @@ class RCNNMaskLoss(keras.layers.Layer):
             _sentinel: internal use only
             target_bounding_box: ground truth bounding boxes (1,total_boxes1,4)
             output_bounding_box: predicted bounding boxes (1,total_boxes2,4)
-            target_mask: ground truth masks (1,total_masks1,N,M)
-            output_mask: predicted masks (1,total_masks2,N,M)
+            target_mask: ground truth masks (1,total_boxes1,N,M)
+            output_mask: predicted masks (1,total_boxes2,N,M)
             threshold: a scalar iou value after which bounding box is valid for bce
-        Retruns:
+        Returns:
             Mean binary cross entropy if IoU between bounding boxes is greater than threshold
 
         """
+
         target_bounding_box = keras.backend.squeeze(target_bounding_box, axis=0)
         output_bounding_box = keras.backend.squeeze(output_bounding_box, axis=0)
 
         index = keras.backend.prod(keras.backend.shape(target_mask)[2:])
 
+        output_mask = output_mask[:, :, :, :, 1]
         target_mask = keras.backend.reshape(target_mask, [-1, index])
         output_mask = keras.backend.reshape(output_mask, [-1, index])
 
         iou = RCNNMaskLoss.intersection_over_union(target_bounding_box, output_bounding_box)
 
-        a = RCNNMaskLoss.categorical_crossentropy(target_mask, output_mask)
+        a = RCNNMaskLoss.categorical_crossentropy(target=target_mask, output=output_mask)
 
         b = keras.backend.greater(iou, threshold)
         b = keras.backend.cast(b, dtype=keras.backend.floatx())
 
+        loss = keras.backend.mean(a * b)
+
         # TODO: we should try:
         #   `keras.backend.mean(a * b) + keras.backend.mean(1 - b)`
-        return keras.backend.mean(a * b)
+
+        return loss
 
     def compute_output_shape(self, input_shape):
         return input_shape[3]

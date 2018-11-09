@@ -4,6 +4,7 @@ import keras.backend
 import keras.layers
 
 import keras_rcnn.backend
+from ._mask_rcnn import RCNNMaskLoss # MATT
 
 
 class RCNN(keras.layers.Layer):
@@ -43,7 +44,7 @@ class RCNN(keras.layers.Layer):
 
         loss = self.classification_loss() + self.regression_loss()
 
-        self.add_loss(loss)
+        self.add_loss(loss, inputs)
 
         return [output_deltas, output_scores]
 

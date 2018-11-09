@@ -300,9 +300,18 @@ class RCNN(keras.models.Model):
             output_scores
         ])
 
+
+        output_masks = keras_rcnn.layers.losses.RCNNMaskLoss()([
+            target_bounding_boxes,
+            output_bounding_boxes,
+            target_masks,
+            mask_features
+        ])
+
         outputs = [
             output_bounding_boxes,
-            output_categories
+            output_categories,
+            output_masks
         ]
 
         super(RCNN, self).__init__(inputs, outputs)
