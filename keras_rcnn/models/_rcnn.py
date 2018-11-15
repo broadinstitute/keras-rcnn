@@ -231,15 +231,6 @@ class RCNN(keras.models.Model):
             output_proposal_bounding_boxes
         ])
 
-        output_features = keras_rcnn.layers.RegionOfInterest(
-            extent=(14, 14),
-            strides=2
-        )([
-            target_metadata,
-            output_features,
-            output_proposal_bounding_boxes
-        ])
-
         mask_features = self._mask_network()(
             [
                 target_metadata,
@@ -247,6 +238,15 @@ class RCNN(keras.models.Model):
                 output_proposal_bounding_boxes
             ]
         )
+
+        output_features = keras_rcnn.layers.RegionOfInterest(
+            extent=(7, 7),
+            strides=1
+        )([
+            target_metadata,
+            output_features,
+            output_proposal_bounding_boxes
+        ])
 
         output_features = keras.layers.TimeDistributed(
             keras.layers.Dense(
@@ -300,7 +300,6 @@ class RCNN(keras.models.Model):
             output_scores
         ])
 
-
         output_masks = keras_rcnn.layers.losses.RCNNMaskLoss()([
             target_bounding_boxes,
             output_bounding_boxes,
@@ -320,14 +319,14 @@ class RCNN(keras.models.Model):
         def f(x):
             target_metadata, output_features, output_proposal_bounding_boxes = x
 
-            # mask_features = keras_rcnn.layers.RegionOfInterest(
-            #     extent=(14, 14),
-            #     strides=2
-            # )([
-            #     target_metadata,
-            #     output_features,
-            #     output_proposal_bounding_boxes
-            # ])
+            mask_features = keras_rcnn.layers.RegionOfInterest(
+                extent=(14, 14),
+                strides=2,
+            )([
+                target_metadata,
+                output_features,
+                output_proposal_bounding_boxes
+            ])
 
             mask_features = keras.layers.TimeDistributed(
                 keras.layers.Conv2D(
@@ -336,7 +335,16 @@ class RCNN(keras.models.Model):
                     kernel_size=(3, 3),
                     padding="same"
                 )
-            )(output_features)
+            )(mask_features)
+
+            mask_features = keras.layers.TimeDistributed(
+                keras.layers.Conv2D(
+                    activation="relu",
+                    filters=256,
+                    kernel_size=(3, 3),
+                    padding="same"
+                )
+            )(mask_features)
 
             mask_features = keras.layers.TimeDistributed(
                 keras.layers.Conv2D(
@@ -368,7 +376,8 @@ class RCNN(keras.models.Model):
             mask_features = keras.layers.TimeDistributed(
                 keras.layers.Conv2D(
                     activation="sigmoid",
-                    filters=self.n_categories,
+                    # filters=self.n_categories,
+                    filters=1,
                     kernel_size=(1, 1),
                     strides=1
                 )

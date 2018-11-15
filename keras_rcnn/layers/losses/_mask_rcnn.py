@@ -110,9 +110,9 @@ class RCNNMaskLoss(keras.layers.Layer):
             in [i,j]
         """
         epsilon = keras.backend.epsilon()
-        cce = -keras.backend.dot(target, keras.backend.transpose(keras.backend.log(output + epsilon)))
 
         # TODO: normalize dot product, size of the logits / number of classes
+        cce = -keras.backend.dot(target, keras.backend.transpose(keras.backend.log(output + epsilon)))
         return cce
 
     @staticmethod
@@ -133,9 +133,9 @@ class RCNNMaskLoss(keras.layers.Layer):
         target_bounding_box = keras.backend.squeeze(target_bounding_box, axis=0)
         output_bounding_box = keras.backend.squeeze(output_bounding_box, axis=0)
 
-        index = keras.backend.prod(keras.backend.shape(target_mask)[2:])
+        index = keras.backend.prod(keras.backend.shape(target_mask)[1:])
 
-        output_mask = output_mask[:, :, :, :, 1]
+        # output_mask = output_mask[:, :, :, :, 1]
         target_mask = keras.backend.reshape(target_mask, [-1, index])
         output_mask = keras.backend.reshape(output_mask, [-1, index])
 
@@ -146,7 +146,9 @@ class RCNNMaskLoss(keras.layers.Layer):
         b = keras.backend.greater(iou, threshold)
         b = keras.backend.cast(b, dtype=keras.backend.floatx())
 
-        loss = keras.backend.mean(a * b)
+
+        loss = keras.backend.sum(a * b) / keras.backend.sum(a)
+        # loss = keras.backend.mean(keras.backend.diag(a * b))
 
         # TODO: we should try:
         #   `keras.backend.mean(a * b) + keras.backend.mean(1 - b)`
