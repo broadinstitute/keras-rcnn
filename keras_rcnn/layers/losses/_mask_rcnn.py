@@ -133,7 +133,7 @@ class RCNNMaskLoss(keras.layers.Layer):
         target_bounding_box = keras.backend.squeeze(target_bounding_box, axis=0)
         output_bounding_box = keras.backend.squeeze(output_bounding_box, axis=0)
 
-        index = keras.backend.prod(keras.backend.shape(target_mask)[1:])
+        index = keras.backend.prod(keras.backend.shape(target_mask)[2:])
 
         # output_mask = output_mask[:, :, :, :, 1]
         target_mask = keras.backend.reshape(target_mask, [-1, index])
