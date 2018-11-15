@@ -61,7 +61,7 @@ class RegionOfInterest(keras.layers.Layer):
         x2 = keras.backend.expand_dims(x2, axis=2)
         y2 = keras.backend.expand_dims(y2, axis=2)
 
-        boxes = keras.backend.concatenate([y1, x1, y2, x2], axis=2)
+        boxes = keras.backend.concatenate([x1, y1, x2, y2], axis=2)
         boxes = keras.backend.reshape(boxes, (-1, 4))
 
         slices = keras_rcnn.backend.crop_and_resize(image, boxes, self.extent)
