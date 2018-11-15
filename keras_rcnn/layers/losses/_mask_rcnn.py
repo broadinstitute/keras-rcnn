@@ -147,8 +147,8 @@ class RCNNMaskLoss(keras.layers.Layer):
         b = keras.backend.cast(b, dtype=keras.backend.floatx())
 
 
-        loss = keras.backend.sum(a * b) / keras.backend.sum(b)
-        # loss = keras.backend.mean(keras.backend.diag(a * b))
+        loss = keras.backend.sum(a * b)
+        # loss = keras.backend.mean(a * b)
 
         # TODO: we should try:
         #   `keras.backend.mean(a * b) + keras.backend.mean(1 - b)`
