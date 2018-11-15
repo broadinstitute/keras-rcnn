@@ -375,7 +375,7 @@ class RCNN(keras.models.Model):
 
             mask_features = keras.layers.TimeDistributed(
                 keras.layers.Conv2D(
-                    activation="sigmoid",
+                    activation="softmax",
                     # filters=self.n_categories,
                     filters=1,
                     kernel_size=(1, 1),

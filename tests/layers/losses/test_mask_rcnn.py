@@ -103,7 +103,7 @@ class TestMaskRCNN:
         # print(lossCCE)
 
         assert lossBCE == lossCCE
-        assert True
+        # assert True
 
     def test_compute_mask_loss(self):
         layer = keras_rcnn.layers.losses.RCNNMaskLoss()
@@ -139,7 +139,7 @@ class TestMaskRCNN:
 
         y_true = numpy.random.randint(0, 2, (1, nbTar, mask_size, mask_size))
         target_masks = keras.backend.tf.convert_to_tensor(y_true, dtype=keras.backend.tf.float32)
-        y_pred = numpy.random.randint(0, 2, (1, nbOut, mask_size, mask_size, 2))
+        y_pred = numpy.random.randint(0, 2, (1, nbOut, mask_size, mask_size))
         output_masks = keras.backend.tf.convert_to_tensor(y_pred, dtype=keras.backend.tf.float32)
 
         loss = layer.compute_mask_loss(
@@ -153,29 +153,29 @@ class TestMaskRCNN:
 
         bb_pred = numpy.squeeze(bb_pred, axis=0)
         bb_true = numpy.squeeze(bb_true, axis=0)
-        count = 0
-        icount = 0
+        count = 0.0
+        icount = 0.0
         for i in range(0, nbTar):
             for j in range(0, nbOut):
                 iou = bb_intersection_over_union(bb_true[i,:], bb_pred[j,:])
                 if iou > threshold:
                     tm = keras.backend.eval(target_masks[0,i,:,:])
-                    om = keras.backend.eval(output_masks[0,j,:,:,1])
+                    om = keras.backend.eval(output_masks[0,j,:,:])
                     tm = keras.backend.tf.convert_to_tensor(numpy.array([tm.flatten()]))
                     om = keras.backend.tf.convert_to_tensor(numpy.array([om.flatten()]))
                     cce = keras.backend.eval(layer.categorical_crossentropy(target=tm,output=om))[0,0]
                     count += cce
-                    icount += 1
+                    icount += 1.0
 
         if icount > 0:
-            expected_loss = count/nbTar/nbOut
+            expected_loss = count/icount
         else:
             print("Irrelevant test, needs to be launched again")
 
         # print('')
         # print(loss)
         # print(expected_loss)
-        assert round(expected_loss*1000) == round(loss*1000)
+        assert round(expected_loss*100) == round(loss*100)
 
     def test_intersection_over_union(self):
         s1 = 50
@@ -225,7 +225,7 @@ class TestMaskRCNN:
         tbb = numpy.random.random((1, nb1, 4))
         obb = numpy.random.random((1, nb2, 4))
         tm = numpy.random.random((1, nb1 + 1, N, M))
-        om = numpy.random.random((1, nb2, N, M, 2))
+        om = numpy.random.random((1, nb2, N, M))
         target_bounding_box = keras.backend.tf.convert_to_tensor(tbb, dtype=keras.backend.tf.float32)
         output_bounding_box = keras.backend.tf.convert_to_tensor(obb, dtype=keras.backend.tf.float32)
         target_mask = keras.backend.tf.convert_to_tensor(tm, dtype=keras.backend.tf.float32)
@@ -240,7 +240,7 @@ class TestMaskRCNN:
 
         # TEST SIZE OUTPUT ---------------------------------------------------------------------------------------------
         tm = numpy.random.random((1, nb1, N, M))
-        om = numpy.random.random((1, nb2 + 1, N, M, 2))
+        om = numpy.random.random((1, nb2 + 1, N, M))
         target_mask = keras.backend.tf.convert_to_tensor(tm, dtype=keras.backend.tf.float32)
         output_mask = keras.backend.tf.convert_to_tensor(om, dtype=keras.backend.tf.float32)
 
@@ -255,7 +255,7 @@ class TestMaskRCNN:
         tbb = numpy.random.random((1, nb1, 3))
         obb = numpy.random.random((1, nb2, 4))
         tm = numpy.random.random((1, nb1, N, M))
-        om = numpy.random.random((1, nb2, N, M, 2))
+        om = numpy.random.random((1, nb2, N, M))
         target_bounding_box = keras.backend.tf.convert_to_tensor(tbb, dtype=keras.backend.tf.float32)
         output_bounding_box = keras.backend.tf.convert_to_tensor(obb, dtype=keras.backend.tf.float32)
         target_mask = keras.backend.tf.convert_to_tensor(tm, dtype=keras.backend.tf.float32)
@@ -296,7 +296,7 @@ class TestMaskRCNN:
         tbb = numpy.random.random((nb1, 4))
         obb = numpy.random.random((nb2, 4))
         tm = numpy.random.random((nb1, N, M))
-        om = numpy.random.random((nb2, N, M, 2))
+        om = numpy.random.random((nb2, N, M))
         target_bounding_box = keras.backend.tf.convert_to_tensor(tbb, dtype=keras.backend.tf.float32)
         output_bounding_box = keras.backend.tf.convert_to_tensor(obb, dtype=keras.backend.tf.float32)
         target_mask = keras.backend.tf.convert_to_tensor(tm, dtype=keras.backend.tf.float32)
@@ -313,7 +313,7 @@ class TestMaskRCNN:
         tbb = numpy.random.random((1, nb1, 4))
         obb = numpy.random.random((1, nb2, 4))
         tm = numpy.random.random((1, nb1, N, M))
-        om = numpy.random.random((1, nb2, N, M))
+        om = numpy.random.random((1, nb2, N, M, 2))
         target_bounding_box = keras.backend.tf.convert_to_tensor(tbb, dtype=keras.backend.tf.float32)
         output_bounding_box = keras.backend.tf.convert_to_tensor(obb, dtype=keras.backend.tf.float32)
         target_mask = keras.backend.tf.convert_to_tensor(tm, dtype=keras.backend.tf.float32)
@@ -326,4 +326,4 @@ class TestMaskRCNN:
                                     output_mask=output_mask)
         print(e_info)
 
-        pass
+        assert True
