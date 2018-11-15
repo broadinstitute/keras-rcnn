@@ -132,16 +132,18 @@ class RCNNMaskLoss(keras.layers.Layer):
 
         target_bounding_box = keras.backend.squeeze(target_bounding_box, axis=0)
         output_bounding_box = keras.backend.squeeze(output_bounding_box, axis=0)
+        target_mask = keras.backend.squeeze(target_mask, axis=0)
+        output_mask = keras.backend.squeeze(output_mask, axis=0)
 
         index = keras.backend.prod(keras.backend.shape(target_mask)[2:])
 
-        target_mask = keras.backend.reshape(keras.backend.squeeze(target_mask, axis=0), [-1, index])
-        output_mask = keras.backend.reshape(keras.backend.squeeze(output_mask, axis=0), [-1, index])
+        target_mask = keras.backend.reshape(target_mask, [-1, index])
+        output_mask = keras.backend.reshape(output_mask, [-1, index])
 
         iou = RCNNMaskLoss.intersection_over_union(target_bounding_box, output_bounding_box)
         # print(keras.backend.eval(output_mask))
         a = RCNNMaskLoss.categorical_crossentropy(target=target_mask, output=output_mask)
-        a = keras.backend.categorical_crossentropy(target=target_mask, output=output_mask)
+        # a = keras.backend.categorical_crossentropy(target=target_mask, output=output_mask)
         # print(keras.backend.eval(a).shape)
         b = keras.backend.greater(iou, threshold)
         b = keras.backend.cast(b, dtype=keras.backend.floatx())
