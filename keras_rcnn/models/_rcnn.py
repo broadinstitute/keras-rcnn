@@ -321,7 +321,7 @@ class RCNN(keras.models.Model):
 
             mask_features = keras_rcnn.layers.RegionOfInterest(
                 extent=(14, 14),
-                strides=1,
+                strides=2,
             )([
                 target_metadata,
                 output_features,
@@ -376,8 +376,7 @@ class RCNN(keras.models.Model):
             mask_features = keras.layers.TimeDistributed(
                 keras.layers.Conv2D(
                     activation="sigmoid",
-                    # filters=self.n_categories,
-                    filters=1,
+                    filters=self.n_categories-1,
                     kernel_size=(1, 1),
                     strides=1
                 )
