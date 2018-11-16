@@ -147,7 +147,8 @@ class RCNNMaskLoss(keras.layers.Layer):
 
         iou = RCNNMaskLoss.intersection_over_union(target_bounding_box, output_bounding_box)
         # print(keras.backend.eval(output_mask))
-        a = RCNNMaskLoss.categorical_crossentropy(target=labels, output=output_mask)
+        # a = RCNNMaskLoss.categorical_crossentropy(target=labels, output=output_mask)
+        a = RCNNMaskLoss.binary_crossentropy(target=labels, output=output_mask)
         # a = keras.backend.categorical_crossentropy(target=target_mask, output=output_mask)
         # print(keras.backend.eval(a).shape)
         b = keras.backend.greater(iou, threshold)
