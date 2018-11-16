@@ -11,9 +11,9 @@ def ResNet50():
             inputs=x
         )
 
-        _, _, _, convolution_5 = y.outputs
+        _, _, convolution_4, _ = y.outputs
 
-        return convolution_5
+        return convolution_4
 
     return f
 
