@@ -140,8 +140,10 @@ class RCNNMaskLoss(keras.layers.Layer):
         target_mask = keras.backend.reshape(target_mask, [-1, index])
         output_mask = keras.backend.reshape(output_mask, [-1, index])
 
-        labels = keras.backend.cast((output_mask>0.5),'float32')
-        labels = keras.backend.cast((labels==target_mask),'float32')
+        labels = keras.backend.greater(output_mask, 0.5)
+        labels = keras.backend.cast(labels, dtype=keras.backend.floatx())
+        labels = keras.backend.equal(labels, target_mask)
+        labels = keras.backend.cast(labels, dtype=keras.backend.floatx())
 
         iou = RCNNMaskLoss.intersection_over_union(target_bounding_box, output_bounding_box)
         # print(keras.backend.eval(output_mask))
