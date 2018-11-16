@@ -140,7 +140,7 @@ class RCNNMaskLoss(keras.layers.Layer):
         target_mask = keras.backend.reshape(target_mask, [-1, index])
         output_mask = keras.backend.reshape(output_mask, [-1, index])
 
-        labels = keras.backend.greater(0.5, output_mask)
+        labels = keras.backend.greater(output_mask, 0.5)
         labels = keras.backend.cast(labels, dtype=keras.backend.floatx())
         labels = keras.backend.equal(labels, target_mask)
         labels = keras.backend.cast(labels, dtype=keras.backend.floatx())
