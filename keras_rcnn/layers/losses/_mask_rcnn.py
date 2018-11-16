@@ -140,9 +140,12 @@ class RCNNMaskLoss(keras.layers.Layer):
         target_mask = keras.backend.reshape(target_mask, [-1, index])
         output_mask = keras.backend.reshape(output_mask, [-1, index])
 
+        labels = keras.backend.cast((output_mask>0.5),'float32')
+        labels = keras.backend.cast((labels==target_mask),'float32')
+
         iou = RCNNMaskLoss.intersection_over_union(target_bounding_box, output_bounding_box)
         # print(keras.backend.eval(output_mask))
-        a = RCNNMaskLoss.categorical_crossentropy(target=target_mask, output=output_mask)
+        a = RCNNMaskLoss.categorical_crossentropy(target=labels, output=output_mask)
         # a = keras.backend.categorical_crossentropy(target=target_mask, output=output_mask)
         # print(keras.backend.eval(a).shape)
         b = keras.backend.greater(iou, threshold)
