@@ -2,6 +2,7 @@
 
 import keras.backend
 import keras.layers
+import tensorflow
 
 class RCNNMaskLoss(keras.layers.Layer):
     def __init__(self, threshold=0.5, **kwargs):
@@ -140,22 +141,22 @@ class RCNNMaskLoss(keras.layers.Layer):
         target_mask = keras.backend.reshape(target_mask, [-1, index])
         output_mask = keras.backend.reshape(output_mask, [-1, index])
 
-        labels = keras.backend.greater(output_mask, 0.5)
-        labels = keras.backend.cast(labels, dtype=keras.backend.floatx())
-        labels = keras.backend.equal(labels, target_mask)
-        labels = keras.backend.cast(labels, dtype=keras.backend.floatx())
-
         iou = RCNNMaskLoss.intersection_over_union(target_bounding_box, output_bounding_box)
-        # print(keras.backend.eval(output_mask))
-        # a = RCNNMaskLoss.categorical_crossentropy(target=labels, output=output_mask)
-        a = RCNNMaskLoss.binary_crossentropy(target=labels, output=output_mask)
-        # a = keras.backend.categorical_crossentropy(target=target_mask, output=output_mask)
-        # print(keras.backend.eval(a).shape)
         b = keras.backend.greater(iou, threshold)
         b = keras.backend.cast(b, dtype=keras.backend.floatx())
 
-        loss = keras.backend.sum(a * b) / keras.backend.sum(b)
-        # loss = keras.backend.mean(a * b)
+
+        # labels = keras.backend.greater(output_mask, 0.5)
+        # labels = keras.backend.cast(labels, dtype=keras.backend.floatx())
+
+        # labels = keras.backend.equal(labels, target_mask)
+        # labels = keras.backend.cast(labels, dtype=keras.backend.floatx())
+
+
+        a = RCNNMaskLoss.binary_crossentropy(target=target_mask, output=output_mask)
+
+        # loss = keras.backend.sum(a * b) / keras.backend.sum(b)
+        loss = keras.backend.mean(a * b)
 
         # TODO: we should try:
         #   `keras.backend.mean(a * b) + keras.backend.mean(1 - b)`
