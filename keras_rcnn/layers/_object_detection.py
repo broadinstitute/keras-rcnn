@@ -80,7 +80,8 @@ class ObjectDetection(keras.layers.Layer):
 
             masks = keras.backend.expand_dims(masks, axis=0)
 
-            masks = self.pad(masks, self.padding)
+            masks = self.padmasks(masks, self.padding)
+
 
             pred_boxes = keras.backend.expand_dims(pred_boxes, 0)
 
@@ -117,6 +118,18 @@ class ObjectDetection(keras.layers.Layer):
         difference = keras.backend.max([0, difference])
 
         paddings = ((0, 0), (0, difference), (0, 0))
+
+        return tensorflow.pad(x, paddings, mode="constant")
+
+    @staticmethod
+    def padmasks(x, padding):
+        detections = keras.backend.shape(x)[1]
+
+        difference = padding - detections
+
+        difference = keras.backend.max([0, difference])
+
+        paddings = ((0, 0), (0, difference), (0, 0), (0, 0),  (0, 0))
 
         return tensorflow.pad(x, paddings, mode="constant")
 
