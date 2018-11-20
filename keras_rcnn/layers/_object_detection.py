@@ -98,7 +98,8 @@ class ObjectDetection(keras.layers.Layer):
         scores = keras.backend.in_train_phase(scores, lambda: detections(1, metadata, deltas, proposals, scores, masks), training=training)
 
         masks = keras.backend.in_test_phase(masks, lambda: detections(2, metadata, deltas, proposals, scores, masks), training=training)
-        return [bounding_boxes, scores]
+
+        return [bounding_boxes, scores, masks]
 
     def compute_output_shape(self, input_shape):
         return [(1, input_shape[0][0], input_shape[1][2]), (1, input_shape[0][0], input_shape[2][2])]
