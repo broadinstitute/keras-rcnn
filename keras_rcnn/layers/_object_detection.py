@@ -74,13 +74,13 @@ class ObjectDetection(keras.layers.Layer):
             scores = keras.backend.gather(scores, nms_indices)
 
 
-            masks = keras.backend.squeeze(masks, axis=0)
-
-            masks = keras.backend.gather(masks, nms_indices)
-
-            masks = keras.backend.expand_dims(masks, axis=0)
-
-            masks = self.padmasks(masks, self.padding)
+            # masks = keras.backend.squeeze(masks, axis=0)
+            #
+            # masks = keras.backend.gather(masks, nms_indices)
+            #
+            # masks = keras.backend.expand_dims(masks, axis=0)
+            #
+            # masks = self.padmasks(masks, self.padding)
 
 
             pred_boxes = keras.backend.expand_dims(pred_boxes, 0)

@@ -155,6 +155,7 @@ class RCNNMaskLoss(keras.layers.Layer):
 
         a = RCNNMaskLoss.binary_crossentropy(target=target_mask, output=output_mask)
 
+
         # loss = keras.backend.sum(a * b) / keras.backend.sum(b)
         loss = keras.backend.mean(a * b)
 
