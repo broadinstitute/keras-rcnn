@@ -105,7 +105,7 @@ class ObjectDetection(keras.layers.Layer):
         return [(1, input_shape[0][0], input_shape[1][2]), (1, input_shape[0][0], input_shape[2][2]), (1, input_shape[0][0], input_shape[4][2], input_shape[4][3], input_shape[4][4])]
 
     def compute_mask(self, inputs, mask=None):
-        return 2 * [None]
+        return 3 * [None]
 
     @staticmethod
     def pad(x, padding):
