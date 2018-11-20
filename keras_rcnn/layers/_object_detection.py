@@ -80,6 +80,7 @@ class ObjectDetection(keras.layers.Layer):
 
             masks = keras.backend.expand_dims(masks, axis=0)
 
+            masks = self.pad(masks, self.padding)
 
             pred_boxes = keras.backend.expand_dims(pred_boxes, 0)
 
