@@ -297,7 +297,8 @@ class RCNN(keras.models.Model):
             target_metadata,
             output_deltas,
             output_proposal_bounding_boxes,
-            output_scores
+            output_scores,
+            mask_features
         ])
 
         output_masks = keras_rcnn.layers.losses.RCNNMaskLoss()([

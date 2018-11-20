@@ -33,9 +33,9 @@ class ObjectDetection(keras.layers.Layer):
         other classes
         """
 
-        metadata, deltas, proposals, scores = x[0], x[1], x[2], x[3]
+        metadata, deltas, proposals, scores, masks = x[0], x[1], x[2], x[3], x[4]
 
-        def detections(num_output, metadata, deltas, proposals, scores):
+        def detections(num_output, metadata, deltas, proposals, scores, masks):
             proposals = keras.backend.reshape(proposals, (-1, 4))
 
             # unscale back to raw image space
@@ -73,6 +73,14 @@ class ObjectDetection(keras.layers.Layer):
 
             scores = keras.backend.gather(scores, nms_indices)
 
+
+            masks = keras.backend.squeeze(masks, axis=0)
+
+            masks = keras.backend.gather(masks, nms_indices)
+
+            masks = keras.backend.expand_dims(masks, axis=0)
+
+
             pred_boxes = keras.backend.expand_dims(pred_boxes, 0)
 
             scores = keras.backend.expand_dims(scores, 0)
@@ -81,14 +89,15 @@ class ObjectDetection(keras.layers.Layer):
 
             scores = self.pad(scores, self.padding)
 
-            detections = [pred_boxes, scores]
+            detections = [pred_boxes, scores, masks]
 
             return detections[num_output]
 
-        bounding_boxes = keras.backend.in_train_phase(proposals, lambda: detections(0, metadata, deltas, proposals, scores), training=training)
+        bounding_boxes = keras.backend.in_train_phase(proposals, lambda: detections(0, metadata, deltas, proposals, scores, masks), training=training)
 
-        scores = keras.backend.in_train_phase(scores, lambda: detections(1, metadata, deltas, proposals, scores), training=training)
+        scores = keras.backend.in_train_phase(scores, lambda: detections(1, metadata, deltas, proposals, scores, masks), training=training)
 
+        masks = keras.backend.in_test_phase(masks, lambda: detections(2, metadata, deltas, proposals, scores, masks), training=training)
         return [bounding_boxes, scores]
 
     def compute_output_shape(self, input_shape):
