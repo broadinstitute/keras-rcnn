@@ -35,8 +35,7 @@ class ObjectDetection(keras.layers.Layer):
 
         metadata, deltas, proposals, scores, masks = x[0], x[1], x[2], x[3], x[4]
 
-        # def detections(num_output, metadata, deltas, proposals, scores, masks):
-        def detections(metadata, deltas, proposals, scores, masks):
+        def detections(num_output, metadata, deltas, proposals, scores, masks):
             proposals = keras.backend.reshape(proposals, (-1, 4))
 
             # unscale back to raw image space
@@ -96,18 +95,15 @@ class ObjectDetection(keras.layers.Layer):
 
             detections = [pred_boxes, scores, masks]
 
-            # return detections[num_output]
-            return detections
+            return detections[num_output]
 
-        # bounding_boxes = keras.backend.in_train_phase(proposals, lambda: detections(0, metadata, deltas, proposals, scores, masks), training=training)
-        #
-        # masks = keras.backend.in_test_phase(masks, lambda: detections(2, metadata, deltas, proposals, scores, masks), training=training)
-        #
-        # scores = keras.backend.in_train_phase(scores, lambda: detections(1, metadata, deltas, proposals, scores, masks), training=training)
+        bounding_boxes = keras.backend.in_train_phase(proposals, lambda: detections(0, metadata, deltas, proposals, scores, masks), training=training)
 
-        detection = keras.backend.in_train_phase(scores, lambda: detections(metadata, deltas, proposals, scores, masks), training=training)
+        masks = keras.backend.in_test_phase(masks, lambda: detections(2, metadata, deltas, proposals, scores, masks), training=training)
 
-        return detection
+        scores = keras.backend.in_train_phase(scores, lambda: detections(1, metadata, deltas, proposals, scores, masks), training=training)
+
+        return [bounding_boxes, scores, masks]
 
     def compute_output_shape(self, input_shape):
         return [(1, input_shape[0][0], input_shape[1][2]), (1, input_shape[0][0], input_shape[2][2]), (1, input_shape[0][0], input_shape[4][2], input_shape[4][3], input_shape[4][4])]
