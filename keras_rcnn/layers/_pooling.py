@@ -70,8 +70,8 @@ class RegionOfInterest(keras.layers.Layer):
 
     def compute_output_shape(self, input_shape):
         print(input_shape)
-        print((1, input_shape[2][0], self.extent[0], self.extent[1], self.channels))
-        return 1, input_shape[2][0], self.extent[0], self.extent[1], self.channels
+        print((1, input_shape[2][1], self.extent[0], self.extent[1], self.channels))
+        return 1, input_shape[2][1], self.extent[0], self.extent[1], self.channels
 
     def get_config(self):
         configuration = {
