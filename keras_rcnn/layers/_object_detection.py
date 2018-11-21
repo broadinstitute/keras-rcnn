@@ -106,8 +106,9 @@ class ObjectDetection(keras.layers.Layer):
         return [bounding_boxes, scores, masks2]
 
     def compute_output_shape(self, input_shape):
-        return [(1, input_shape[0][0], input_shape[2][2]), (1, input_shape[0][0], input_shape[3][2]), (1, input_shape[0][0], input_shape[4][2], input_shape[4][3], input_shape[4][4])]
-
+        # return [(1, input_shape[0][0], input_shape[2][2]), (1, input_shape[0][0], input_shape[3][2]), (1, input_shape[0][0], input_shape[4][2], input_shape[4][3], input_shape[4][4])]
+        return input_shape
+    
     def compute_mask(self, inputs, mask=None):
         return 3 * [None]
 
