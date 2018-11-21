@@ -74,13 +74,13 @@ class ObjectDetection(keras.layers.Layer):
             scores = keras.backend.gather(scores, nms_indices)
 
 
-            masks = keras.backend.squeeze(masks, axis=0)
+            # masks = keras.backend.squeeze(masks, axis=0)
 
             # nb_masks = keras.backend.shape(masks)[0]
 
-            masks = keras.backend.gather(masks, nms_indices)
+            masks = keras.backend.gather(masks, nms_indices, axis=1)
 
-            masks = keras.backend.expand_dims(masks, axis=0)
+            # masks = keras.backend.expand_dims(masks, axis=0)
 
             masks = self.padmasks(masks, self.padding)
 
@@ -106,9 +106,9 @@ class ObjectDetection(keras.layers.Layer):
         return [bounding_boxes, scores, masks2]
 
     def compute_output_shape(self, input_shape):
-        # return [(1, input_shape[0][0], input_shape[2][2]), (1, input_shape[0][0], input_shape[3][2]), (1, input_shape[0][0], input_shape[4][2], input_shape[4][3], input_shape[4][4])]
-        return input_shape
-    
+
+        return [(1, input_shape[0][0], input_shape[2][2]), (1, input_shape[0][0], input_shape[3][2]), (1, input_shape[0][0], input_shape[4][2], input_shape[4][3], input_shape[4][4])]
+
     def compute_mask(self, inputs, mask=None):
         return 3 * [None]
 
