@@ -293,12 +293,11 @@ class RCNN(keras.models.Model):
             output_scores
         ])
 
-        output_bounding_boxes, output_categories, mask_features = keras_rcnn.layers.ObjectDetection()([
+        output_bounding_boxes, output_categories = keras_rcnn.layers.ObjectDetection()([
             target_metadata,
             output_deltas,
             output_proposal_bounding_boxes,
-            output_scores,
-            mask_features
+            output_scores
         ])
 
         output_masks = keras_rcnn.layers.losses.RCNNMaskLoss()([
