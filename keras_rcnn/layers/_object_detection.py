@@ -107,7 +107,7 @@ class ObjectDetection(keras.layers.Layer):
 
     def compute_output_shape(self, input_shape):
         print(input_shape)
-        print([(1, input_shape[2][1], input_shape[2][2]), (1, input_shape[3][1], input_shape[3][2]), (1, input_shape[4][1], input_shape[4][2], input_shape[4][3], input_shape[4][4])])
+        print([(1, input_shape[0][0], input_shape[2][2]), (1, input_shape[0][0], input_shape[3][2]), (1, input_shape[4][1], input_shape[4][2], input_shape[4][3], input_shape[4][4])])
         return [(1, input_shape[2][1], input_shape[2][2]), (1, input_shape[3][1], input_shape[3][2]), (1, input_shape[4][1], input_shape[4][2], input_shape[4][3], input_shape[4][4])]
 
     def compute_mask(self, inputs, mask=None):
