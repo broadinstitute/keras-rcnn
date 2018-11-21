@@ -82,8 +82,6 @@ class ObjectDetection(keras.layers.Layer):
 
             masks = keras.backend.expand_dims(masks, axis=0)
 
-            masks = keras.backend.expand_dims(masks, axis=4)
-
             masks = self.padmasks(masks, self.padding)
 
 
@@ -101,7 +99,7 @@ class ObjectDetection(keras.layers.Layer):
 
         bounding_boxes = keras.backend.in_train_phase(proposals, lambda: detections(0, metadata, deltas, proposals, scores, masks), training=training)
 
-        masks2 = keras.backend.in_test_phase(masks, lambda: detections(2, metadata, deltas, proposals, scores, masks), training=training)
+        masks2 = keras.backend.in_train_phase(masks, lambda: detections(2, metadata, deltas, proposals, scores, masks), training=training)
 
         scores = keras.backend.in_train_phase(scores, lambda: detections(1, metadata, deltas, proposals, scores, masks), training=training)
 
