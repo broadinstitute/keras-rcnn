@@ -74,13 +74,13 @@ class ObjectDetection(keras.layers.Layer):
             scores = keras.backend.gather(scores, nms_indices)
 
 
-            masks = keras.backend.squeeze(masks, axis=0)
-
-            masks = keras.backend.gather(masks, nms_indices)
-
-            masks = keras.backend.expand_dims(masks, axis=0)
-
-            masks = self.padmasks(masks, self.padding)
+            # masks = keras.backend.squeeze(masks, axis=0)
+            #
+            # masks = keras.backend.gather(masks, nms_indices)
+            #
+            # masks = keras.backend.expand_dims(masks, axis=0)
+            #
+            # masks = self.padmasks(masks, self.padding)
 
 
             pred_boxes = keras.backend.expand_dims(pred_boxes, 0)
@@ -99,7 +99,7 @@ class ObjectDetection(keras.layers.Layer):
 
         ## A REFLECHIR LA DESSUS : ON VEUT QUE LES MASKS NE CHANGENT PAS DURANT LE TRAIN MAIS CHANGENT DURANT LE TEST
         ## MEME RESULTAT QU'AVANT POUR LE TRAIN MAIS PAS POUR LE TEST
-        masks2 = keras.backend.in_train_phase(masks, lambda: detections(2, metadata, deltas, proposals, scores, masks), training=training)
+        # masks2 = keras.backend.in_train_phase(masks, lambda: detections(2, metadata, deltas, proposals, scores, masks), training=training)
 
         scores = keras.backend.in_train_phase(scores, lambda: detections(1, metadata, deltas, proposals, scores, masks), training=training)
 
