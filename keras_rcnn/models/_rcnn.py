@@ -240,7 +240,7 @@ class RCNN(keras.models.Model):
         )
 
         output_features = keras_rcnn.layers.RegionOfInterest(
-            extent=(14, 14),
+            extent=(7, 7),
             strides=1
         )([
             target_metadata,
@@ -293,16 +293,25 @@ class RCNN(keras.models.Model):
             output_scores
         ])
 
-        output_bounding_boxes, output_categories = keras_rcnn.layers.ObjectDetection()([
+        output_bounding_boxes, output_categories, mask_features = keras_rcnn.layers.ObjectDetection()([
             target_metadata,
             output_deltas,
             output_proposal_bounding_boxes,
-            output_scores
+            output_scores,
+            mask_features
+        ])
+
+        output_masks = keras_rcnn.layers.losses.RCNNMaskLoss()([
+            target_bounding_boxes,
+            output_bounding_boxes,
+            target_masks,
+            mask_features
         ])
 
         outputs = [
             output_bounding_boxes,
-            output_categories
+            output_categories,
+            output_masks
         ]
 
         super(RCNN, self).__init__(inputs, outputs)
@@ -313,12 +322,21 @@ class RCNN(keras.models.Model):
 
             mask_features = keras_rcnn.layers.RegionOfInterest(
                 extent=(14, 14),
-                strides=2
+                strides=2,
             )([
                 target_metadata,
                 output_features,
                 output_proposal_bounding_boxes
             ])
+
+            mask_features = keras.layers.TimeDistributed(
+                keras.layers.Conv2D(
+                    activation="relu",
+                    filters=256,
+                    kernel_size=(3, 3),
+                    padding="same"
+                )
+            )(mask_features)
 
             mask_features = keras.layers.TimeDistributed(
                 keras.layers.Conv2D(
@@ -359,7 +377,7 @@ class RCNN(keras.models.Model):
             mask_features = keras.layers.TimeDistributed(
                 keras.layers.Conv2D(
                     activation="sigmoid",
-                    filters=self.n_categories,
+                    filters=self.n_categories-1,
                     kernel_size=(1, 1),
                     strides=1
                 )

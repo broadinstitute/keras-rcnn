@@ -4,6 +4,7 @@ import keras.backend
 import keras.layers
 
 import keras_rcnn.backend
+from ._mask_rcnn import RCNNMaskLoss
 
 
 class RCNN(keras.layers.Layer):
@@ -112,7 +113,7 @@ class RPN(keras.layers.Layer):
         a = p_star_i * a_y
 
         # Divided by anchor overlaps
-        weight = 10.0
+        weight = 1.0
 
         loss = weight * (keras.backend.sum(a) / keras.backend.maximum(keras.backend.epsilon(), keras.backend.sum(p_star_i)))
 

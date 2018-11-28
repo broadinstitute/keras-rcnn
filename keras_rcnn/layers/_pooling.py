@@ -51,10 +51,10 @@ class RegionOfInterest(keras.layers.Layer):
         h = keras.backend.cast(shape[0], keras.backend.floatx())
         w = keras.backend.cast(shape[1], keras.backend.floatx())
 
-        x1 /= w
-        y1 /= h
-        x2 /= w
-        y2 /= h
+        x1 /= w - 1
+        y1 /= h - 1
+        x2 /= w - 1
+        y2 /= h - 1
 
         x1 = keras.backend.expand_dims(x1, axis=2)
         y1 = keras.backend.expand_dims(y1, axis=2)
