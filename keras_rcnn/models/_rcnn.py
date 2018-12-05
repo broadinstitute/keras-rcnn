@@ -172,7 +172,7 @@ class RCNN(keras.models.Model):
             target_metadata
         ]
 
-        backbone = keras_resnet.layers.FPN2D50(target_image)
+        backbone = keras_resnet.models.FPN2D50(target_image)
 
         pyramid_2, pyramid_3, pyramid_4, pyramid_5, pyramid_6 = backbone.outputs
         pyramid_names = ['rpn_p2_', 'rpn_p3_', 'rpn_p4_', 'rpn_p5_', 'rpn_p6_']
