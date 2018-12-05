@@ -60,7 +60,7 @@ class TestMaskRCNN:
         expected_losses = numpy.zeros((n2, n1))
         for i in range(0, n2):
             for j in range(0, n1):
-                expected_losses[i,j] = cross_entropy(output[j, :], target[i, :], epsilon=keras.backend.epsilon())
+                expected_losses[i, j] = cross_entropy(output[j, :], target[i, :], epsilon=keras.backend.epsilon())
 
         losses = numpy.array(keras.backend.eval(layer.categorical_crossentropy(target=target_tensor, output=output_tensor)))
 
@@ -137,9 +137,9 @@ class TestMaskRCNN:
             output_bounding_boxes4), axis=2)
         output_bounding_boxes = keras.backend.tf.convert_to_tensor(bb_pred, dtype=keras.backend.tf.float32)
 
-        y_true = numpy.random.randint(0, 2, (1, nbTar, mask_size, mask_size))
+        y_true = numpy.random.randint(0, 2, (1, nbTar, mask_size, mask_size)).astype(float)
         target_masks = keras.backend.tf.convert_to_tensor(y_true, dtype=keras.backend.tf.float32)
-        y_pred = numpy.random.randint(0, 2, (1, nbOut, mask_size, mask_size))
+        y_pred = numpy.random.random((1, nbOut, mask_size, mask_size))
         output_masks = keras.backend.tf.convert_to_tensor(y_pred, dtype=keras.backend.tf.float32)
 
         loss = layer.compute_mask_loss(
@@ -154,7 +154,6 @@ class TestMaskRCNN:
         bb_pred = numpy.squeeze(bb_pred, axis=0)
         bb_true = numpy.squeeze(bb_true, axis=0)
         count = 0.0
-        icount = 0.0
         for i in range(0, nbTar):
             for j in range(0, nbOut):
                 iou = bb_intersection_over_union(bb_true[i,:], bb_pred[j,:])
@@ -163,19 +162,21 @@ class TestMaskRCNN:
                     om = keras.backend.eval(output_masks[0,j,:,:])
                     tm = keras.backend.tf.convert_to_tensor(numpy.array([tm.flatten()]))
                     om = keras.backend.tf.convert_to_tensor(numpy.array([om.flatten()]))
-                    cce = keras.backend.eval(layer.categorical_crossentropy(target=tm,output=om))[0,0]
+                    cce = keras.backend.eval(layer.binary_crossentropy(target=tm,output=om))[0, 0]
                     count += cce
-                    icount += 1.0
 
-        if icount > 0:
-            expected_loss = count/icount
-        else:
-            print("Irrelevant test, needs to be launched again")
+
+        expected_loss = count/nbTar/nbOut
+
+        precision = 1000000.0
+        loss = round(loss*precision)
+        expected_loss = round(expected_loss*precision)
 
         # print('')
         # print(loss)
         # print(expected_loss)
-        assert round(expected_loss*100) == round(loss*100)
+
+        assert loss == expected_loss
 
     def test_intersection_over_union(self):
         s1 = 50

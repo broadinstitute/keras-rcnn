@@ -4,6 +4,7 @@ import keras.backend
 import keras.layers
 import tensorflow
 
+
 class RCNNMaskLoss(keras.layers.Layer):
     def __init__(self, threshold=0.5, **kwargs):
         self.threshold = threshold
@@ -92,9 +93,7 @@ class RCNNMaskLoss(keras.layers.Layer):
         """
         epsilon = keras.backend.epsilon()
 
-        intermediate = keras.backend.dot(target, keras.backend.transpose(keras.backend.log(output + epsilon))) \
-                       + keras.backend.dot((1. - target),
-                                           keras.backend.transpose(keras.backend.log(1. - output + epsilon)))
+        intermediate = keras.backend.dot(target, keras.backend.transpose(keras.backend.log(output + epsilon))) + keras.backend.dot((1. - target), keras.backend.transpose(keras.backend.log(1. - output + epsilon)))
 
         return - intermediate / keras.backend.cast(keras.backend.shape(target)[1], dtype=keras.backend.floatx())
 
