@@ -6,7 +6,7 @@ import numpy
 import keras_rcnn.layers
 import keras_rcnn.models.backbone
 
-import keras_resnet.layers
+import keras_resnet.models
 
 
 class RCNN(keras.models.Model):
