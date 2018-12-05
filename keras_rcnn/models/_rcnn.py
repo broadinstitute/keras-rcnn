@@ -333,7 +333,7 @@ class RCNN(keras.models.Model):
             mask_features
         ])
 
-        output_masks = RCNNMaskLoss()([
+        output_masks = keras_rcnn.layers.losses.RCNNMaskLoss()([
             target_bounding_boxes,
             output_bounding_boxes,
             target_masks,
