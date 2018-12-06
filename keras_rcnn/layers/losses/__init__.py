@@ -118,3 +118,5 @@ class RPN(keras.layers.Layer):
         loss = weight * (keras.backend.sum(a) / keras.backend.maximum(keras.backend.epsilon(), keras.backend.sum(p_star_i)))
 
         return loss
+
+    # COMPUTE OUTPUT SHAPE

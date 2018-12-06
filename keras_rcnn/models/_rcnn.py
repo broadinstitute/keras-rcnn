@@ -260,7 +260,7 @@ class RCNN(keras.models.Model):
             [
                 target_bounding_boxes,
                 target_categories,
-                output_proposal_bounding_boxes_pyramid
+                output_proposal_bounding_boxes
             ])
 
         mask_features = keras_rcnn.layers.RegionOfInterestAlignPyramid(
