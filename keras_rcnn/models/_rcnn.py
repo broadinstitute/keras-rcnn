@@ -224,8 +224,8 @@ class RCNN(keras.models.Model):
                 base_size=anchor_base_size,
                 padding=anchor_padding,
                 aspect_ratios=anchor_aspect_ratios,
-                scales=[2 ** (len(levels) - index_lvl)],
-                stride=anchor_stride
+                scales=[2. ** (index_lvl) / 2. ** (index_lvl + 2)],
+                stride=(2**(index_lvl + 2))
             )([
                 target_bounding_boxes,
                 target_metadata,
