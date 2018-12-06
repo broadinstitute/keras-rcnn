@@ -263,7 +263,7 @@ class RCNN(keras.models.Model):
                 output_proposal_bounding_boxes_pyramid
             ])
 
-        mask_features = keras_rcnn.layers.RegionOfInterest(
+        mask_features = keras_rcnn.layers.RegionOfInterestAlignPyramid(
             extent=(14, 14),
             strides=2,
         )([
