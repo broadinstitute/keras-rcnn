@@ -260,24 +260,39 @@ class RCNN(keras.models.Model):
             [
                 target_bounding_boxes,
                 target_categories,
-                output_proposal_bounding_boxes
+                output_proposal_bounding_boxes_pyramid
             ])
+
+        mask_features = keras_rcnn.layers.RegionOfInterest(
+            extent=(14, 14),
+            strides=2,
+        )([
+            target_metadata,
+            output_proposal_bounding_boxes,
+            pyramid_2,
+            pyramid_3,
+            pyramid_4,
+            pyramid_5
+        ])
 
         mask_features = self._mask_network()(
             [
                 target_metadata,
-                pyramid_4,
+                mask_features,
                 output_proposal_bounding_boxes
             ]
         )
 
-        output_features = keras_rcnn.layers.RegionOfInterest(
+        output_features = keras_rcnn.layers.RegionOfInterestAlignPyramid(
             extent=(7, 7),
             strides=1
         )([
             target_metadata,
+            output_proposal_bounding_boxes,
+            pyramid_2,
+            pyramid_3,
             pyramid_4,
-            output_proposal_bounding_boxes
+            pyramid_5
         ])
 
         output_features = keras.layers.TimeDistributed(
@@ -352,15 +367,6 @@ class RCNN(keras.models.Model):
         def f(x):
             target_metadata, output_features, output_proposal_bounding_boxes = x
 
-            mask_features = keras_rcnn.layers.RegionOfInterest(
-                extent=(14, 14),
-                strides=2,
-            )([
-                target_metadata,
-                output_features,
-                output_proposal_bounding_boxes
-            ])
-
             mask_features = keras.layers.TimeDistributed(
                 keras.layers.Conv2D(
                     activation="relu",
@@ -368,7 +374,7 @@ class RCNN(keras.models.Model):
                     kernel_size=(3, 3),
                     padding="same"
                 )
-            )(mask_features)
+            )(output_features)
 
             mask_features = keras.layers.TimeDistributed(
                 keras.layers.Conv2D(

@@ -346,9 +346,6 @@ class DictionaryIterator(keras.preprocessing.image.Iterator):
 
         x_masks = x_masks[:, ~cropped]
 
-        if x_bounding_boxes.shape == (self.batch_size, 0, 4):
-            raise BoundingBoxException
-
         if self.generator.clear_border:
             indices = self._clear_border(x_bounding_boxes)
 
@@ -357,6 +354,9 @@ class DictionaryIterator(keras.preprocessing.image.Iterator):
             x_categories = x_categories[:, indices]
 
             x_masks = x_masks[:, indices]
+
+        if x_bounding_boxes.shape == (self.batch_size, 0, 4):
+            raise BoundingBoxException
 
         x_masks[x_masks > 0.5] = 1.0
         x_masks[x_masks < 0.5] = 0.0
