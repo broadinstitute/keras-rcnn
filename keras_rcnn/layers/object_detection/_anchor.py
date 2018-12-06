@@ -193,7 +193,8 @@ class Anchor(keras.layers.Layer):
 
         # Assign foreground labels based on IoU overlaps that are higher than
         # RPN_POSITIVE_OVERLAP.
-        labels = keras_rcnn.backend.where(keras.backend.greater_equal(max_overlaps, self.positive_overlap), ones, labels)
+        labels = keras_rcnn.backend.where(keras.backend.greater_equal(max_overlaps, self.positive_overlap), ones,
+                                          labels)
 
         if self.clobber_positives:
             # assign bg labels last so that negative labels can clobber positives
@@ -411,9 +412,9 @@ class Anchor(keras.layers.Layer):
             negative_examples = keras.backend.sum(negative_examples)
 
             positive_weights = keras.backend.ones_like(anchors) * (
-                        0 + positive_weight) / positive_examples
+                    0 + positive_weight) / positive_examples
             negative_weights = keras.backend.ones_like(anchors) * (
-                        1 - positive_weight) / negative_examples
+                    1 - positive_weight) / negative_examples
 
         inside_weights = keras.backend.zeros_like(anchors)
         inside_weights = keras_rcnn.backend.where(positive_condition,

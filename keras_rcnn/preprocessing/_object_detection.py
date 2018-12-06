@@ -98,6 +98,17 @@ class DictionaryIterator(keras.preprocessing.image.Iterator):
 
         return scale
 
+    def _clear_border(self, bounding_boxes):
+        indices = []
+
+        for index, bounding_box in enumerate(bounding_boxes[0]):
+            minimum_r, minimum_c, maximum_r, maximum_c = bounding_box
+
+            if minimum_r > 0 and minimum_c > 0 and maximum_c < self.target_size[0] and maximum_r < self.target_size[1]:
+                indices += [index]
+
+        return indices
+
     @staticmethod
     def _crop_bounding_boxes(bounding_boxes, boundary):
         cropped_bounding_boxes = numpy.array(boundary)
@@ -121,10 +132,10 @@ class DictionaryIterator(keras.preprocessing.image.Iterator):
         crop_c = numpy.random.randint(0, image.shape[1] - self.generator.crop_size[1] - 1)
 
         crop = image[
-            crop_r:crop_r + self.generator.crop_size[0],
-            crop_c:crop_c + self.generator.crop_size[1],
-            ...
-        ]
+               crop_r:crop_r + self.generator.crop_size[0],
+               crop_c:crop_c + self.generator.crop_size[1],
+               ...
+               ]
 
         dimensions = numpy.array([
             crop_r,
@@ -143,6 +154,8 @@ class DictionaryIterator(keras.preprocessing.image.Iterator):
             try:
                 x = self._transform_samples(batch_index, image_index)
             except BoundingBoxException:
+                image_index += 1
+
                 continue
 
             break
@@ -200,7 +213,13 @@ class DictionaryIterator(keras.preprocessing.image.Iterator):
 
         dimensions *= scale
 
-        image = skimage.transform.rescale(image, scale)
+        image = skimage.transform.rescale(
+            image,
+            scale,
+            anti_aliasing=True,
+            mode="reflect",
+            multichannel=True
+        )
 
         image = self.generator.standardize(image)
 
@@ -291,14 +310,22 @@ class DictionaryIterator(keras.preprocessing.image.Iterator):
                     bounding_box["mask"]["pathname"]
                 )
 
-                target_mask = skimage.transform.rescale(target_mask, scale)
+                target_mask = skimage.transform.rescale(
+                    target_mask,
+                    scale,
+                    anti_aliasing=True,
+                    mode="reflect",
+                    multichannel=False
+                )
 
                 target_mask = target_mask[minimum_r:maximum_r + 1, minimum_c:maximum_c + 1]
 
                 target_mask = skimage.transform.resize(
                     target_mask,
                     self.mask_size,
-                    order=0
+                    order=0,
+                    mode="reflect",
+                    anti_aliasing=True
                 )
 
                 if horizontal_flip:
@@ -335,8 +362,20 @@ class DictionaryIterator(keras.preprocessing.image.Iterator):
 
         x_masks = x_masks[:, ~cropped]
 
+        if self.generator.clear_border:
+            indices = self._clear_border(x_bounding_boxes)
+
+            x_bounding_boxes = x_bounding_boxes[:, indices]
+
+            x_categories = x_categories[:, indices]
+
+            x_masks = x_masks[:, indices]
+
         if x_bounding_boxes.shape == (self.batch_size, 0, 4):
             raise BoundingBoxException
+
+        x_masks[x_masks > 0.5] = 1.0
+        x_masks[x_masks < 0.5] = 0.0
 
         return [
             x_bounding_boxes,
@@ -368,6 +407,7 @@ class DictionaryIterator(keras.preprocessing.image.Iterator):
 class ObjectDetectionGenerator:
     def __init__(
             self,
+            clear_border=False,
             crop_size=None,
             data_format=None,
             horizontal_flip=False,
@@ -377,6 +417,8 @@ class ObjectDetectionGenerator:
             samplewise_center=False,
             vertical_flip=False
     ):
+        self.clear_border = clear_border
+
         self.crop_size = crop_size
 
         self.data_format = data_format

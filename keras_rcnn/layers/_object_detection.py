@@ -81,7 +81,6 @@ class ObjectDetection(keras.layers.Layer):
 
             scores = self.pad(scores, self.padding)
 
-
             masks = keras.backend.squeeze(masks, axis=0)
 
             masks = keras.backend.gather(masks, nms_indices)
