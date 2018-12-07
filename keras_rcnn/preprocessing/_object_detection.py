@@ -436,4 +436,24 @@ class ObjectDetectionGenerator:
             categories,
             target_size,
             self,
-            bat...
+            batch_size,
+            color_mode,
+            data_format,
+            mask_size,
+            seed,
+            shuffle
+        )
+
+    def standardize(self, image):
+        image = skimage.exposure.rescale_intensity(image, out_range=(0.0, 1.0))
+
+        if self.preprocessing_function:
+            image = self.preprocessing_function(image)
+
+        if self.rescale:
+            image *= self.rescale
+
+        if self.samplewise_center:
+            image -= numpy.mean(image, keepdims=True)
+
+        return image
