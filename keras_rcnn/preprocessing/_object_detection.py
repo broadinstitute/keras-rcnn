@@ -109,7 +109,7 @@ class DictionaryIterator(keras.preprocessing.image.Iterator):
 
         return indices
 
-    &  # 64;staticmethod
+    @staticmethod
     def _crop_bounding_boxes(bounding_boxes, boundary):
         cropped_bounding_boxes = numpy.array(boundary)
 
@@ -369,7 +369,7 @@ class DictionaryIterator(keras.preprocessing.image.Iterator):
             x_metadata
         ]
 
-    &  # 64;staticmethod
+    @staticmethod
     def _cropped_objects(x_bounding_boxes):
         return numpy.all(x_bounding_boxes[..., :] == 0, axis=2)[0]
 
