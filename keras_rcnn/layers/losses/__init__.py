@@ -64,7 +64,7 @@ class RPN(keras.layers.Layer):
 
         loss_weight = 0.01
 
-        self.add_loss(loss_weight * loss)
+        self.add_loss(loss)
 
         return [output_deltas, output_scores]
 
