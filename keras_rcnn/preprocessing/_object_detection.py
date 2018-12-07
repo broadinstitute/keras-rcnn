@@ -154,6 +154,8 @@ class DictionaryIterator(keras.preprocessing.image.Iterator):
             try:
                 x = self._transform_samples(batch_index, image_index)
             except BoundingBoxException:
+                image_index += 1
+
                 continue
 
             break
@@ -211,7 +213,13 @@ class DictionaryIterator(keras.preprocessing.image.Iterator):
 
         dimensions *= scale
 
-        image = skimage.transform.rescale(image, scale)
+        image = skimage.transform.rescale(
+            image,
+            scale,
+            anti_aliasing=True,
+            mode="reflect",
+            multichannel=True
+        )
 
         image = self.generator.standardize(image)
 
@@ -302,14 +310,22 @@ class DictionaryIterator(keras.preprocessing.image.Iterator):
                     bounding_box["mask"]["pathname"]
                 )
 
-                target_mask = skimage.transform.rescale(target_mask, scale)
+                target_mask = skimage.transform.rescale(
+                    target_mask,
+                    scale,
+                    anti_aliasing=True,
+                    mode="reflect",
+                    multichannel=False
+                )
 
                 target_mask = target_mask[minimum_r:maximum_r + 1, minimum_c:maximum_c + 1]
 
                 target_mask = skimage.transform.resize(
                     target_mask,
                     self.mask_size,
-                    order=0
+                    order=0,
+                    mode="reflect",
+                    anti_aliasing=True
                 )
 
                 if horizontal_flip:
