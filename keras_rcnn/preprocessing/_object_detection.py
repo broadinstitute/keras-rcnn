@@ -109,7 +109,7 @@ class DictionaryIterator(keras.preprocessing.image.Iterator):
 
         return indices
 
-    @staticmethod
+    &  # 64;staticmethod
     def _crop_bounding_boxes(bounding_boxes, boundary):
         cropped_bounding_boxes = numpy.array(boundary)
 
@@ -154,8 +154,6 @@ class DictionaryIterator(keras.preprocessing.image.Iterator):
             try:
                 x = self._transform_samples(batch_index, image_index)
             except BoundingBoxException:
-                image_index += 1
-
                 continue
 
             break
@@ -213,13 +211,7 @@ class DictionaryIterator(keras.preprocessing.image.Iterator):
 
         dimensions *= scale
 
-        image = skimage.transform.rescale(
-            image,
-            scale,
-            anti_aliasing=True,
-            mode="reflect",
-            multichannel=True
-        )
+        image = skimage.transform.rescale(image, scale)
 
         image = self.generator.standardize(image)
 
@@ -310,22 +302,14 @@ class DictionaryIterator(keras.preprocessing.image.Iterator):
                     bounding_box["mask"]["pathname"]
                 )
 
-                target_mask = skimage.transform.rescale(
-                    target_mask,
-                    scale,
-                    anti_aliasing=True,
-                    mode="reflect",
-                    multichannel=False
-                )
+                target_mask = skimage.transform.rescale(target_mask, scale)
 
                 target_mask = target_mask[minimum_r:maximum_r + 1, minimum_c:maximum_c + 1]
 
                 target_mask = skimage.transform.resize(
                     target_mask,
                     self.mask_size,
-                    order=0,
-                    mode="reflect",
-                    anti_aliasing=True
+                    order=0
                 )
 
                 if horizontal_flip:
@@ -385,7 +369,7 @@ class DictionaryIterator(keras.preprocessing.image.Iterator):
             x_metadata
         ]
 
-    @staticmethod
+    &  # 64;staticmethod
     def _cropped_objects(x_bounding_boxes):
         return numpy.all(x_bounding_boxes[..., :] == 0, axis=2)[0]
 
@@ -452,24 +436,4 @@ class ObjectDetectionGenerator:
             categories,
             target_size,
             self,
-            batch_size,
-            color_mode,
-            data_format,
-            mask_size,
-            seed,
-            shuffle
-        )
-
-    def standardize(self, image):
-        image = skimage.exposure.rescale_intensity(image, out_range=(0.0, 1.0))
-
-        if self.preprocessing_function:
-            image = self.preprocessing_function(image)
-
-        if self.rescale:
-            image *= self.rescale
-
-        if self.samplewise_center:
-            image -= numpy.mean(image, keepdims=True)
-
-        return image
+            bat...
