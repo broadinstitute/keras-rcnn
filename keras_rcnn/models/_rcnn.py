@@ -225,7 +225,7 @@ class RCNN(keras.models.Model):
 
             if (64 < input_shape[0] * input_shape[1] / (2.0 ** (index_lvl + 2)) / (2.0 ** (index_lvl + 2))):
                 stri = (2 ** (index_lvl + 2))
-                target_anchors, target_proposal_bounding_boxes, target_proposal_categories = Anchor(
+                target_anchors, target_proposal_bounding_boxes, target_proposal_categories = keras_rcnn.layers.Anchor(
                     base_size=stri,
                     padding=anchor_padding,
                     aspect_ratios=anchor_aspect_ratios,
