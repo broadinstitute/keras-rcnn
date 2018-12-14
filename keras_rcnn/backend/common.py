@@ -15,9 +15,7 @@ def anchor(base_size=16, ratios=None, scales=None):
     if scales is None:
         scales = keras.backend.cast([1, 2, 4, 8, 16], keras.backend.floatx())
 
-    # base_anchor = keras.backend.cast([-base_size / 2, -base_size / 2, base_size / 2, base_size / 2], keras.backend.floatx())
-
-    base_anchor = keras.backend.cast([1, 1, base_size, base_size], keras.backend.floatx())
+    base_anchor = keras.backend.cast([-base_size / 2, -base_size / 2, base_size / 2, base_size / 2], keras.backend.floatx())
 
     base_anchor = keras.backend.expand_dims(base_anchor, 0)
 
