@@ -113,7 +113,7 @@ class RPN(keras.layers.Layer):
         a = p_star_i * a_y
 
         # Divided by anchor overlaps
-        weight = 1.0
+        weight = 10.0
 
         loss = weight * (keras.backend.sum(a) / keras.backend.maximum(keras.backend.epsilon(), keras.backend.sum(p_star_i)))
 
