@@ -207,6 +207,17 @@ class DictionaryIterator(keras.preprocessing.image.Iterator):
             if image.shape[0] > self.generator.crop_size[0] and image.shape[1] > self.generator.crop_size[1]:
                 image, dimensions = self._crop_image(image)
 
+        #             print(dimensions)
+        #             print(image.shape)
+        #             if horizontal_flip:
+        #                 dimensions =  numpy.array([
+        #                     dimensions[2],
+        #                     dimensions[1],
+        #                     dimensions[0],
+        #                     dimensions[3]
+        #                 ])
+        #             print(dimensions)
+
         dimensions = dimensions.astype(numpy.float16)
 
         scale = self.find_scale(image)
@@ -284,22 +295,6 @@ class DictionaryIterator(keras.preprocessing.image.Iterator):
                 maximum_c
             ]
 
-            if horizontal_flip:
-                target_bounding_box = [
-                    target_bounding_box[0],
-                    image.shape[1] - target_bounding_box[3],
-                    target_bounding_box[2],
-                    image.shape[1] - target_bounding_box[1]
-                ]
-
-            if vertical_flip:
-                target_bounding_box = [
-                    image.shape[0] - target_bounding_box[2],
-                    target_bounding_box[1],
-                    image.shape[0] - target_bounding_box[0],
-                    target_bounding_box[3]
-                ]
-
             x_bounding_boxes[
                 batch_index,
                 bounding_box_index
@@ -328,12 +323,6 @@ class DictionaryIterator(keras.preprocessing.image.Iterator):
                     anti_aliasing=True
                 )
 
-                if horizontal_flip:
-                    target_mask = numpy.fliplr(target_mask)
-
-                if vertical_flip:
-                    target_mask = numpy.flipud(target_mask)
-
                 x_masks[
                     batch_index,
                     bounding_box_index
@@ -361,6 +350,37 @@ class DictionaryIterator(keras.preprocessing.image.Iterator):
         x_categories = x_categories[:, ~cropped]
 
         x_masks = x_masks[:, ~cropped]
+
+        for bounding_box_index, bounding_box in enumerate(x_bounding_boxes[0]):
+            mask = x_masks[0, bounding_box_index]
+
+            if horizontal_flip:
+                bounding_box = [
+                    bounding_box[0],
+                    image.shape[1] - bounding_box[3],
+                    bounding_box[2],
+                    image.shape[1] - bounding_box[1]
+                ]
+                target_mask = numpy.fliplr(target_mask)
+
+            if vertical_flip:
+                bounding_box = [
+                    image.shape[0] - bounding_box[2],
+                    bounding_box[1],
+                    image.shape[0] - bounding_box[0],
+                    bounding_box[3]
+                ]
+                target_mask = numpy.flipud(target_mask)
+
+            x_bounding_boxes[
+                batch_index,
+                bounding_box_index
+            ] = bounding_box
+
+            x_masks[
+                batch_index,
+                bounding_box_index
+            ] = target_mask
 
         if self.generator.clear_border:
             indices = self._clear_border(x_bounding_boxes)
