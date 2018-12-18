@@ -203,12 +203,9 @@ class DictionaryIterator(keras.preprocessing.image.Iterator):
 
         dimensions = numpy.array([0, 0, image.shape[0], image.shape[1]])
 
-        bounding_boxes = self.dictionary[image_index]["objects"]
-
         if self.generator.crop_size:
             if image.shape[0] > self.generator.crop_size[0] and image.shape[1] > self.generator.crop_size[1]:
                 image, dimensions = self._crop_image(image)
-                bounding_boxes = self._crop_bounding_boxes(bounding_boxes, dimensions)
 
         dimensions = dimensions.astype(numpy.float16)
 
@@ -240,6 +237,8 @@ class DictionaryIterator(keras.preprocessing.image.Iterator):
         x_images[batch_index] = target_image
 
         x_metadata[batch_index] = [*self.target_size, 1.0]
+
+        bounding_boxes = self.dictionary[image_index]["objects"]
 
         n_objects = len(bounding_boxes)
 
