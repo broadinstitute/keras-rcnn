@@ -255,7 +255,7 @@ class DictionaryIterator(keras.preprocessing.image.Iterator):
             (self.batch_size, n_objects, self.n_categories)
         )
 
-        for bounding_box_index, bounding_box in enumerate(x_bounding_boxes):
+        for bounding_box_index, bounding_box in enumerate(bounding_boxes):
             if bounding_box["category"] not in self.categories:
                 continue
 
