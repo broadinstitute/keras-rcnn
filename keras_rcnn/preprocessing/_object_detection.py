@@ -361,7 +361,7 @@ class DictionaryIterator(keras.preprocessing.image.Iterator):
                     bounding_box[2],
                     image.shape[1] - bounding_box[1]
                 ]
-                target_mask = numpy.fliplr(target_mask)
+                mask = numpy.fliplr(mask)
 
             if vertical_flip:
                 bounding_box = [
@@ -370,7 +370,7 @@ class DictionaryIterator(keras.preprocessing.image.Iterator):
                     image.shape[0] - bounding_box[0],
                     bounding_box[3]
                 ]
-                target_mask = numpy.flipud(target_mask)
+                mask = numpy.flipud(mask)
 
             x_bounding_boxes[
                 batch_index,
@@ -380,7 +380,7 @@ class DictionaryIterator(keras.preprocessing.image.Iterator):
             x_masks[
                 batch_index,
                 bounding_box_index
-            ] = target_mask
+            ] = mask
 
         if self.generator.clear_border:
             indices = self._clear_border(x_bounding_boxes)
