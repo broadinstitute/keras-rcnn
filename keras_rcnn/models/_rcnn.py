@@ -217,10 +217,10 @@ class RCNN(keras.models.Model):
             )(convolution_3x3)
 
             target_anchors, target_proposal_bounding_boxes, target_proposal_categories = keras_rcnn.layers.Anchor(
-                base_size=32,
+                base_size=minimum_size,
                 padding=anchor_padding,
                 aspect_ratios=anchor_aspect_ratios,
-                scales=[(2. ** (len(levels) - 1 - index_lvl)) / (4 * 2 ** (len(levels) - 1 - index_lvl))],
+                scales=[32 * (2. ** (len(levels) - 1 - index_lvl)) / (4 * 2 ** (len(levels) - 1 - index_lvl))],
                 stride=4 * 2 ** (len(levels) - 1 - index_lvl)
             )([
                 target_bounding_boxes,

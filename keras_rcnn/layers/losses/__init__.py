@@ -44,10 +44,10 @@ class RCNN(keras.layers.Layer):
 
         loss = self.classification_loss() + self.regression_loss()
 
-        weight = 5.0
+        weight = 1.0
 
         loss = weight * loss
-        
+
         self.add_loss(loss)
 
         return [output_deltas, output_scores]
@@ -64,7 +64,7 @@ class RPN(keras.layers.Layer):
 
         b = self.regression_loss(target_deltas, target_scores, output_deltas)
 
-        weight = 10.0
+        weight = 1.0
 
         loss = weight * (a + b)
 
