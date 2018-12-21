@@ -12,6 +12,10 @@ class BoundingBoxException(Exception):
     pass
 
 
+class MissingImageException(Exception):
+    pass
+
+
 class DictionaryIterator(keras.preprocessing.image.Iterator):
     def __init__(
             self,
@@ -154,10 +158,12 @@ class DictionaryIterator(keras.preprocessing.image.Iterator):
             try:
                 x = self._transform_samples(batch_index, image_index)
             except BoundingBoxException:
+                # FIXME: This should do something! To ignore the image
                 image_index += 1
-
                 continue
-
+            except MissingImageException:
+                image_index = 0
+                continue
             break
 
         return x, None
@@ -195,7 +201,10 @@ class DictionaryIterator(keras.preprocessing.image.Iterator):
             if numpy.random.random() < 0.5:
                 vertical_flip = True
 
+        #         try:
         pathname = self.dictionary[image_index]["image"]["pathname"]
+        #         except:
+        #             raise MissingImageException
 
         target_image = numpy.zeros((*self.target_size, self.channels))
 
@@ -206,17 +215,6 @@ class DictionaryIterator(keras.preprocessing.image.Iterator):
         if self.generator.crop_size:
             if image.shape[0] > self.generator.crop_size[0] and image.shape[1] > self.generator.crop_size[1]:
                 image, dimensions = self._crop_image(image)
-
-        #             print(dimensions)
-        #             print(image.shape)
-        #             if horizontal_flip:
-        #                 dimensions =  numpy.array([
-        #                     dimensions[2],
-        #                     dimensions[1],
-        #                     dimensions[0],
-        #                     dimensions[3]
-        #                 ])
-        #             print(dimensions)
 
         dimensions = dimensions.astype(numpy.float16)
 
