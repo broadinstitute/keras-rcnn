@@ -201,10 +201,11 @@ class DictionaryIterator(keras.preprocessing.image.Iterator):
             if numpy.random.random() < 0.5:
                 vertical_flip = True
 
-        #         try:
-        pathname = self.dictionary[image_index]["image"]["pathname"]
-        #         except:
-        #             raise MissingImageException
+        try:
+            pathname = self.dictionary[image_index]["image"]["pathname"]
+
+        except:
+            raise MissingImageException
 
         target_image = numpy.zeros((*self.target_size, self.channels))
 
