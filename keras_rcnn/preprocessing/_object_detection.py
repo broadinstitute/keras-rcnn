@@ -211,6 +211,11 @@ class DictionaryIterator(keras.preprocessing.image.Iterator):
 
         image = skimage.io.imread(pathname)
 
+        if self.data_format == "channels_last":
+            image = image[..., :self.channels]
+        else:
+            image = image[:self.channels, ...]
+
         dimensions = numpy.array([0, 0, image.shape[0], image.shape[1]])
 
         if self.generator.crop_size:
