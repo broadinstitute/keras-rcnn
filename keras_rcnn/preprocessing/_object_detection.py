@@ -262,7 +262,7 @@ class DictionaryIterator(keras.preprocessing.image.Iterator):
                 numpy.zeros((self.batch_size, 0, 4)),
                 numpy.zeros((self.batch_size, 0, self.n_categories)),
                 x_images,
-                numpy.zeros((self.batch_size, 0, self.mask_size)),
+                numpy.zeros((self.batch_size, 0, self.mask_size[0], self.mask_size[1])),
                 x_metadata
             ]
 
