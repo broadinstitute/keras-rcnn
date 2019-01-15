@@ -257,6 +257,15 @@ class DictionaryIterator(keras.preprocessing.image.Iterator):
 
         n_objects = len(bounding_boxes)
 
+        if n_objects == 0:
+            return [
+                numpy.zeros((self.batch_size, 0, 4)),
+                numpy.zeros((self.batch_size, 0, self.n_categories)),
+                x_images,
+                numpy.zeros((self.batch_size, 0, self.mask_size)),
+                x_metadata
+            ]
+
         x_bounding_boxes = numpy.resize(
             x_bounding_boxes, (self.batch_size, n_objects, 4)
         )
@@ -408,6 +417,7 @@ class DictionaryIterator(keras.preprocessing.image.Iterator):
             x_masks,
             x_metadata
         ]
+
 
     @staticmethod
     def _cropped_objects(x_bounding_boxes):
