@@ -6,6 +6,10 @@ import numpy
 import keras_rcnn.layers
 import keras_rcnn.models.backbone
 
+import keras_resnet
+import keras_resnet.models
+
+
 
 class RCNN(keras.models.Model):
     """
@@ -103,6 +107,7 @@ class RCNN(keras.models.Model):
     minimum_size : A positive integer that specifies the maximum width
         or height for each object proposal.
     """
+
     def __init__(
             self,
             input_shape,
@@ -122,13 +127,13 @@ class RCNN(keras.models.Model):
             anchor_aspect_ratios = [0.5, 1.0, 2.0]
 
         if anchor_scales is None:
-            anchor_scales = [4, 8, 16]
+            anchor_scales = [32, 64, 128, 256, 512]
 
         self.mask_shape = mask_shape
 
         self.n_categories = len(categories) + 1
 
-        k = len(anchor_aspect_ratios) * len(anchor_scales)
+        k = len(anchor_aspect_ratios)
 
         target_bounding_boxes = keras.layers.Input(
             shape=(None, 4),
@@ -169,85 +174,134 @@ class RCNN(keras.models.Model):
             target_metadata
         ]
 
-        if backbone:
-            output_features = backbone()(target_image)
-        else:
-            output_features = keras_rcnn.models.backbone.VGG16()(target_image)
+        backbone = keras_resnet.models.FPN2D50(target_image)
 
-        convolution_3x3 = keras.layers.Conv2D(
-            filters=64, 
-            name="3x3",
-            **options
-        )(output_features)
+        pyramid_2, pyramid_3, pyramid_4, pyramid_5, pyramid_6 = backbone.outputs
 
-        output_deltas = keras.layers.Conv2D(
-            filters=k * 4,
-            kernel_size=(1, 1),
-            activation="linear",
-            kernel_initializer="zero",
-            name="deltas1"
-        )(convolution_3x3)
+        levels = backbone.outputs
 
-        output_scores = keras.layers.Conv2D(
-            filters=k * 1,
-            kernel_size=(1, 1),
-            activation="sigmoid",
-            kernel_initializer="uniform",
-            name="scores1"
-        )(convolution_3x3)
+        target_proposal_bounding_boxes_list = []
+        target_proposal_categories_list = []
+        output_proposal_bounding_boxes_list = []
 
-        target_anchors, target_proposal_bounding_boxes, target_proposal_categories = keras_rcnn.layers.Anchor(
-            padding=anchor_padding,
-            aspect_ratios=anchor_aspect_ratios,
-            base_size=anchor_base_size,
-            scales=anchor_scales,
-            stride=anchor_stride,
+        for index_lvl in range(0, len(levels)):
+            level = levels[len(levels) - index_lvl - 1]
+
+            convolution_3x3 = keras.layers.Conv2D(
+                kernel_size=(3, 3),
+                filters=64,
+                name="3x3_" + str(index_lvl),
+                kernel_initializer=keras.initializers.RandomNormal(mean=0.0, stddev=0.01, seed=None),
+                bias_initializer=keras.initializers.Constant(value=0.0),
+                padding='same'
+            )(level)
+
+            output_deltas = keras.layers.Conv2D(
+                filters=k * 4,
+                kernel_size=(1, 1),
+                activation="linear",
+                kernel_initializer=keras.initializers.RandomNormal(mean=0.0, stddev=0.01, seed=None),
+                bias_initializer=keras.initializers.Constant(value=0.0),
+                name="deltas1_" + str(index_lvl),
+                padding='same'
+            )(convolution_3x3)
+
+            output_scores = keras.layers.Conv2D(
+                filters=k * 2,
+                kernel_size=(1, 1),
+                activation="sigmoid",
+                kernel_initializer=keras.initializers.RandomNormal(mean=0.0, stddev=0.01, seed=None),
+                bias_initializer=keras.initializers.Constant(value=0.0),
+                name="scores1_" + str(index_lvl),
+                padding='valid'
+            )(convolution_3x3)
+
+            target_anchors, target_proposal_bounding_boxes, target_proposal_categories = keras_rcnn.layers.Anchor(
+                base_size=minimum_size,
+                padding=anchor_padding,
+                aspect_ratios=anchor_aspect_ratios,
+                scales=[32 * (2. ** (len(levels) - 1 - index_lvl)) / (4 * 2 ** (len(levels) - 1 - index_lvl))],
+                stride=4 * 2 ** (len(levels) - 1 - index_lvl)
+            )([
+                target_bounding_boxes,
+                target_metadata,
+                output_scores
+            ])
+
+            output_deltas, output_scores = keras_rcnn.layers.RPN()([
+                target_proposal_bounding_boxes,
+                target_proposal_categories,
+                output_deltas,
+                output_scores
+            ])
+
+            output_proposal_bounding_boxes = keras_rcnn.layers.ObjectProposal(
+                maximum_proposals=maximum_proposals,
+                minimum_size=minimum_size
+            )([
+                target_anchors,
+                target_metadata,
+                output_deltas,
+                output_scores
+            ])
+
+            target_proposal_bounding_boxes, target_proposal_categories, output_proposal_bounding_boxes = keras_rcnn.layers.ProposalTarget()(
+                [
+                    target_bounding_boxes,
+                    target_categories,
+                    output_proposal_bounding_boxes
+                ])
+
+            output_proposal_bounding_boxes_list += [output_proposal_bounding_boxes]
+            target_proposal_bounding_boxes_list += [target_proposal_bounding_boxes]
+            target_proposal_categories_list += [target_proposal_categories]
+
+        output_proposal_bounding_boxes = keras.layers.concatenate(
+            inputs=output_proposal_bounding_boxes_list,
+            axis=1
+        )
+
+        target_proposal_bounding_boxes = keras.layers.concatenate(
+            inputs=target_proposal_bounding_boxes_list,
+            axis=1
+        )
+
+        target_proposal_categories = keras.layers.concatenate(
+            inputs=target_proposal_categories_list,
+            axis=1
+        )
+
+        mask_features = keras_rcnn.layers.RegionOfInterestAlignPyramid(
+            extent=(14, 14),
+            strides=2,
         )([
-            target_bounding_boxes,
             target_metadata,
-            output_scores
+            output_proposal_bounding_boxes,
+            pyramid_2,
+            pyramid_3,
+            pyramid_4,
+            pyramid_5
         ])
 
-        output_deltas, output_scores = keras_rcnn.layers.RPN()([
-            target_proposal_bounding_boxes,
-            target_proposal_categories,
-            output_deltas,
-            output_scores
-        ])
-
-        output_proposal_bounding_boxes = keras_rcnn.layers.ObjectProposal(
-            maximum_proposals=maximum_proposals,
-            minimum_size=minimum_size
+        output_features = keras_rcnn.layers.RegionOfInterestAlignPyramid(
+            extent=(7, 7),
+            strides=1
         )([
-            target_anchors,
             target_metadata,
-            output_deltas,
-            output_scores
-        ])
-
-        target_proposal_bounding_boxes, target_proposal_categories, output_proposal_bounding_boxes = keras_rcnn.layers.ProposalTarget()([
-            target_bounding_boxes,
-            target_categories,
-            output_proposal_bounding_boxes
+            output_proposal_bounding_boxes,
+            pyramid_2,
+            pyramid_3,
+            pyramid_4,
+            pyramid_5
         ])
 
         mask_features = self._mask_network()(
             [
                 target_metadata,
-                output_features,
+                mask_features,
                 output_proposal_bounding_boxes
             ]
         )
-
-        output_features = keras_rcnn.layers.RegionOfInterest(
-            extent=(14, 14),
-            strides=1
-        )([
-            target_metadata,
-            output_features,
-            output_proposal_bounding_boxes
-        ])
-
         output_features = keras.layers.TimeDistributed(
             keras.layers.Dense(
                 units=dense_units,
@@ -293,16 +347,25 @@ class RCNN(keras.models.Model):
             output_scores
         ])
 
-        output_bounding_boxes, output_categories = keras_rcnn.layers.ObjectDetection()([
+        output_bounding_boxes, output_categories, mask_features = keras_rcnn.layers.ObjectDetection()([
             target_metadata,
             output_deltas,
             output_proposal_bounding_boxes,
-            output_scores
+            output_scores,
+            mask_features
+        ])
+
+        output_masks = keras_rcnn.layers.losses.RCNNMaskLoss()([
+            target_bounding_boxes,
+            output_bounding_boxes,
+            target_masks,
+            mask_features
         ])
 
         outputs = [
             output_bounding_boxes,
-            output_categories
+            output_categories,
+            output_masks
         ]
 
         super(RCNN, self).__init__(inputs, outputs)
@@ -311,14 +374,14 @@ class RCNN(keras.models.Model):
         def f(x):
             target_metadata, output_features, output_proposal_bounding_boxes = x
 
-            mask_features = keras_rcnn.layers.RegionOfInterest(
-                extent=(14, 14),
-                strides=2
-            )([
-                target_metadata,
-                output_features,
-                output_proposal_bounding_boxes
-            ])
+            mask_features = keras.layers.TimeDistributed(
+                keras.layers.Conv2D(
+                    activation="relu",
+                    filters=256,
+                    kernel_size=(3, 3),
+                    padding="same"
+                )
+            )(output_features)
 
             mask_features = keras.layers.TimeDistributed(
                 keras.layers.Conv2D(
@@ -359,7 +422,7 @@ class RCNN(keras.models.Model):
             mask_features = keras.layers.TimeDistributed(
                 keras.layers.Conv2D(
                     activation="sigmoid",
-                    filters=self.n_categories,
+                    filters=self.n_categories - 1,
                     kernel_size=(1, 1),
                     strides=1
                 )
