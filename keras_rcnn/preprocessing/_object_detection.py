@@ -12,6 +12,10 @@ class BoundingBoxException(Exception):
     pass
 
 
+class MissingImageException(Exception):
+    pass
+
+
 class DictionaryIterator(keras.preprocessing.image.Iterator):
     def __init__(
             self,
@@ -154,10 +158,12 @@ class DictionaryIterator(keras.preprocessing.image.Iterator):
             try:
                 x = self._transform_samples(batch_index, image_index)
             except BoundingBoxException:
+                # FIXME: This should do something! To ignore the image
                 image_index += 1
-
                 continue
-
+            except MissingImageException:
+                image_index = 0
+                continue
             break
 
         return x, None
@@ -195,11 +201,20 @@ class DictionaryIterator(keras.preprocessing.image.Iterator):
             if numpy.random.random() < 0.5:
                 vertical_flip = True
 
-        pathname = self.dictionary[image_index]["image"]["pathname"]
+        try:
+            pathname = self.dictionary[image_index]["image"]["pathname"]
+
+        except:
+            raise MissingImageException
 
         target_image = numpy.zeros((*self.target_size, self.channels))
 
         image = skimage.io.imread(pathname)
+
+        if self.data_format == "channels_last":
+            image = image[..., :self.channels]
+        else:
+            image = image[:self.channels, ...]
 
         dimensions = numpy.array([0, 0, image.shape[0], image.shape[1]])
 
@@ -241,6 +256,15 @@ class DictionaryIterator(keras.preprocessing.image.Iterator):
         bounding_boxes = self.dictionary[image_index]["objects"]
 
         n_objects = len(bounding_boxes)
+
+        if n_objects == 0:
+            return [
+                numpy.zeros((self.batch_size, 0, 4)),
+                numpy.zeros((self.batch_size, 0, self.n_categories)),
+                x_images,
+                numpy.zeros((self.batch_size, 0, self.mask_size[0], self.mask_size[1])),
+                x_metadata
+            ]
 
         x_bounding_boxes = numpy.resize(
             x_bounding_boxes, (self.batch_size, n_objects, 4)
@@ -284,22 +308,6 @@ class DictionaryIterator(keras.preprocessing.image.Iterator):
                 maximum_c
             ]
 
-            if horizontal_flip:
-                target_bounding_box = [
-                    target_bounding_box[0],
-                    image.shape[1] - target_bounding_box[3],
-                    target_bounding_box[2],
-                    image.shape[1] - target_bounding_box[1]
-                ]
-
-            if vertical_flip:
-                target_bounding_box = [
-                    image.shape[0] - target_bounding_box[2],
-                    target_bounding_box[1],
-                    image.shape[0] - target_bounding_box[0],
-                    target_bounding_box[3]
-                ]
-
             x_bounding_boxes[
                 batch_index,
                 bounding_box_index
@@ -327,12 +335,6 @@ class DictionaryIterator(keras.preprocessing.image.Iterator):
                     mode="reflect",
                     anti_aliasing=True
                 )
-
-                if horizontal_flip:
-                    target_mask = numpy.fliplr(target_mask)
-
-                if vertical_flip:
-                    target_mask = numpy.flipud(target_mask)
 
                 x_masks[
                     batch_index,
@@ -362,6 +364,37 @@ class DictionaryIterator(keras.preprocessing.image.Iterator):
 
         x_masks = x_masks[:, ~cropped]
 
+        for bounding_box_index, bounding_box in enumerate(x_bounding_boxes[0]):
+            mask = x_masks[0, bounding_box_index]
+
+            if horizontal_flip:
+                bounding_box = [
+                    bounding_box[0],
+                    image.shape[1] - bounding_box[3],
+                    bounding_box[2],
+                    image.shape[1] - bounding_box[1]
+                ]
+                mask = numpy.fliplr(mask)
+
+            if vertical_flip:
+                bounding_box = [
+                    image.shape[0] - bounding_box[2],
+                    bounding_box[1],
+                    image.shape[0] - bounding_box[0],
+                    bounding_box[3]
+                ]
+                mask = numpy.flipud(mask)
+
+            x_bounding_boxes[
+                batch_index,
+                bounding_box_index
+            ] = bounding_box
+
+            x_masks[
+                batch_index,
+                bounding_box_index
+            ] = mask
+
         if self.generator.clear_border:
             indices = self._clear_border(x_bounding_boxes)
 
@@ -384,6 +417,7 @@ class DictionaryIterator(keras.preprocessing.image.Iterator):
             x_masks,
             x_metadata
         ]
+
 
     @staticmethod
     def _cropped_objects(x_bounding_boxes):
