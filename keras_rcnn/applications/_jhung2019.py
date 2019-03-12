@@ -287,6 +287,8 @@ class JHung2019(keras.models.Model):
     def compile(self, optimizer, **kwargs):
         super(JHung2019, self).compile(optimizer, None)
 
+        self.load_weights("JHung2019.hdf5")
+
     def predict(self, x, batch_size=None, verbose=0, steps=None):
         target_bounding_boxes = numpy.zeros((x.shape[0], 1, 4))
 
