@@ -288,8 +288,8 @@ class JHung2019(keras.models.Model):
         super(JHung2019, self).compile(optimizer, None)
 
         origin = "http://keras-rcnn.storage.googleapis.com/JHung2019.tar.gz"
-        
-        self.load_weights("JHung2019.hdf5")
+
+        self.load_weights("JHung2019.hdf5", by_name=True)
 
     def predict(self, x, batch_size=None, verbose=0, steps=None):
         target_bounding_boxes = numpy.zeros((x.shape[0], 1, 4))
