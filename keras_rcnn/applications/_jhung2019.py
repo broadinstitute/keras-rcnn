@@ -12,7 +12,8 @@ import keras_resnet.models
 
 class JHung2019(keras.models.Model):
     """
-    A Region-based Convolutional Neural Network (RCNN)
+    The region-based convolutional neural network (RCNN) used by
+    Jane Hung, et al. (2019).
 
     Parameters
     ----------
