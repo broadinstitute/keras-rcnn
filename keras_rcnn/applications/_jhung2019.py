@@ -55,10 +55,6 @@ class JHung2019(keras.models.Model):
 
         corresponds to 1:2, 1:1, and 2:1 respectively.
 
-    anchor_base_size : Integer that specifies an anchor’s base area:
-
-            $$base_area = base_size^{2}$$.
-
     anchor_scales : An array-like with shape:
 
             $$(scales,)$$
@@ -68,8 +64,6 @@ class JHung2019(keras.models.Model):
             $$area_{scale}=\sqrt{\frac{area_{anchor}}{area_{base}}}$$.
 
     anchor_stride : A positive integer
-
-    backbone :
 
     dense_units : A positive integer that specifies the dimensionality of
         the fully-connected layers.
@@ -83,8 +77,6 @@ class JHung2019(keras.models.Model):
         correctly learn the target functions, but it’ll substantially
         increase the number of learnable parameters and memory needed by
         the model.
-
-    mask_shape : A shape tuple (integer).
 
     maximum_proposals : A positive integer that specifies the maximum
         number of object proposals returned from the model.
@@ -112,13 +104,10 @@ class JHung2019(keras.models.Model):
             input_shape,
             categories,
             anchor_aspect_ratios=None,
-            anchor_base_size=16,
             anchor_padding=1,
             anchor_scales=None,
             anchor_stride=16,
-            backbone=None,
             dense_units=1024,
-            mask_shape=(28, 28),
             maximum_proposals=300,
             minimum_size=16
     ):
@@ -127,8 +116,6 @@ class JHung2019(keras.models.Model):
 
         if anchor_scales is None:
             anchor_scales = [32, 64, 128, 256, 512]
-
-        self.mask_shape = mask_shape
 
         self.n_categories = len(categories) + 1
 
@@ -217,12 +204,15 @@ class JHung2019(keras.models.Model):
             output_scores
         ])
 
-        target_proposal_bounding_boxes, target_proposal_categories, output_proposal_bounding_boxes = keras_rcnn.layers.ProposalTarget()(
-            [
-                target_bounding_boxes,
-                target_categories,
-                output_proposal_bounding_boxes
-            ])
+        (
+            target_proposal_bounding_boxes,
+            target_proposal_categories,
+            output_proposal_bounding_boxes
+        ) = keras_rcnn.layers.ProposalTarget()([
+            target_bounding_boxes,
+            target_categories,
+            output_proposal_bounding_boxes
+        ])
 
         output_features = keras_rcnn.layers.RegionOfInterestAlignPyramid(
             extent=(7, 7),
@@ -301,15 +291,12 @@ class JHung2019(keras.models.Model):
 
         target_categories = numpy.zeros((x.shape[0], 1, self.n_categories))
 
-        target_mask = numpy.zeros((1, 1, *self.mask_shape))
-
         target_metadata = numpy.array([[x.shape[1], x.shape[2], 1.0]])
 
         x = [
             target_bounding_boxes,
             target_categories,
             x,
-            target_mask,
             target_metadata
         ]
 
