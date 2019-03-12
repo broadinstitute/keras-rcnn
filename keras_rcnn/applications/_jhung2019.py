@@ -192,8 +192,8 @@ class JHung2019(keras.models.Model):
             base_size=minimum_size,
             padding=anchor_padding,
             aspect_ratios=anchor_aspect_ratios,
-            scales=[32 * (2. ** (len(levels) - 1 - index_lvl)) / (4 * 2 ** (len(levels) - 1 - index_lvl))],
-            stride=4 * 2 ** (len(levels) - 1 - index_lvl)
+            scales=anchor_scales,
+            stride=anchor_stride
         )([
             target_bounding_boxes,
             target_metadata,
