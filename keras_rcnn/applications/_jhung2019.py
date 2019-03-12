@@ -287,6 +287,8 @@ class JHung2019(keras.models.Model):
     def compile(self, optimizer, **kwargs):
         super(JHung2019, self).compile(optimizer, None)
 
+        origin = "http://keras-rcnn.storage.googleapis.com/JHung2019.tar.gz"
+        
         self.load_weights("JHung2019.hdf5")
 
     def predict(self, x, batch_size=None, verbose=0, steps=None):
