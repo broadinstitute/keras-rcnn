@@ -154,12 +154,6 @@ class JHung2019(keras.models.Model):
             name="target_metadata"
         )
 
-        options = {
-            "activation": "relu",
-            "kernel_size": (3, 3),
-            "padding": "same"
-        }
-
         inputs = [
             target_bounding_boxes,
             target_categories,
@@ -167,35 +161,21 @@ class JHung2019(keras.models.Model):
             target_metadata
         ]
 
-        backbone = keras_resnet.models.FPN2D50(target_image)
+        backbone = keras_resnet.models.ResNet2D50(target_image, freeze_bn=True)
 
-        pyramid_2, pyramid_3, pyramid_4, pyramid_5, pyramid_6 = backbone.outputs
-
-        levels = backbone.outputs
-
-        target_proposal_bounding_boxes_list = []
-        target_proposal_categories_list = []
-        output_proposal_bounding_boxes_list = []
+        features = backbone.outputs
 
         convolution_3x3 = keras.layers.Conv2D(
             kernel_size=(3, 3),
             filters=64,
             name="3x3",
-            kernel_initializer=keras.initializers.RandomNormal(mean=0.0,
-                                                               stddev=0.01,
-                                                               seed=None),
-            bias_initializer=keras.initializers.Constant(value=0.0),
             padding='same'
-        )(level)
+        )(features)
 
         output_deltas = keras.layers.Conv2D(
             filters=k * 4,
             kernel_size=(1, 1),
             activation="linear",
-            kernel_initializer=keras.initializers.RandomNormal(mean=0.0,
-                                                               stddev=0.01,
-                                                               seed=None),
-            bias_initializer=keras.initializers.Constant(value=0.0),
             name="deltas1",
             padding='same'
         )(convolution_3x3)
@@ -204,10 +184,6 @@ class JHung2019(keras.models.Model):
             filters=k * 2,
             kernel_size=(1, 1),
             activation="sigmoid",
-            kernel_initializer=keras.initializers.RandomNormal(mean=0.0,
-                                                               stddev=0.01,
-                                                               seed=None),
-            bias_initializer=keras.initializers.Constant(value=0.0),
             name="scores1",
             padding='valid'
         )(convolution_3x3)
@@ -248,49 +224,13 @@ class JHung2019(keras.models.Model):
                 output_proposal_bounding_boxes
             ])
 
-        output_proposal_bounding_boxes_list += [
-            output_proposal_bounding_boxes]
-        target_proposal_bounding_boxes_list += [
-            target_proposal_bounding_boxes]
-        target_proposal_categories_list += [target_proposal_categories]
-
-        output_proposal_bounding_boxes = keras.layers.concatenate(
-            inputs=output_proposal_bounding_boxes_list,
-            axis=1
-        )
-
-        target_proposal_bounding_boxes = keras.layers.concatenate(
-            inputs=target_proposal_bounding_boxes_list,
-            axis=1
-        )
-
-        target_proposal_categories = keras.layers.concatenate(
-            inputs=target_proposal_categories_list,
-            axis=1
-        )
-
-        mask_features = keras_rcnn.layers.RegionOfInterestAlignPyramid(
-            extent=(14, 14),
-            strides=2,
-        )([
-            target_metadata,
-            output_proposal_bounding_boxes,
-            pyramid_2,
-            pyramid_3,
-            pyramid_4,
-            pyramid_5
-        ])
-
         output_features = keras_rcnn.layers.RegionOfInterestAlignPyramid(
             extent=(7, 7),
             strides=1
         )([
             target_metadata,
             output_proposal_bounding_boxes,
-            pyramid_2,
-            pyramid_3,
-            pyramid_4,
-            pyramid_5
+            features
         ])
 
         output_features = keras.layers.TimeDistributed(
@@ -344,7 +284,6 @@ class JHung2019(keras.models.Model):
                 output_deltas,
                 output_proposal_bounding_boxes,
                 output_scores,
-                mask_features
             ])
 
         outputs = [
