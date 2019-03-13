@@ -1,0 +1,5 @@
+# This package also depends on Keras-ResNet https://github.com/broadinstitute/keras-resnet
+
+numpy==1.16.2
+tensorflow==1.13.1
+Keras==2.2.4
