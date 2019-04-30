@@ -6,4 +6,6 @@ from ._pooling import (RegionOfInterest, RegionOfInterestAlignPyramid)
 
 from ._object_detection import ObjectDetection
 
+from ._object_segmentation import ObjectSegmentation
+
 from ._upsample import Upsample
