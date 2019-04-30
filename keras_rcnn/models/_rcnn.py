@@ -106,7 +106,6 @@ class RCNN(keras.models.Model):
     minimum_size : A positive integer that specifies the maximum width
         or height for each object proposal.
     """
-
     def __init__(
             self,
             input_shape,
@@ -226,7 +225,7 @@ class RCNN(keras.models.Model):
                 padding=anchor_padding,
                 aspect_ratios=anchor_aspect_ratios,
                 scales=[32 * (2. ** (len(levels) - 1 - index_lvl)) / (
-                            4 * 2 ** (len(levels) - 1 - index_lvl))],
+                        4 * 2 ** (len(levels) - 1 - index_lvl))],
                 stride=4 * 2 ** (len(levels) - 1 - index_lvl)
             )([
                 target_bounding_boxes,
@@ -234,35 +233,46 @@ class RCNN(keras.models.Model):
                 output_scores
             ])
 
-            output_deltas, output_scores = keras_rcnn.layers.RPN()([
-                target_proposal_bounding_boxes,
-                target_proposal_categories,
-                output_deltas,
-                output_scores
-            ])
+            output_deltas, output_scores = keras_rcnn.layers.RPN()(
+                [
+                    target_proposal_bounding_boxes,
+                    target_proposal_categories,
+                    output_deltas,
+                    output_scores
+                ]
+            )
 
             output_proposal_bounding_boxes = keras_rcnn.layers.ObjectProposal(
                 maximum_proposals=maximum_proposals,
                 minimum_size=minimum_size
-            )([
-                target_anchors,
-                target_metadata,
-                output_deltas,
-                output_scores
-            ])
+            )(
+                [
+                    target_anchors,
+                    target_metadata,
+                    output_deltas,
+                    output_scores
+                ]
+            )
 
             target_proposal_bounding_boxes, target_proposal_categories, output_proposal_bounding_boxes = keras_rcnn.layers.ProposalTarget()(
                 [
                     target_bounding_boxes,
                     target_categories,
                     output_proposal_bounding_boxes
-                ])
+                ]
+            )
 
             output_proposal_bounding_boxes_list += [
-                output_proposal_bounding_boxes]
+                output_proposal_bounding_boxes
+            ]
+
             target_proposal_bounding_boxes_list += [
-                target_proposal_bounding_boxes]
-            target_proposal_categories_list += [target_proposal_categories]
+                target_proposal_bounding_boxes
+            ]
+
+            target_proposal_categories_list += [
+                target_proposal_categories
+            ]
 
         output_proposal_bounding_boxes = keras.layers.concatenate(
             inputs=output_proposal_bounding_boxes_list,
@@ -279,37 +289,20 @@ class RCNN(keras.models.Model):
             axis=1
         )
 
-        mask_features = keras_rcnn.layers.RegionOfInterestAlignPyramid(
-            extent=(14, 14),
-            strides=2,
-        )([
-            target_metadata,
-            output_proposal_bounding_boxes,
-            pyramid_2,
-            pyramid_3,
-            pyramid_4,
-            pyramid_5
-        ])
-
         output_features = keras_rcnn.layers.RegionOfInterestAlignPyramid(
             extent=(7, 7),
             strides=1
-        )([
-            target_metadata,
-            output_proposal_bounding_boxes,
-            pyramid_2,
-            pyramid_3,
-            pyramid_4,
-            pyramid_5
-        ])
-
-        mask_features = self._mask_network()(
+        )(
             [
                 target_metadata,
-                mask_features,
-                output_proposal_bounding_boxes
+                output_proposal_bounding_boxes,
+                pyramid_2,
+                pyramid_3,
+                pyramid_4,
+                pyramid_5
             ]
         )
+
         output_features = keras.layers.TimeDistributed(
             keras.layers.Dense(
                 units=dense_units,
@@ -348,98 +341,30 @@ class RCNN(keras.models.Model):
             )
         )(output_features)
 
-        output_deltas, output_scores = keras_rcnn.layers.RCNN()([
-            target_proposal_bounding_boxes,
-            target_proposal_categories,
-            output_deltas,
-            output_scores
-        ])
+        output_deltas, output_scores = keras_rcnn.layers.RCNN()(
+            [
+                target_proposal_bounding_boxes,
+                target_proposal_categories,
+                output_deltas,
+                output_scores
+            ]
+        )
 
-        output_bounding_boxes, output_categories, mask_features = keras_rcnn.layers.ObjectDetection()(
+        output_bounding_boxes, output_categories = ObjectDetection()(
             [
                 target_metadata,
                 output_deltas,
                 output_proposal_bounding_boxes,
-                output_scores,
-                mask_features
-            ])
-
-        output_masks = keras_rcnn.layers.losses.RCNNMaskLoss()([
-            target_bounding_boxes,
-            output_bounding_boxes,
-            target_masks,
-            mask_features
-        ])
+                output_scores
+            ]
+        )
 
         outputs = [
             output_bounding_boxes,
-            output_categories,
-            output_masks
+            output_categories
         ]
 
         super(RCNN, self).__init__(inputs, outputs)
-
-    def _mask_network(self):
-        def f(x):
-            target_metadata, output_features, output_proposal_bounding_boxes = x
-
-            mask_features = keras.layers.TimeDistributed(
-                keras.layers.Conv2D(
-                    activation="relu",
-                    filters=256,
-                    kernel_size=(3, 3),
-                    padding="same"
-                )
-            )(output_features)
-
-            mask_features = keras.layers.TimeDistributed(
-                keras.layers.Conv2D(
-                    activation="relu",
-                    filters=256,
-                    kernel_size=(3, 3),
-                    padding="same"
-                )
-            )(mask_features)
-
-            mask_features = keras.layers.TimeDistributed(
-                keras.layers.Conv2D(
-                    activation="relu",
-                    filters=256,
-                    kernel_size=(3, 3),
-                    padding="same"
-                )
-            )(mask_features)
-
-            mask_features = keras.layers.TimeDistributed(
-                keras.layers.Conv2D(
-                    activation="relu",
-                    filters=256,
-                    kernel_size=(3, 3),
-                    padding="same"
-                )
-            )(mask_features)
-
-            mask_features = keras.layers.TimeDistributed(
-                keras.layers.Conv2DTranspose(
-                    activation="relu",
-                    filters=256,
-                    kernel_size=(2, 2),
-                    strides=2
-                )
-            )(mask_features)
-
-            mask_features = keras.layers.TimeDistributed(
-                keras.layers.Conv2D(
-                    activation="sigmoid",
-                    filters=self.n_categories - 1,
-                    kernel_size=(1, 1),
-                    strides=1
-                )
-            )(mask_features)
-
-            return mask_features
-
-        return f
 
     def compile(self, optimizer, **kwargs):
         super(RCNN, self).compile(optimizer, None)
