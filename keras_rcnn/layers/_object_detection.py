@@ -31,7 +31,7 @@ class ObjectDetection(keras.layers.Layer):
         other classes
         """
 
-        metadata, deltas, proposals, scores, masks = x[0], x[1], x[2], x[3], x[4]
+        metadata, deltas, proposals, scores = x[0], x[1], x[2], x[3]
 
         bounding_boxes = keras.backend.in_train_phase(
             proposals,
@@ -40,21 +40,7 @@ class ObjectDetection(keras.layers.Layer):
                 metadata,
                 deltas,
                 proposals,
-                scores,
-                masks
-            ),
-            training=training
-        )
-
-        masks = keras.backend.in_train_phase(
-            masks,
-            lambda: self.detections(
-                2,
-                metadata,
-                deltas,
-                proposals,
-                scores,
-                masks
+                scores
             ),
             training=training
         )
@@ -66,25 +52,23 @@ class ObjectDetection(keras.layers.Layer):
                 metadata,
                 deltas,
                 proposals,
-                scores,
-                masks
+                scores
             ),
             training=training
         )
 
-        return [bounding_boxes, scores, masks]
+        return [bounding_boxes, scores]
 
     def compute_output_shape(self, input_shape):
         return [
             (1, input_shape[0][0], input_shape[1][2]),
-            (1, input_shape[0][0], input_shape[2][2]),
-            (1, input_shape[0][0], input_shape[2][2], input_shape[4][2], input_shape[4][3], input_shape[4][4])
+            (1, input_shape[0][0], input_shape[2][2])
         ]
 
     def compute_mask(self, inputs, mask=None):
-        return 3 * [None]
+        return 2 * [None]
 
-    def detections(self, num_output, metadata, deltas, proposals, scores, masks):
+    def detections(self, num_output, metadata, deltas, proposals, scores):
         proposals = keras.backend.reshape(proposals, (-1, 4))
 
         # unscale back to raw image space
@@ -187,15 +171,7 @@ class ObjectDetection(keras.layers.Layer):
 
         scores = self.pad_bounding_boxes(scores, self.padding)
 
-        masks = keras.backend.squeeze(masks, axis=0)
-
-        masks = keras.backend.gather(masks, suppressed_indices)
-
-        masks = keras.backend.expand_dims(masks, axis=0)
-
-        masks = self.pad_masks(masks, self.padding)
-
-        detections = [predicted_bounding_boxes, scores, masks]
+        detections = [predicted_bounding_boxes, scores]
 
         return detections[num_output]
 
@@ -208,19 +184,6 @@ class ObjectDetection(keras.layers.Layer):
         difference = keras.backend.max([0, difference])
 
         paddings = ((0, 0), (0, difference), (0, 0))
-
-        # TODO: replace with `keras.backend.pad`
-        return tensorflow.pad(x, paddings, mode="constant")
-
-    @staticmethod
-    def pad_masks(x, padding):
-        detections = keras.backend.shape(x)[1]
-
-        difference = padding - detections
-
-        difference = keras.backend.max([0, difference])
-
-        paddings = ((0, 0), (0, difference), (0, 0), (0, 0), (0, 0))
 
         # TODO: replace with `keras.backend.pad`
         return tensorflow.pad(x, paddings, mode="constant")
