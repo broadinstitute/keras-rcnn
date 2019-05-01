@@ -1,11 +1,26 @@
 # -*- coding: utf-8 -*-
 
+import keras.utils.data_utils
 import numpy
 
 import keras_rcnn.models
 
 
 class JHung2019(keras_rcnn.models.RCNN):
+    def compile(self, optimizer, **kwargs):
+        super(JHung2019, self).compile(optimizer)
+
+        origin = "http://keras-rcnn.storage.googleapis.com/JHung2019.tar.gz"
+
+        pathname = keras.utils.data_utils.get_file(
+            cache_subdir='models',
+            fname=JHung2019,
+            origin=origin,
+            untar=True,
+        )
+
+        self.load_weights(pathname)
+
     def predict(self, x, batch_size=None, verbose=0, steps=None):
         prediction = super(JHung2019, self).predict(
             x,
