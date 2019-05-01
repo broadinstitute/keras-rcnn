@@ -1,4 +1,5 @@
 import keras
+import numpy
 
 import keras_rcnn.applications
 
@@ -25,4 +26,6 @@ class TestJHung2019:
         self.instance.compile(optimizer)
 
     def test_predict(self):
-        pass
+        image = numpy.random.random((1, 224, 224, 3))
+
+        self.instance.predict(image)
