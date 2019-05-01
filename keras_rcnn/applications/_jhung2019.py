@@ -14,7 +14,7 @@ class JHung2019(keras_rcnn.models.RCNN):
 
         pathname = keras.utils.data_utils.get_file(
             cache_subdir='models',
-            fname=JHung2019,
+            fname="JHung2019",
             origin=origin,
             untar=True,
         )
