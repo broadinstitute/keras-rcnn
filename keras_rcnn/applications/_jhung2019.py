@@ -19,7 +19,7 @@ class JHung2019(keras_rcnn.models.RCNN):
             untar=True,
         )
 
-        self.load_weights(pathname)
+        self.load_weights(pathname, by_name=True)
 
     def predict(self, x, batch_size=None, verbose=0, steps=None):
         prediction = super(JHung2019, self).predict(
