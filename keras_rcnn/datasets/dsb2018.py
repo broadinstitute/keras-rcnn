@@ -7,12 +7,10 @@ import keras.utils.data_utils
 
 
 def load_data():
-    name = "DSB2018"
-
-    origin = "http://keras-rcnn.storage.googleapis.com/{}.tar.gz".format(name)
+    origin = "http://keras-rcnn.storage.googleapis.com/{}.tar.gz".format("DSB2018")
 
     pathname = keras.utils.data_utils.get_file(
-        fname=name,
+        fname="DSB2018",
         origin=origin,
         untar=True
     )
@@ -21,28 +19,34 @@ def load_data():
 
     if os.path.exists(filename):
         with open(filename) as data:
-            training = json.load(data)
+            training_dictionaries = json.load(data)
     else:
-        training = []
+        training_dictionaries = None
 
-    for dictionary in training:
-        dictionary["image"]["pathname"] = pathname + dictionary["image"]["pathname"]
+    if training_dictionaries:
+        for training_dictionary in training_dictionaries:
+            training_dictionary["image"][
+                "pathname"] = f"{pathname}{training_dictionary['image']['pathname']}"
 
-        for instance in dictionary["objects"]:
-            instance["mask"]["pathname"] = pathname + instance["mask"]["pathname"]
+            for instance in training_dictionary["objects"]:
+                instance["mask"][
+                    "pathname"] = f"{pathname}{instance['mask']['pathname']}"
 
     filename = os.path.join(pathname, "test.json")
 
     if os.path.exists(filename):
         with open(filename) as data:
-            test = json.load(data)
+            test_dictionaries = json.load(data)
     else:
-        test = []
+        test_dictionaries = None
 
-    for dictionary in test:
-        dictionary["image"]["pathname"] = pathname + dictionary["image"]["pathname"]
+    if test_dictionaries:
+        for test_dictionary in test_dictionaries:
+            test_dictionary["image"][
+                "pathname"] = f"{pathname}{training_dictionary['image']['pathname']}"
 
-        for instance in dictionary["objects"]:
-            instance["mask"]["pathname"] = pathname + instance["mask"]["pathname"]
+            for instance in test_dictionary["objects"]:
+                instance["mask"][
+                    "pathname"] = f"{pathname}{instance['mask']['pathname']}"
 
-    return training, test
+    return training_dictionaries, test_dictionaries
