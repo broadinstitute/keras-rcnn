@@ -10,6 +10,16 @@ Keras-RCNN
 keras-rcnn is *the* Keras package for region-based convolutional
 neural networks.
 
+Requirements
+---------------
+Python 3
+
+numpy==1.16.2
+
+tensorflow==1.13.1
+
+Keras==2.2.4
+
 Getting Started
 ---------------
 
