@@ -14,11 +14,16 @@ Requirements
 ---------------
 Python 3
 
+keras-resnet==0.2.0
+
 numpy==1.16.2
 
 tensorflow==1.13.1
 
 Keras==2.2.4
+
+scikit-image==0.15.0
+
 
 Getting Started
 ---------------
@@ -72,7 +77,7 @@ and pass our preferred optimizer to the `compile` method:
 
 .. code:: python
 
-    optimizer = keras.optimizers.Adam()
+    optimizer = keras.optimizers.Adam(0.0001)
 
     model.compile(optimizer)
 
