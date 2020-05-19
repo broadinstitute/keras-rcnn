@@ -19,7 +19,6 @@ setuptools.setup(
         "keras>=2.3.1",
         "keras-resnet>=0.2.0",
         "scikit-image>=0.17.2",
-        "tensorflow>=2.2.0",
     ],
     license="MIT",
     name="keras-rcnn",

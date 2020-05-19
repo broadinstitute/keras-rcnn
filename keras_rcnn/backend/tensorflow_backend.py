@@ -32,14 +32,14 @@ def resize(image, output_shape):
 
     are returned.
     """
-    return tensorflow.image.resize_images(image, output_shape)
+    return tensorflow.compat.v1.image.resize_images(image, output_shape)
 
 
 def transpose(x, axes=None):
     """
     Permute the dimensions of an array.
     """
-    return tensorflow.transpose(x, axes)
+    return tensorflow.compat.v1.transpose(x, axes)
 
 
 def shuffle(x):
@@ -48,11 +48,11 @@ def shuffle(x):
     the array along the first axis of a multi-dimensional array. The order of
     sub-arrays is changed but their contents remains the same.
     """
-    return tensorflow.random_shuffle(x)
+    return tensorflow.compat.v1.random_shuffle(x)
 
 
 def gather_nd(params, indices):
-    return tensorflow.gather_nd(params, indices)
+    return tensorflow.compat.v1.gather_nd(params, indices)
 
 
 def matmul(
@@ -65,7 +65,7 @@ def matmul(
     a_is_sparse=False,
     b_is_sparse=False,
 ):
-    return tensorflow.matmul(
+    return tensorflow.compat.v1.matmul(
         a,
         b,
         transpose_a=transpose_a,
@@ -79,7 +79,7 @@ def matmul(
 
 # TODO: emulate NumPy semantics
 def argsort(a):
-    _, indices = tensorflow.nn.top_k(a, keras.backend.shape(a)[-1])
+    _, indices = tensorflow.compat.v1.nn.top_k(a, keras.backend.shape(a)[-1])
 
     return indices
 
@@ -111,47 +111,22 @@ def scatter_add_tensor(ref, indices, updates, name=None):
     :return: Same as ref. Returned as a convenience for operations that want
     to use the updated values after the update is done.
     """
-    with tensorflow.name_scope(
-        name, "scatter_add_tensor", [ref, indices, updates]
-    ) as scope:
-        ref = tensorflow.convert_to_tensor(ref, name="ref")
-
-        indices = tensorflow.convert_to_tensor(indices, name="indices")
-
-        updates = tensorflow.convert_to_tensor(updates, name="updates")
-
-        ref_shape = tensorflow.shape(ref, out_type=indices.dtype, name="ref_shape")
-
-        scattered_updates = tensorflow.scatter_nd(
-            indices, updates, ref_shape, name="scattered_updates"
-        )
-
-        with tensorflow.control_dependencies(
-            [
-                tensorflow.assert_equal(
-                    ref_shape,
-                    tensorflow.shape(scattered_updates, out_type=indices.dtype),
-                )
-            ]
-        ):
-            output = tensorflow.add(ref, scattered_updates, name=scope)
-
-        return output
+    return tensorflow.tensor_scatter_nd_add(ref, indices, updates, name)
 
 
 def meshgrid(*args, **kwargs):
-    return tensorflow.meshgrid(*args, **kwargs)
+    return tensorflow.compat.v1.meshgrid(*args, **kwargs)
 
 
 newaxis = tensorflow.newaxis
 
 
 def where(condition, x=None, y=None):
-    return tensorflow.where(condition, x, y)
+    return tensorflow.compat.v1.where(condition, x, y)
 
 
 def non_maximum_suppression(boxes, scores, maximum, threshold=0.5):
-    return tensorflow.image.non_max_suppression(
+    return tensorflow.compat.v1.image.non_max_suppression(
         boxes=boxes, iou_threshold=threshold, max_output_size=maximum, scores=scores
     )
 
@@ -173,7 +148,7 @@ def crop_and_resize(image, boxes, size):
 
     boxes = keras.backend.cast(keras.backend.reshape(boxes, [-1, 4]), "float32")
 
-    return tensorflow.image.crop_and_resize(image, boxes, box_ind, size)
+    return tensorflow.compat.v1.image.crop_and_resize(image, boxes, box_ind, size)
 
 
 def smooth_l1(output, target, anchored=False, weights=None):
@@ -183,7 +158,7 @@ def smooth_l1(output, target, anchored=False, weights=None):
     q = 0.5 * keras.backend.square(difference)
     r = difference - 0.5
 
-    difference = tensorflow.where(p, q, r)
+    difference = tensorflow.compat.v1.where(p, q, r)
 
     loss = keras.backend.sum(difference, axis=2)
 
@@ -213,7 +188,7 @@ def unique(x, return_index=False):
     reconstruct the input array, and the number of times each unique value
     comes up in the input array.
     """
-    y, indices = tensorflow.unique(x)
+    y, indices = tensorflow.compat.v1.unique(x)
 
     if return_index:
         return y, indices
@@ -222,4 +197,4 @@ def unique(x, return_index=False):
 
 
 def pad(x, pad_width, mode):
-    return tensorflow.pad(x, pad_width, mode)
+    return tensorflow.compat.v1.pad(x, pad_width, mode)
