@@ -28,4 +28,4 @@ class TestJHung2019:
     def test_predict(self):
         image = numpy.random.random((1, 224, 224, 3))
 
-        self.instance.predict(image)
+        self.instance.predict(image, )

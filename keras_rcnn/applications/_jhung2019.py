@@ -21,13 +21,9 @@ class JHung2019(keras_rcnn.models.RCNN):
 
         self.load_weights(pathname, by_name=True)
 
-    def predict(self, x, batch_size=None, verbose=0, steps=None):
-        prediction = super(JHung2019, self).predict(
-            x,
-            batch_size,
-            verbose,
-            steps
-        )
+    def predict(self, x, batch_size=None, verbose=0, steps=None, **kwargs):
+        prediction = super(JHung2019, self).predict(x, batch_size, verbose,
+                                                    steps, )
 
         predicted_bounding_boxes, predicted_categories = prediction
 

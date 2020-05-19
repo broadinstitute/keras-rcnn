@@ -369,7 +369,7 @@ class RCNN(keras.models.Model):
     def compile(self, optimizer, **kwargs):
         super(RCNN, self).compile(optimizer, None)
 
-    def predict(self, x, batch_size=None, verbose=0, steps=None):
+    def predict(self, x, batch_size=None, verbose=0, steps=None, **kwargs):
         target_bounding_boxes = numpy.zeros((x.shape[0], 1, 4))
 
         target_categories = numpy.zeros((x.shape[0], 1, self.n_categories))

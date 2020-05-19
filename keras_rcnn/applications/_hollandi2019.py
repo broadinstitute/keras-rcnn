@@ -20,5 +20,5 @@ class Hollandi2019(keras_rcnn.models.MaskRCNN):
 
         self.load_weights(pathname, by_name=True)
 
-    def predict(self, x, batch_size=None, verbose=0, steps=None):
-        super(Hollandi2019, self).predict(x, batch_size, verbose, steps)
+    def predict(self, x, batch_size=None, verbose=0, steps=None, **kwargs):
+        super(Hollandi2019, self).predict(x, batch_size, verbose, steps, )
