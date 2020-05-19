@@ -11,7 +11,7 @@ class TestObjectProposal:
 
         deltas = numpy.random.random((1, 14, 14, 9 * 4))
         scores = numpy.random.random((1, 14, 14, 9 * 2))
-        anchors = numpy.zeros((1, 14 * 14 * 9, 4)).astype('float32')
+        anchors = numpy.zeros((1, 14 * 14 * 9, 4)).astype("float32")
 
         deltas = keras.backend.variable(deltas)
         scores = keras.backend.variable(scores)
@@ -22,16 +22,12 @@ class TestObjectProposal:
 
 
 def test_filter_boxes():
-    proposals = numpy.array(
-        [[0, 2, 3, 10],
-         [-1, -5, 4, 8],
-         [0, 0, 1, 1]]
-    )
+    proposals = numpy.array([[0, 2, 3, 10], [-1, -5, 4, 8], [0, 0, 1, 1]])
 
     minimum = 3
 
     results = keras_rcnn.layers.object_detection._object_proposal.filter_boxes(
-        proposals, minimum)
+        proposals, minimum
+    )
 
-    numpy.testing.assert_array_equal(keras.backend.eval(results),
-                                     numpy.array([0, 1]))
+    numpy.testing.assert_array_equal(keras.backend.eval(results), numpy.array([0, 1]))

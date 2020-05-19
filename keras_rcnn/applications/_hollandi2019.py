@@ -12,13 +12,12 @@ class Hollandi2019(keras_rcnn.models.MaskRCNN):
         origin = "http://keras-rcnn.storage.googleapis.com/Hollandi2019.tar.gz"
 
         pathname = keras.utils.data_utils.get_file(
-            cache_subdir='models',
-            fname="Hollandi2019",
-            origin=origin,
-            untar=True,
+            cache_subdir="models", fname="Hollandi2019", origin=origin, untar=True,
         )
 
         self.load_weights(pathname, by_name=True)
 
     def predict(self, x, batch_size=None, verbose=0, steps=None, **kwargs):
-        super(Hollandi2019, self).predict(x, batch_size, verbose, steps, )
+        super(Hollandi2019, self).predict(
+            x, batch_size, verbose, steps,
+        )

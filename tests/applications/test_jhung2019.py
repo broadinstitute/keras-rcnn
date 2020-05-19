@@ -12,13 +12,10 @@ class TestJHung2019:
             "ring": 3,
             "trophozoite": 4,
             "schizont": 5,
-            "gametocyte": 6
+            "gametocyte": 6,
         }
 
-        self.instance = keras_rcnn.applications.JHung2019(
-            (224, 224, 3),
-            categories
-        )
+        self.instance = keras_rcnn.applications.JHung2019((224, 224, 3), categories)
 
     def test_compile(self):
         optimizer = keras.optimizers.SGD()
@@ -28,4 +25,4 @@ class TestJHung2019:
     def test_predict(self):
         image = numpy.random.random((1, 224, 224, 3))
 
-        self.instance.predict(image, )
+        self.instance.predict(image,)

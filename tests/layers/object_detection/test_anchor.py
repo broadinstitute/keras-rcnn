@@ -19,13 +19,9 @@ class TestAnchor:
         output_scores = numpy.random.random((1, 14, 14, 9 * 2))
         output_scores = keras.backend.variable(output_scores)
 
-        _, _, _ = keras_rcnn.layers.Anchor(
-            padding=1
-        )([
-            target_bounding_boxes,
-            target_metadata,
-            output_scores
-        ])
+        _, _, _ = keras_rcnn.layers.Anchor(padding=1)(
+            [target_bounding_boxes, target_metadata, output_scores]
+        )
 
     def test_label(self, anchor_layer):
         stride = 16
@@ -42,9 +38,13 @@ class TestAnchor:
 
         inds_inside, all_inside_anchors = anchor_layer._inside_image(all_anchors)
 
-        all_inside_anchors = keras_rcnn.backend.clip(all_inside_anchors, img_info[0][:2])
+        all_inside_anchors = keras_rcnn.backend.clip(
+            all_inside_anchors, img_info[0][:2]
+        )
 
-        argmax_overlaps_inds, anchor_labels = anchor_layer._label(gt_boxes, all_inside_anchors, inds_inside)
+        argmax_overlaps_inds, anchor_labels = anchor_layer._label(
+            gt_boxes, all_inside_anchors, inds_inside
+        )
 
         result1 = keras.backend.eval(argmax_overlaps_inds)
         result2 = keras.backend.eval(anchor_labels)
@@ -57,7 +57,9 @@ class TestAnchor:
 
         assert numpy.min(result2) >= -1
 
-        argmax_overlaps_inds, anchor_labels = anchor_layer._label(gt_boxes, all_inside_anchors, inds_inside)
+        argmax_overlaps_inds, anchor_labels = anchor_layer._label(
+            gt_boxes, all_inside_anchors, inds_inside
+        )
 
         result1 = keras.backend.eval(argmax_overlaps_inds)
         result2 = keras.backend.eval(anchor_labels)
@@ -73,7 +75,9 @@ class TestAnchor:
         gt_boxes = keras.backend.variable(224 * numpy.random.random((55, 4)))
         gt_boxes = tensorflow.convert_to_tensor(gt_boxes, dtype=tensorflow.float32)
 
-        argmax_overlaps_inds, anchor_labels = anchor_layer._label(gt_boxes, all_inside_anchors, inds_inside)
+        argmax_overlaps_inds, anchor_labels = anchor_layer._label(
+            gt_boxes, all_inside_anchors, inds_inside
+        )
 
         result1 = keras.backend.eval(argmax_overlaps_inds)
         result2 = keras.backend.eval(anchor_labels)
@@ -89,18 +93,13 @@ class TestAnchor:
     def test_subsample_positive_labels(self, anchor_layer):
         x = keras.backend.ones((10,))
 
-        y = anchor_layer._subsample_positive_labels(
-            x)
+        y = anchor_layer._subsample_positive_labels(x)
 
-        numpy.testing.assert_array_equal(
-            keras.backend.eval(x),
-            keras.backend.eval(y)
-        )
+        numpy.testing.assert_array_equal(keras.backend.eval(x), keras.backend.eval(y))
 
         x = keras.backend.ones((1000,))
 
-        y = anchor_layer._subsample_positive_labels(
-            x)
+        y = anchor_layer._subsample_positive_labels(x)
 
         assert keras.backend.eval(keras.backend.sum(y) < keras.backend.sum(x))
 
@@ -109,10 +108,7 @@ class TestAnchor:
 
         y = anchor_layer._subsample_negative_labels(x)
 
-        numpy.testing.assert_array_equal(
-            keras.backend.eval(x),
-            keras.backend.eval(y)
-        )
+        numpy.testing.assert_array_equal(keras.backend.eval(x), keras.backend.eval(y))
 
         x = keras.backend.zeros((1000,))
 
@@ -125,19 +121,13 @@ class TestAnchor:
 
         y = anchor_layer._balance(x)
 
-        numpy.testing.assert_array_equal(
-            keras.backend.eval(x),
-            keras.backend.eval(y)
-        )
+        numpy.testing.assert_array_equal(keras.backend.eval(x), keras.backend.eval(y))
 
         x = keras.backend.ones((91,))
 
         y = anchor_layer._balance(x)
 
-        numpy.testing.assert_array_equal(
-            keras.backend.eval(x),
-            keras.backend.eval(y)
-        )
+        numpy.testing.assert_array_equal(keras.backend.eval(x), keras.backend.eval(y))
 
         x = keras.backend.ones((1000,))
 
@@ -159,9 +149,13 @@ class TestAnchor:
 
         inds_inside, all_inside_anchors = anchor_layer._inside_image(all_anchors)
 
-        all_inside_anchors = keras_rcnn.backend.clip(all_inside_anchors, img_info[0][:2])
+        all_inside_anchors = keras_rcnn.backend.clip(
+            all_inside_anchors, img_info[0][:2]
+        )
 
-        a, max_overlaps, gt_argmax_overlaps_inds = anchor_layer._overlapping(all_inside_anchors, gt_boxes, inds_inside)
+        a, max_overlaps, gt_argmax_overlaps_inds = anchor_layer._overlapping(
+            all_inside_anchors, gt_boxes, inds_inside
+        )
 
         a = keras.backend.eval(a)
         max_overlaps = keras.backend.eval(max_overlaps)
@@ -190,11 +184,17 @@ class TestAnchor:
 
         inds_inside, all_inside_anchors = anchor_layer._inside_image(all_anchors)
 
-        all_inside_anchors = keras_rcnn.backend.clip(all_inside_anchors, img_info[0][:2])
+        all_inside_anchors = keras_rcnn.backend.clip(
+            all_inside_anchors, img_info[0][:2]
+        )
 
-        argmax_overlaps_indices, labels = anchor_layer._label(gt_boxes, all_inside_anchors, inds_inside)
+        argmax_overlaps_indices, labels = anchor_layer._label(
+            gt_boxes, all_inside_anchors, inds_inside
+        )
 
-        bbox_reg_targets = keras_rcnn.backend.bbox_transform(all_inside_anchors, keras.backend.gather(gt_boxes, argmax_overlaps_indices))
+        bbox_reg_targets = keras_rcnn.backend.bbox_transform(
+            all_inside_anchors, keras.backend.gather(gt_boxes, argmax_overlaps_indices)
+        )
 
         labels = anchor_layer._unmap(labels, inds_inside, fill=-1)
 
@@ -216,7 +216,9 @@ class TestAnchor:
 
         inds_inside, all_inside_anchors = anchor_layer._inside_image(all_anchors)
 
-        all_inside_anchors = keras_rcnn.backend.clip(all_inside_anchors, img_info[0][:2])
+        all_inside_anchors = keras_rcnn.backend.clip(
+            all_inside_anchors, img_info[0][:2]
+        )
 
         inds_inside = keras.backend.eval(inds_inside)
 
@@ -227,11 +229,7 @@ class TestAnchor:
         assert all_inside_anchors.shape == (224, 4)
 
     def test_inside_and_outside_weights_1(self, anchor_layer):
-        anchors = numpy.array(
-            [[30, 20, 50, 30],
-             [10, 15, 20, 25],
-             [ 5, 15, 20, 22]]
-        )
+        anchors = numpy.array([[30, 20, 50, 30], [10, 15, 20, 25], [5, 15, 20, 22]])
 
         anchors = keras.backend.constant(anchors)
 
@@ -242,17 +240,22 @@ class TestAnchor:
         proposed_inside_weights = [1.0, 0.5, 0.7, 1.0]
 
         target_inside_weights = numpy.array(
-            [[1.0, 0.5, 0.7, 1.0],
-             [0.0, 0.0, 0.0, 0.0],
-             [1.0, 0.5, 0.7, 1.0]]
+            [[1.0, 0.5, 0.7, 1.0], [0.0, 0.0, 0.0, 0.0], [1.0, 0.5, 0.7, 1.0]]
         )
 
         target_inside_weights = keras.backend.constant(target_inside_weights)
 
-        target_outside_weights = keras.backend.ones_like(anchors, dtype=keras.backend.floatx())
+        target_outside_weights = keras.backend.ones_like(
+            anchors, dtype=keras.backend.floatx()
+        )
         target_outside_weights /= target_outside_weights
 
-        output_inside_weights, output_outside_weights = anchor_layer._inside_and_outside_weights(anchors, subsample, positive_weight, proposed_inside_weights)
+        (
+            output_inside_weights,
+            output_outside_weights,
+        ) = anchor_layer._inside_and_outside_weights(
+            anchors, subsample, positive_weight, proposed_inside_weights
+        )
 
         target_inside_weights = keras.backend.eval(target_inside_weights)
         output_inside_weights = keras.backend.eval(output_inside_weights)
@@ -265,11 +268,7 @@ class TestAnchor:
         numpy.testing.assert_array_equal(target_outside_weights, output_outside_weights)
 
     def test_inside_and_outside_weights_2(self, anchor_layer):
-        anchors = numpy.array(
-            [[30, 20, 50, 30],
-             [10, 15, 20, 25],
-             [ 5, 15, 20, 22]]
-        )
+        anchors = numpy.array([[30, 20, 50, 30], [10, 15, 20, 25], [5, 15, 20, 22]])
 
         anchors = keras.backend.constant(anchors)
 
@@ -280,22 +279,23 @@ class TestAnchor:
         proposed_inside_weights = [1.0, 0.5, 0.7, 1.0]
 
         target_inside_weights = numpy.array(
-            [[1.0, 0.5, 0.7, 1.0],
-             [0.0, 0.0, 0.0, 0.0],
-             [1.0, 0.5, 0.7, 1.0]]
+            [[1.0, 0.5, 0.7, 1.0], [0.0, 0.0, 0.0, 0.0], [1.0, 0.5, 0.7, 1.0]]
         )
 
         target_inside_weights = keras.backend.constant(target_inside_weights)
 
         target_outside_weights = numpy.array(
-            [[0.3, 0.3, 0.3, 0.3],
-             [0.4, 0.4, 0.4, 0.4],
-             [0.3, 0.3, 0.3, 0.3]]
+            [[0.3, 0.3, 0.3, 0.3], [0.4, 0.4, 0.4, 0.4], [0.3, 0.3, 0.3, 0.3]]
         )
 
         target_outside_weights = keras.backend.constant(target_outside_weights)
 
-        output_inside_weights, output_outside_weights = anchor_layer._inside_and_outside_weights(anchors, subsample, positive_weight, proposed_inside_weights)
+        (
+            output_inside_weights,
+            output_outside_weights,
+        ) = anchor_layer._inside_and_outside_weights(
+            anchors, subsample, positive_weight, proposed_inside_weights
+        )
 
         target_inside_weights = keras.backend.eval(target_inside_weights)
         output_inside_weights = keras.backend.eval(output_inside_weights)

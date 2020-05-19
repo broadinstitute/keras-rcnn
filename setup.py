@@ -4,13 +4,14 @@ setuptools.setup(
     author="Allen Goodman",
     author_email="allen.goodman@icloud.com",
     extras_require={
+        "dev": ["black>=19.10b0", "check-manifest>=0.41", "pre-commit>=2.2.0"],
         "test": [
             "codecov",
             "mock",
             "pytest",
             "pytest-cov",
             "pytest-pep8",
-            "pytest-runner"
+            "pytest-runner",
         ],
     },
     install_requires=[
@@ -18,7 +19,7 @@ setuptools.setup(
         "keras>=2.3.1",
         "keras-resnet>=0.2.0",
         "scikit-image>=0.17.2",
-        "tensorflow>=2.2.0"
+        "tensorflow>=2.2.0",
     ],
     license="MIT",
     name="keras-rcnn",
@@ -26,15 +27,11 @@ setuptools.setup(
         "keras-rcnn": [
             "data/checkpoints/*/*.hdf5",
             "data/logs/*/*.csv",
-            "data/notebooks/*/*.ipynb"
+            "data/notebooks/*/*.ipynb",
         ]
     },
-    packages=setuptools.find_packages(
-        exclude=[
-            "tests"
-        ]
-    ),
+    packages=setuptools.find_packages(exclude=["tests"]),
     url="https://github.com/broadinstitute/keras-rcnn",
     version="0.1.0",
-    zip_safe=True
+    zip_safe=True,
 )

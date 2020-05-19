@@ -27,14 +27,11 @@ def show_bounding_boxes(image, bounding_boxes, categories=None):
 
     for bounding_box, category in zip(bounding_boxes, categories):
         rectangle = matplotlib.patches.Rectangle(
-            [
-                bounding_box[1],
-                bounding_box[0]
-            ],
+            [bounding_box[1], bounding_box[0]],
             bounding_box[3] - bounding_box[1],
             bounding_box[2] - bounding_box[0],
             edgecolor=colormap(category[0]),
-            facecolor="none"
+            facecolor="none",
         )
 
         axis.add_patch(rectangle)

@@ -12,7 +12,9 @@ class RCNN(keras.layers.Layer):
         super(RCNN, self).__init__(**kwargs)
 
     def classification_loss(self):
-        loss = keras_rcnn.backend.softmax_classification(self.target_scores, self.output_scores, anchored=True)
+        loss = keras_rcnn.backend.softmax_classification(
+            self.target_scores, self.output_scores, anchored=True
+        )
 
         return keras.backend.mean(loss)
 
@@ -27,11 +29,15 @@ class RCNN(keras.layers.Layer):
         labels = keras.backend.repeat_elements(mask, 4, -1)
         labels = labels[:, :, 4:]
 
-        loss = keras_rcnn.backend.smooth_l1(output_deltas * labels, target_deltas * labels, anchored=True)
+        loss = keras_rcnn.backend.smooth_l1(
+            output_deltas * labels, target_deltas * labels, anchored=True
+        )
 
         target_scores = self.target_scores[:, :, 1:]
 
-        return keras.backend.sum(loss) / keras.backend.maximum(keras.backend.epsilon(), keras.backend.sum(target_scores))
+        return keras.backend.sum(loss) / keras.backend.maximum(
+            keras.backend.epsilon(), keras.backend.sum(target_scores)
+        )
 
     def call(self, inputs, **kwargs):
         target_deltas, target_scores, output_deltas, output_scores = inputs
@@ -121,7 +127,12 @@ class RPN(keras.layers.Layer):
         # Divided by anchor overlaps
         weight = 1.0
 
-        loss = weight * (keras.backend.sum(a) / keras.backend.maximum(keras.backend.epsilon(), keras.backend.sum(p_star_i)))
+        loss = weight * (
+            keras.backend.sum(a)
+            / keras.backend.maximum(
+                keras.backend.epsilon(), keras.backend.sum(p_star_i)
+            )
+        )
 
         return loss
 

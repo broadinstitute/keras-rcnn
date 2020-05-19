@@ -10,20 +10,18 @@ class JHung2019(keras_rcnn.models.RCNN):
     def compile(self, optimizer, **kwargs):
         super(JHung2019, self).compile(optimizer)
 
-        origin = "http://keras-rcnn-applications.storage.googleapis.com/JHung2019.tar.gz"
+        origin = (
+            "http://keras-rcnn-applications.storage.googleapis.com/JHung2019.tar.gz"
+        )
 
         pathname = keras.utils.data_utils.get_file(
-            cache_subdir='models',
-            fname="JHung2019.hdf5",
-            origin=origin,
-            untar=True,
+            cache_subdir="models", fname="JHung2019.hdf5", origin=origin, untar=True,
         )
 
         self.load_weights(pathname, by_name=True)
 
     def predict(self, x, batch_size=None, verbose=0, steps=None, **kwargs):
-        prediction = super(JHung2019, self).predict(x, batch_size, verbose,
-                                                    steps, )
+        prediction = super(JHung2019, self).predict(x, batch_size, verbose, steps,)
 
         predicted_bounding_boxes, predicted_categories = prediction
 

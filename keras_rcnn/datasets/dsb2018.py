@@ -10,9 +10,7 @@ def load_data():
     origin = "http://keras-rcnn.storage.googleapis.com/{}.tar.gz".format("DSB2018")
 
     pathname = keras.utils.data_utils.get_file(
-        fname="DSB2018",
-        origin=origin,
-        untar=True
+        fname="DSB2018", origin=origin, untar=True
     )
 
     filename = os.path.join(pathname, "training.json")
@@ -26,11 +24,13 @@ def load_data():
     if training_dictionaries:
         for training_dictionary in training_dictionaries:
             training_dictionary["image"][
-                "pathname"] = f"{pathname}{training_dictionary['image']['pathname']}"
+                "pathname"
+            ] = f"{pathname}{training_dictionary['image']['pathname']}"
 
             for instance in training_dictionary["objects"]:
                 instance["mask"][
-                    "pathname"] = f"{pathname}{instance['mask']['pathname']}"
+                    "pathname"
+                ] = f"{pathname}{instance['mask']['pathname']}"
 
     filename = os.path.join(pathname, "test.json")
 
@@ -43,10 +43,12 @@ def load_data():
     if test_dictionaries:
         for test_dictionary in test_dictionaries:
             test_dictionary["image"][
-                "pathname"] = f"{pathname}{training_dictionary['image']['pathname']}"
+                "pathname"
+            ] = f"{pathname}{training_dictionary['image']['pathname']}"
 
             for instance in test_dictionary["objects"]:
                 instance["mask"][
-                    "pathname"] = f"{pathname}{instance['mask']['pathname']}"
+                    "pathname"
+                ] = f"{pathname}{instance['mask']['pathname']}"
 
     return training_dictionaries, test_dictionaries

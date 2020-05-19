@@ -20,7 +20,7 @@ def generator(training_dictionary):
         dictionary=training_dictionary,
         categories=categories,
         target_size=(224, 224),
-        shuffle=False
+        shuffle=False,
     )
 
 

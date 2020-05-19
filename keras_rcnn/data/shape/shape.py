@@ -21,7 +21,8 @@ def md5sum(pathname, blocksize=65536):
 def __main__():
     pathname = "images"
 
-    if os.path.exists(pathname): shutil.rmtree(pathname)
+    if os.path.exists(pathname):
+        shutil.rmtree(pathname)
 
     os.mkdir(pathname)
 
@@ -48,13 +49,9 @@ def __main__():
                     "image": {
                         "checksum": md5sum(pathname),
                         "pathname": pathname,
-                        "shape": {
-                            "r": r,
-                            "c": c,
-                            "channels": 3
-                        }
+                        "shape": {"r": r, "c": c, "channels": 3},
                     },
-                    "objects": []
+                    "objects": [],
                 }
 
                 for category, (bounding_box_r, bounding_box_c) in objects:
@@ -63,16 +60,10 @@ def __main__():
 
                     object_dictionary = {
                         "bounding_box": {
-                            "minimum": {
-                                "r": minimum_r - 1,
-                                "c": minimum_c - 1
-                            },
-                            "maximum": {
-                                "r": maximum_r - 1,
-                                "c": maximum_c - 1
-                            }
+                            "minimum": {"r": minimum_r - 1, "c": minimum_c - 1},
+                            "maximum": {"r": maximum_r - 1, "c": maximum_c - 1},
                         },
-                        "category": category
+                        "category": category,
                     }
 
                     dictionary["objects"].append(object_dictionary)

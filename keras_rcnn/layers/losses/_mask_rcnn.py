@@ -31,7 +31,7 @@ class RCNNMaskLoss(keras.layers.Layer):
             output_bounding_box=predicred_boxes,
             target_mask=target_masks,
             output_mask=predicted_masks,
-            threshold=self.threshold
+            threshold=self.threshold,
         )
 
         self.add_loss(loss, inputs)
@@ -58,8 +58,18 @@ class RCNNMaskLoss(keras.layers.Layer):
             in [i, j].
         """
 
-        a_x1, a_y1, b_x1, b_y1 = a[:, 0:1], a[:, 1:2], a[:, 2:3], a[:, 3:]  # tf.split(bboxes1, 4, axis=1)
-        a_x2, a_y2, b_x2, b_y2 = b[:, 0:1], b[:, 1:2], b[:, 2:3], b[:, 3:]  # tf.split(bboxes2, 4, axis=1)
+        a_x1, a_y1, b_x1, b_y1 = (
+            a[:, 0:1],
+            a[:, 1:2],
+            a[:, 2:3],
+            a[:, 3:],
+        )  # tf.split(bboxes1, 4, axis=1)
+        a_x2, a_y2, b_x2, b_y2 = (
+            b[:, 0:1],
+            b[:, 1:2],
+            b[:, 2:3],
+            b[:, 3:],
+        )  # tf.split(bboxes2, 4, axis=1)
 
         x_intersection_1 = keras.backend.maximum(a_x1, keras.backend.transpose(a_x2))
         y_intersection_1 = keras.backend.maximum(a_y1, keras.backend.transpose(a_y2))
@@ -75,7 +85,9 @@ class RCNNMaskLoss(keras.layers.Layer):
         bounding_boxes_a_area = (b_x1 - a_x1 + 1) * (b_y1 - a_y1 + 1)
         bounding_boxes_b_area = (b_x2 - a_x2 + 1) * (b_y2 - a_y2 + 1)
 
-        union = (bounding_boxes_a_area + keras.backend.transpose(bounding_boxes_b_area)) - intersection
+        union = (
+            bounding_boxes_a_area + keras.backend.transpose(bounding_boxes_b_area)
+        ) - intersection
 
         return keras.backend.maximum(intersection / union, 0)
 
@@ -93,9 +105,16 @@ class RCNNMaskLoss(keras.layers.Layer):
         """
         epsilon = keras.backend.epsilon()
 
-        intermediate = keras.backend.dot(target, keras.backend.transpose(keras.backend.log(output + epsilon))) + keras.backend.dot((1. - target), keras.backend.transpose(keras.backend.log(1. - output + epsilon)))
+        intermediate = keras.backend.dot(
+            target, keras.backend.transpose(keras.backend.log(output + epsilon))
+        ) + keras.backend.dot(
+            (1.0 - target),
+            keras.backend.transpose(keras.backend.log(1.0 - output + epsilon)),
+        )
 
-        return - intermediate / keras.backend.cast(keras.backend.shape(target)[1], dtype=keras.backend.floatx())
+        return -intermediate / keras.backend.cast(
+            keras.backend.shape(target)[1], dtype=keras.backend.floatx()
+        )
 
     @staticmethod
     def categorical_crossentropy(_sentinel=None, target=None, output=None):
@@ -112,11 +131,20 @@ class RCNNMaskLoss(keras.layers.Layer):
         epsilon = keras.backend.epsilon()
 
         # TODO: normalize dot product, size of the logits / number of classes
-        cce = -keras.backend.dot(target, keras.backend.transpose(keras.backend.log(output + epsilon)))
+        cce = -keras.backend.dot(
+            target, keras.backend.transpose(keras.backend.log(output + epsilon))
+        )
         return cce
 
     @staticmethod
-    def compute_mask_loss(_sentinel=None, target_bounding_box=None, output_bounding_box=None, target_mask=None, output_mask=None, threshold=0.5):
+    def compute_mask_loss(
+        _sentinel=None,
+        target_bounding_box=None,
+        output_bounding_box=None,
+        target_mask=None,
+        output_mask=None,
+        threshold=0.5,
+    ):
         """
         Args:
             _sentinel: internal use only
@@ -140,10 +168,11 @@ class RCNNMaskLoss(keras.layers.Layer):
         target_mask = keras.backend.reshape(target_mask, [-1, index])
         output_mask = keras.backend.reshape(output_mask, [-1, index])
 
-        iou = RCNNMaskLoss.intersection_over_union(target_bounding_box, output_bounding_box)
+        iou = RCNNMaskLoss.intersection_over_union(
+            target_bounding_box, output_bounding_box
+        )
         b = keras.backend.greater(iou, threshold)
         b = keras.backend.cast(b, dtype=keras.backend.floatx())
-
 
         # labels = keras.backend.greater(output_mask, 0.5)
         # labels = keras.backend.cast(labels, dtype=keras.backend.floatx())
@@ -151,9 +180,7 @@ class RCNNMaskLoss(keras.layers.Layer):
         # labels = keras.backend.equal(labels, target_mask)
         # labels = keras.backend.cast(labels, dtype=keras.backend.floatx())
 
-
         a = RCNNMaskLoss.binary_crossentropy(target=target_mask, output=output_mask)
-
 
         # loss = keras.backend.sum(a * b) / keras.backend.sum(b)
         loss = keras.backend.mean(a * b)

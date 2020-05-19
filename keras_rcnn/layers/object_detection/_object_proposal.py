@@ -21,6 +21,7 @@ class ObjectProposal(keras.layers.Layer):
     # Output shape
         (# images, # proposals, 4)
     """
+
     def __init__(self, maximum_proposals=300, minimum_size=16, stride=16, **kwargs):
         self.maximum_proposals = maximum_proposals
 
@@ -62,7 +63,7 @@ class ObjectProposal(keras.layers.Layer):
         indices = filter_boxes(proposals, self.minimum_size * image_scale)
         proposals = keras.backend.gather(proposals, indices)
 
-        scores = scores[..., (scores.shape[-1] // 2):]
+        scores = scores[..., (scores.shape[-1] // 2) :]
         scores = keras.backend.reshape(scores, (-1, 1))
         scores = keras.backend.gather(scores, indices)
         scores = keras.backend.flatten(scores)
@@ -81,7 +82,12 @@ class ObjectProposal(keras.layers.Layer):
         scores = keras.backend.gather(scores, indices)
 
         # 6. apply nms (e.g. threshold = 0.7)
-        indices = keras_rcnn.backend.non_maximum_suppression(boxes=proposals, scores=scores, maximum=self.maximum_proposals, threshold=0.7)
+        indices = keras_rcnn.backend.non_maximum_suppression(
+            boxes=proposals,
+            scores=scores,
+            maximum=self.maximum_proposals,
+            threshold=0.7,
+        )
 
         proposals = keras.backend.gather(proposals, indices)
 
@@ -95,7 +101,7 @@ class ObjectProposal(keras.layers.Layer):
         configuration = {
             "maximum_proposals": self.maximum_proposals,
             "minimum_size": self.minimum_size,
-            "stride": self.stride
+            "stride": self.stride,
         }
 
         return {**super(ObjectProposal, self).get_config(), **configuration}

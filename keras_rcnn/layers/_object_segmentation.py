@@ -35,41 +35,20 @@ class ObjectSegmentation(keras.layers.Layer):
 
         bounding_boxes = keras.backend.in_train_phase(
             proposals,
-            lambda: self.detections(
-                0,
-                metadata,
-                deltas,
-                proposals,
-                scores,
-                masks
-            ),
-            training=training
+            lambda: self.detections(0, metadata, deltas, proposals, scores, masks),
+            training=training,
         )
 
         masks = keras.backend.in_train_phase(
             masks,
-            lambda: self.detections(
-                2,
-                metadata,
-                deltas,
-                proposals,
-                scores,
-                masks
-            ),
-            training=training
+            lambda: self.detections(2, metadata, deltas, proposals, scores, masks),
+            training=training,
         )
 
         scores = keras.backend.in_train_phase(
             scores,
-            lambda: self.detections(
-                1,
-                metadata,
-                deltas,
-                proposals,
-                scores,
-                masks
-            ),
-            training=training
+            lambda: self.detections(1, metadata, deltas, proposals, scores, masks),
+            training=training,
         )
 
         return [bounding_boxes, scores, masks]
@@ -78,7 +57,14 @@ class ObjectSegmentation(keras.layers.Layer):
         return [
             (1, input_shape[0][0], input_shape[1][2]),
             (1, input_shape[0][0], input_shape[2][2]),
-            (1, input_shape[0][0], input_shape[2][2], input_shape[4][2], input_shape[4][3], input_shape[4][4])
+            (
+                1,
+                input_shape[0][0],
+                input_shape[2][2],
+                input_shape[4][2],
+                input_shape[4][3],
+                input_shape[4][4],
+            ),
         ]
 
     def compute_mask(self, inputs, mask=None):
@@ -96,13 +82,11 @@ class ObjectSegmentation(keras.layers.Layer):
 
         # Apply bounding-box regression deltas
         predicted_bounding_boxes = keras_rcnn.backend.bbox_transform_inv(
-            bounding_boxes,
-            deltas
+            bounding_boxes, deltas
         )
 
         predicted_bounding_boxes = keras_rcnn.backend.clip(
-            predicted_bounding_boxes,
-            metadata[0][:2]
+            predicted_bounding_boxes, metadata[0][:2]
         )
 
         scores = keras.backend.reshape(scores, (num_objects, -1))
@@ -112,49 +96,28 @@ class ObjectSegmentation(keras.layers.Layer):
             keras.backend.arange(0, num_objects, dtype="int64")
         )
 
-        top_classes = keras.backend.expand_dims(
-            keras.backend.argmax(scores, axis=1)
-        )
+        top_classes = keras.backend.expand_dims(keras.backend.argmax(scores, axis=1))
 
-        coordinate_0 = keras.backend.concatenate(
-            [inds, top_classes * 4],
-            1
-        )
+        coordinate_0 = keras.backend.concatenate([inds, top_classes * 4], 1)
 
-        coordinate_1 = keras.backend.concatenate(
-            [inds, top_classes * 4 + 1],
-            1
-        )
+        coordinate_1 = keras.backend.concatenate([inds, top_classes * 4 + 1], 1)
 
-        coordinate_2 = keras.backend.concatenate(
-            [inds, top_classes * 4 + 2],
-            1
-        )
+        coordinate_2 = keras.backend.concatenate([inds, top_classes * 4 + 2], 1)
 
-        coordinate_3 = keras.backend.concatenate(
-            [inds, top_classes * 4 + 3],
-            1
-        )
+        coordinate_3 = keras.backend.concatenate([inds, top_classes * 4 + 3], 1)
 
         predicted_bounding_boxes = keras_rcnn.backend.gather_nd(
             predicted_bounding_boxes,
             keras.backend.reshape(
                 keras.backend.concatenate(
-                    [
-                        coordinate_0,
-                        coordinate_1,
-                        coordinate_2,
-                        coordinate_3
-                    ],
-                    1
+                    [coordinate_0, coordinate_1, coordinate_2, coordinate_3], 1
                 ),
-                (-1, 2)
-            )
+                (-1, 2),
+            ),
         )
 
         predicted_bounding_boxes = keras.backend.reshape(
-            predicted_bounding_boxes,
-            (-1, 4)
+            predicted_bounding_boxes, (-1, 4)
         )
 
         max_scores = keras.backend.max(scores[:, 1:], axis=1)
@@ -163,26 +126,23 @@ class ObjectSegmentation(keras.layers.Layer):
             boxes=predicted_bounding_boxes,
             scores=max_scores,
             maximum=num_objects,
-            threshold=0.5
+            threshold=0.5,
         )
 
         predicted_bounding_boxes = keras.backend.gather(
-            predicted_bounding_boxes,
-            suppressed_indices
+            predicted_bounding_boxes, suppressed_indices
         )
 
         scores = keras.backend.gather(scores, suppressed_indices)
 
         predicted_bounding_boxes = keras.backend.expand_dims(
-            predicted_bounding_boxes,
-            0
+            predicted_bounding_boxes, 0
         )
 
         scores = keras.backend.expand_dims(scores, 0)
 
         predicted_bounding_boxes = self.pad_bounding_boxes(
-            predicted_bounding_boxes,
-            self.padding
+            predicted_bounding_boxes, self.padding
         )
 
         scores = self.pad_bounding_boxes(scores, self.padding)
@@ -226,10 +186,6 @@ class ObjectSegmentation(keras.layers.Layer):
         return tensorflow.pad(x, paddings, mode="constant")
 
     def get_config(self):
-        configuration = {
-            "padding": self.padding
-        }
+        configuration = {"padding": self.padding}
 
-        return {
-            **super(ObjectSegmentation, self).get_config(), **configuration
-        }
+        return {**super(ObjectSegmentation, self).get_config(), **configuration}

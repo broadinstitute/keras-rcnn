@@ -32,8 +32,12 @@ def intersection_over_union(y_true, y_pred):
 
     intersection = (maximum_r - minimum_r + 1) * (maximum_c - minimum_c + 1)
 
-    y_true_area = (y_true_maximum_r - y_true_minimum_r + 1) * (y_true_maximum_c - y_true_minimum_c + 1)
-    y_pred_area = (y_pred_maximum_r - y_pred_minimum_r + 1) * (y_pred_maximum_c - y_pred_minimum_c + 1)
+    y_true_area = (y_true_maximum_r - y_true_minimum_r + 1) * (
+        y_true_maximum_c - y_true_minimum_c + 1
+    )
+    y_pred_area = (y_pred_maximum_r - y_pred_minimum_r + 1) * (
+        y_pred_maximum_c - y_pred_minimum_c + 1
+    )
 
     union = y_true_area + y_pred_area - intersection
 
@@ -70,7 +74,9 @@ def evaluate(y_true, y_pred, threshold=0.5):
             y_true_index = y_true_indices[score]
             y_pred_index = y_pred_indices[score]
 
-            if (y_true_index not in y_true_matched_indices) and (y_pred_index not in y_pred_matched_indices):
+            if (y_true_index not in y_true_matched_indices) and (
+                y_pred_index not in y_pred_matched_indices
+            ):
                 y_true_matched_indices += [y_true_index]
                 y_pred_matched_indices += [y_pred_index]
 
@@ -94,5 +100,5 @@ def evaluate(y_true, y_pred, threshold=0.5):
         "precision": precision,
         "recall": recall,
         "threshold": threshold,
-        "true positives": tp
+        "true positives": tp,
     }

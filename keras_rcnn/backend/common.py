@@ -15,7 +15,9 @@ def anchor(base_size=16, ratios=None, scales=None):
     if scales is None:
         scales = keras.backend.cast([1, 2, 4, 8, 16], keras.backend.floatx())
 
-    base_anchor = keras.backend.cast([1, 1, base_size, base_size], keras.backend.floatx())
+    base_anchor = keras.backend.cast(
+        [1, 1, base_size, base_size], keras.backend.floatx()
+    )
     # base_anchor = keras.backend.cast([-base_size / 2, -base_size / 2, base_size / 2, base_size / 2], keras.backend.floatx())
 
     base_anchor = keras.backend.expand_dims(base_anchor, 0)
@@ -53,12 +55,11 @@ def bbox_transform(ex_rois, gt_rois):
     targets_dw = keras.backend.log(gt_widths / ex_widths)
     targets_dh = keras.backend.log(gt_heights / ex_heights)
 
-    targets = keras.backend.stack(
-        (targets_dx, targets_dy, targets_dw, targets_dh))
+    targets = keras.backend.stack((targets_dx, targets_dy, targets_dw, targets_dh))
 
     targets = keras.backend.transpose(targets)
 
-    return keras.backend.cast(targets, 'float32')
+    return keras.backend.cast(targets, "float32")
 
 
 def clip(boxes, shape):
@@ -67,38 +68,44 @@ def clip(boxes, shape):
 
     """
     indices = keras.backend.tile(
-        keras.backend.arange(0, keras.backend.shape(boxes)[0]), [4])
+        keras.backend.arange(0, keras.backend.shape(boxes)[0]), [4]
+    )
     indices = keras.backend.reshape(indices, (-1, 1))
-    indices = keras.backend.tile(indices,
-                                 [1, keras.backend.shape(boxes)[1] // 4])
+    indices = keras.backend.tile(indices, [1, keras.backend.shape(boxes)[1] // 4])
     indices = keras.backend.reshape(indices, (-1, 1))
 
     indices_coords = keras.backend.tile(
         keras.backend.arange(0, keras.backend.shape(boxes)[1], step=4),
-        [keras.backend.shape(boxes)[0]])
+        [keras.backend.shape(boxes)[0]],
+    )
     indices_coords = keras.backend.concatenate(
-        [indices_coords, indices_coords + 1, indices_coords + 2,
-         indices_coords + 3], 0)
+        [indices_coords, indices_coords + 1, indices_coords + 2, indices_coords + 3], 0
+    )
     indices = keras.backend.concatenate(
-        [indices, keras.backend.expand_dims(indices_coords)], axis=1)
+        [indices, keras.backend.expand_dims(indices_coords)], axis=1
+    )
 
-    updates = keras.backend.concatenate([keras.backend.maximum(
-        keras.backend.minimum(boxes[:, 0::4], shape[1] - 1), 0),
-        keras.backend.maximum(
-            keras.backend.minimum(
-                boxes[:, 1::4], shape[0] - 1),
-            0),
-        keras.backend.maximum(
-            keras.backend.minimum(
-                boxes[:, 2::4], shape[1] - 1),
-            0),
-        keras.backend.maximum(
-            keras.backend.minimum(
-                boxes[:, 3::4], shape[0] - 1),
-            0)], axis=0)
+    updates = keras.backend.concatenate(
+        [
+            keras.backend.maximum(
+                keras.backend.minimum(boxes[:, 0::4], shape[1] - 1), 0
+            ),
+            keras.backend.maximum(
+                keras.backend.minimum(boxes[:, 1::4], shape[0] - 1), 0
+            ),
+            keras.backend.maximum(
+                keras.backend.minimum(boxes[:, 2::4], shape[1] - 1), 0
+            ),
+            keras.backend.maximum(
+                keras.backend.minimum(boxes[:, 3::4], shape[0] - 1), 0
+            ),
+        ],
+        axis=0,
+    )
     updates = keras.backend.reshape(updates, (-1,))
     pred_boxes = keras_rcnn.backend.scatter_add_tensor(
-        keras.backend.zeros_like(boxes), indices, updates)
+        keras.backend.zeros_like(boxes), indices, updates
+    )
 
     return pred_boxes
 
@@ -179,7 +186,9 @@ def shift(shape, stride, base_size=16, ratios=None, scales=None):
 
     shifted_anchors = keras.backend.reshape(anchors, [1, number_of_anchors, 4])
 
-    b = keras.backend.cast(keras.backend.reshape(shifts, [k, 1, 4]), keras.backend.floatx())
+    b = keras.backend.cast(
+        keras.backend.reshape(shifts, [k, 1, 4]), keras.backend.floatx()
+    )
 
     shifted_anchors = shifted_anchors + b
 
@@ -199,13 +208,23 @@ def intersection_over_union(output, target):
     -------
     overlaps: (N, K) ndarray of overlap between boxes and query_boxes
     """
-    intersection_area = (target[:, 2] - target[:, 0] + 1) * (target[:, 3] - target[:, 1] + 1)
+    intersection_area = (target[:, 2] - target[:, 0] + 1) * (
+        target[:, 3] - target[:, 1] + 1
+    )
 
-    intersection_c_minimum = keras.backend.minimum(keras.backend.expand_dims(output[:, 2], 1), target[:, 2])
-    intersection_c_maximum = keras.backend.maximum(keras.backend.expand_dims(output[:, 0], 1), target[:, 0])
+    intersection_c_minimum = keras.backend.minimum(
+        keras.backend.expand_dims(output[:, 2], 1), target[:, 2]
+    )
+    intersection_c_maximum = keras.backend.maximum(
+        keras.backend.expand_dims(output[:, 0], 1), target[:, 0]
+    )
 
-    intersection_r_minimum = keras.backend.minimum(keras.backend.expand_dims(output[:, 3], 1), target[:, 3])
-    intersection_r_maximum = keras.backend.maximum(keras.backend.expand_dims(output[:, 1], 1), target[:, 1])
+    intersection_r_minimum = keras.backend.minimum(
+        keras.backend.expand_dims(output[:, 3], 1), target[:, 3]
+    )
+    intersection_r_maximum = keras.backend.maximum(
+        keras.backend.expand_dims(output[:, 1], 1), target[:, 1]
+    )
 
     intersection_c = intersection_c_minimum - intersection_c_maximum + 1
     intersection_r = intersection_r_minimum - intersection_r_maximum + 1
@@ -213,7 +232,13 @@ def intersection_over_union(output, target):
     intersection_c = keras.backend.maximum(intersection_c, 0)
     intersection_r = keras.backend.maximum(intersection_r, 0)
 
-    union_area = keras.backend.expand_dims((output[:, 2] - output[:, 0] + 1) * (output[:, 3] - output[:, 1] + 1), 1) + intersection_area - intersection_c * intersection_r
+    union_area = (
+        keras.backend.expand_dims(
+            (output[:, 2] - output[:, 0] + 1) * (output[:, 3] - output[:, 1] + 1), 1
+        )
+        + intersection_area
+        - intersection_c * intersection_r
+    )
 
     union_area = keras.backend.maximum(union_area, keras.backend.epsilon())
 
@@ -302,35 +327,44 @@ def bbox_transform_inv(boxes, deltas):
     dw = deltas[:, 2::4]
     dh = deltas[:, 3::4]
 
-    pred_ctr_x = dx * a[:, keras_rcnn.backend.newaxis] + \
-        ctr_x[:, keras_rcnn.backend.newaxis]
-    pred_ctr_y = dy * b[:, keras_rcnn.backend.newaxis] + \
-        ctr_y[:, keras_rcnn.backend.newaxis]
+    pred_ctr_x = (
+        dx * a[:, keras_rcnn.backend.newaxis] + ctr_x[:, keras_rcnn.backend.newaxis]
+    )
+    pred_ctr_y = (
+        dy * b[:, keras_rcnn.backend.newaxis] + ctr_y[:, keras_rcnn.backend.newaxis]
+    )
 
     pred_w = keras.backend.exp(dw) * a[:, keras_rcnn.backend.newaxis]
     pred_h = keras.backend.exp(dh) * b[:, keras_rcnn.backend.newaxis]
 
     indices = keras.backend.tile(
-        keras.backend.arange(0, keras.backend.shape(deltas)[0]), [4])
+        keras.backend.arange(0, keras.backend.shape(deltas)[0]), [4]
+    )
     indices = keras.backend.reshape(indices, (-1, 1))
-    indices = keras.backend.tile(indices,
-                                 [1, keras.backend.shape(deltas)[-1] // 4])
+    indices = keras.backend.tile(indices, [1, keras.backend.shape(deltas)[-1] // 4])
     indices = keras.backend.reshape(indices, (-1, 1))
     indices_coords = keras.backend.tile(
         keras.backend.arange(0, keras.backend.shape(deltas)[1], step=4),
-        [keras.backend.shape(deltas)[0]])
+        [keras.backend.shape(deltas)[0]],
+    )
     indices_coords = keras.backend.concatenate(
-        [indices_coords, indices_coords + 1, indices_coords + 2,
-         indices_coords + 3], 0)
+        [indices_coords, indices_coords + 1, indices_coords + 2, indices_coords + 3], 0
+    )
     indices = keras.backend.concatenate(
-        [indices, keras.backend.expand_dims(indices_coords)], axis=1)
+        [indices, keras.backend.expand_dims(indices_coords)], axis=1
+    )
 
     updates = keras.backend.concatenate(
-        [keras.backend.reshape(pred_ctr_x - 0.5 * pred_w, (-1,)),
-         keras.backend.reshape(pred_ctr_y - 0.5 * pred_h, (-1,)),
-         keras.backend.reshape(pred_ctr_x + 0.5 * pred_w, (-1,)),
-         keras.backend.reshape(pred_ctr_y + 0.5 * pred_h, (-1,))], axis=0)
+        [
+            keras.backend.reshape(pred_ctr_x - 0.5 * pred_w, (-1,)),
+            keras.backend.reshape(pred_ctr_y - 0.5 * pred_h, (-1,)),
+            keras.backend.reshape(pred_ctr_x + 0.5 * pred_w, (-1,)),
+            keras.backend.reshape(pred_ctr_y + 0.5 * pred_h, (-1,)),
+        ],
+        axis=0,
+    )
     pred_boxes = keras_rcnn.backend.scatter_add_tensor(
-        keras.backend.zeros_like(deltas), indices, updates)
+        keras.backend.zeros_like(deltas), indices, updates
+    )
 
     return pred_boxes

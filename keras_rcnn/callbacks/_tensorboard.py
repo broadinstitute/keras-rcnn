@@ -16,7 +16,9 @@ def _generate_image(image, bounding_boxes):
 
     axis.set_axis_off()
 
-    bbox_inches = axis.get_window_extent().transformed(matplotlib.pyplot.gcf().dpi_scale_trans.inverted())
+    bbox_inches = axis.get_window_extent().transformed(
+        matplotlib.pyplot.gcf().dpi_scale_trans.inverted()
+    )
 
     keras_rcnn.utils.show_bounding_boxes(image, bounding_boxes)
 
