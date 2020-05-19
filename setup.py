@@ -14,10 +14,10 @@ setuptools.setup(
         ],
     },
     install_requires=[
-        "jsonschema",
-        "keras",
-        "keras-resnet",
-        "scikit-image"
+        "jsonschema>=3.2.0",
+        "keras>=2.3.1",
+        "keras-resnet>=0.2.0",
+        "scikit-image>=0.17.2"
     ],
     license="MIT",
     name="keras-rcnn",

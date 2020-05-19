@@ -418,7 +418,6 @@ class DictionaryIterator(keras.preprocessing.image.Iterator):
             x_metadata
         ]
 
-
     @staticmethod
     def _cropped_objects(x_bounding_boxes):
         return numpy.all(x_bounding_boxes[..., :] == 0, axis=2)[0]
