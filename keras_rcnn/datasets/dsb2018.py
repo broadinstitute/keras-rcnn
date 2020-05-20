@@ -3,13 +3,13 @@
 import json
 import os.path
 
-import keras.utils.data_utils
+import tensorflow.keras.utils.data_utils
 
 
 def load_data():
     origin = "http://keras-rcnn.storage.googleapis.com/{}.tar.gz".format("DSB2018")
 
-    pathname = keras.utils.data_utils.get_file(
+    pathname = tensorflow.keras.utils.data_utils.get_file(
         fname="DSB2018", origin=origin, untar=True
     )
 

@@ -1,13 +1,13 @@
 # -*- coding: utf-8 -*-
 
-import keras.backend
-import keras.layers
+import tensorflow.keras.backend
+import tensorflow.keras.layers
 
 import keras_rcnn.backend
 from ._mask_rcnn import RCNNMaskLoss
 
 
-class RCNN(keras.layers.Layer):
+class RCNN(tensorflow.keras.layers.Layer):
     def __init__(self, **kwargs):
         super(RCNN, self).__init__(**kwargs)
 
@@ -16,7 +16,7 @@ class RCNN(keras.layers.Layer):
             self.target_scores, self.output_scores, anchored=True
         )
 
-        return keras.backend.mean(loss)
+        return tensorflow.keras.backend.mean(loss)
 
     def regression_loss(self):
         output_deltas = self.output_deltas[:, :, 4:]
@@ -26,7 +26,7 @@ class RCNN(keras.layers.Layer):
         # function
         mask = self.target_scores
 
-        labels = keras.backend.repeat_elements(mask, 4, -1)
+        labels = tensorflow.keras.backend.repeat_elements(mask, 4, -1)
         labels = labels[:, :, 4:]
 
         loss = keras_rcnn.backend.smooth_l1(
@@ -35,8 +35,9 @@ class RCNN(keras.layers.Layer):
 
         target_scores = self.target_scores[:, :, 1:]
 
-        return keras.backend.sum(loss) / keras.backend.maximum(
-            keras.backend.epsilon(), keras.backend.sum(target_scores)
+        return tensorflow.keras.backend.sum(loss) / tensorflow.keras.backend.maximum(
+            tensorflow.keras.backend.epsilon(),
+            tensorflow.keras.backend.sum(target_scores),
         )
 
     def call(self, inputs, **kwargs):
@@ -59,7 +60,7 @@ class RCNN(keras.layers.Layer):
         return [output_deltas, output_scores]
 
 
-class RPN(keras.layers.Layer):
+class RPN(tensorflow.keras.layers.Layer):
     def __init__(self, **kwargs):
         super(RPN, self).__init__(**kwargs)
 
@@ -80,26 +81,26 @@ class RPN(keras.layers.Layer):
 
     @staticmethod
     def classification_loss(target_scores, output_scores):
-        output_scores = keras.backend.reshape(output_scores, (1, -1))
+        output_scores = tensorflow.keras.backend.reshape(output_scores, (1, -1))
 
-        condition = keras.backend.not_equal(target_scores, -1)
+        condition = tensorflow.keras.backend.not_equal(target_scores, -1)
 
         indices = keras_rcnn.backend.where(condition)
 
-        indices = keras.backend.expand_dims(indices, 0)
+        indices = tensorflow.keras.backend.expand_dims(indices, 0)
 
         target = keras_rcnn.backend.gather_nd(target_scores, indices)
         output = keras_rcnn.backend.gather_nd(output_scores, indices)
 
-        loss = keras.backend.binary_crossentropy(target, output)
+        loss = tensorflow.keras.backend.binary_crossentropy(target, output)
 
-        return keras.backend.mean(loss)
+        return tensorflow.keras.backend.mean(loss)
 
     @staticmethod
     def regression_loss(target_deltas, target_scores, output_deltas):
-        output_deltas = keras.backend.reshape(output_deltas, (1, -1, 4))
+        output_deltas = tensorflow.keras.backend.reshape(output_deltas, (1, -1, 4))
 
-        condition = keras.backend.not_equal(target_scores, -1)
+        condition = tensorflow.keras.backend.not_equal(target_scores, -1)
 
         indices = keras_rcnn.backend.where(condition)
 
@@ -108,17 +109,17 @@ class RPN(keras.layers.Layer):
 
         target_scores = keras_rcnn.backend.gather_nd(target_scores, indices)
 
-        condition = keras.backend.greater(target_scores, 0)
+        condition = tensorflow.keras.backend.greater(target_scores, 0)
 
-        x = keras.backend.zeros_like(target_scores) + 1
-        y = keras.backend.zeros_like(target_scores)
+        x = tensorflow.keras.backend.zeros_like(target_scores) + 1
+        y = tensorflow.keras.backend.zeros_like(target_scores)
 
         p_star_i = keras_rcnn.backend.where(condition, x, y)
 
-        p_star_i = keras.backend.expand_dims(p_star_i, 0)
+        p_star_i = tensorflow.keras.backend.expand_dims(p_star_i, 0)
 
-        output = keras.backend.expand_dims(output, 0)
-        target = keras.backend.expand_dims(target, 0)
+        output = tensorflow.keras.backend.expand_dims(output, 0)
+        target = tensorflow.keras.backend.expand_dims(target, 0)
 
         a_y = keras_rcnn.backend.smooth_l1(output, target, anchored=True)
 
@@ -128,9 +129,10 @@ class RPN(keras.layers.Layer):
         weight = 1.0
 
         loss = weight * (
-            keras.backend.sum(a)
-            / keras.backend.maximum(
-                keras.backend.epsilon(), keras.backend.sum(p_star_i)
+            tensorflow.keras.backend.sum(a)
+            / tensorflow.keras.backend.maximum(
+                tensorflow.keras.backend.epsilon(),
+                tensorflow.keras.backend.sum(p_star_i),
             )
         )
 

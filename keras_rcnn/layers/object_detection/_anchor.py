@@ -1,14 +1,14 @@
 # -*- coding: utf-8 -*-
 
-import keras.backend
-import keras.engine
 import tensorflow
+import tensorflow.keras.backend
+import tensorflow.keras.engine
 
 import keras_rcnn.backend
 import keras_rcnn.layers
 
 
-class Anchor(keras.layers.Layer):
+class Anchor(tensorflow.keras.layers.Layer):
     def __init__(
         self,
         aspect_ratios=None,
@@ -41,9 +41,9 @@ class Anchor(keras.layers.Layer):
 
         self.base_size = base_size
 
-        self.aspect_ratios = keras.backend.variable(aspect_ratios)
+        self.aspect_ratios = tensorflow.keras.backend.variable(aspect_ratios)
 
-        self.scales = keras.backend.variable(scales)
+        self.scales = tensorflow.keras.backend.variable(scales)
 
         self.__shifted_anchors = None
 
@@ -77,10 +77,10 @@ class Anchor(keras.layers.Layer):
 
         target_bounding_boxes = target_bounding_boxes[0]
 
-        self.r = keras.backend.shape(scores)[1]
-        self.c = keras.backend.shape(scores)[2]
+        self.r = tensorflow.keras.backend.shape(scores)[1]
+        self.c = tensorflow.keras.backend.shape(scores)[2]
 
-        self.k = self.r * self.c * keras.backend.shape(scores)[3]
+        self.k = self.r * self.c * tensorflow.keras.backend.shape(scores)[3]
 
         # 1. Generate proposals from bbox deltas and shifted anchors
         output_bounding_boxes = self._shifted_anchors
@@ -96,7 +96,7 @@ class Anchor(keras.layers.Layer):
             target_bounding_boxes, anchors, indices_inside
         )
 
-        target_bounding_boxes = keras.backend.gather(
+        target_bounding_boxes = tensorflow.keras.backend.gather(
             target_bounding_boxes, argmax_overlaps_indices
         )
 
@@ -107,7 +107,9 @@ class Anchor(keras.layers.Layer):
 
         # TODO: Why is target_bounding_box_targets' shape (5, ?, 4)? Why is target_bounding_boxes'
         # shape (None, None, 4) and not (None, 4)?
-        target_bounding_boxes = keras.backend.reshape(target_bounding_boxes, (-1, 4))
+        target_bounding_boxes = tensorflow.keras.backend.reshape(
+            target_bounding_boxes, (-1, 4)
+        )
 
         # map up to original set of anchors
         target_categories = self._unmap(target_categories, indices_inside, fill=-1)
@@ -116,11 +118,17 @@ class Anchor(keras.layers.Layer):
             target_bounding_boxes, indices_inside, fill=0
         )
 
-        target_categories = keras.backend.expand_dims(target_categories, axis=0)
+        target_categories = tensorflow.keras.backend.expand_dims(
+            target_categories, axis=0
+        )
 
-        target_bounding_boxes = keras.backend.expand_dims(target_bounding_boxes, axis=0)
+        target_bounding_boxes = tensorflow.keras.backend.expand_dims(
+            target_bounding_boxes, axis=0
+        )
 
-        output_bounding_boxes = keras.backend.expand_dims(output_bounding_boxes, axis=0)
+        output_bounding_boxes = tensorflow.keras.backend.expand_dims(
+            output_bounding_boxes, axis=0
+        )
 
         # TODO: implement inside and outside weights
         return [output_bounding_boxes, target_bounding_boxes, target_categories]
@@ -176,9 +184,13 @@ class Anchor(keras.layers.Layer):
 
         :return: indices of gt boxes with the greatest overlap, balanced labels
         """
-        ones = keras.backend.ones_like(inds_inside, dtype=keras.backend.floatx())
+        ones = tensorflow.keras.backend.ones_like(
+            inds_inside, dtype=tensorflow.keras.backend.floatx()
+        )
         labels = ones * -1
-        zeros = keras.backend.zeros_like(inds_inside, dtype=keras.backend.floatx())
+        zeros = tensorflow.keras.backend.zeros_like(
+            inds_inside, dtype=tensorflow.keras.backend.floatx()
+        )
 
         argmax_overlaps_inds, max_overlaps, gt_argmax_overlaps_inds = self._overlapping(
             output, target, inds_inside
@@ -187,7 +199,9 @@ class Anchor(keras.layers.Layer):
         # Assign background labels first so that positive labels can clobber them.
         if not self.clobber_positives:
             labels = keras_rcnn.backend.where(
-                keras.backend.less(max_overlaps, self.negative_overlap), zeros, labels
+                tensorflow.keras.backend.less(max_overlaps, self.negative_overlap),
+                zeros,
+                labels,
             )
 
         # fg label: for each gt, anchor with highest overlap
@@ -197,12 +211,13 @@ class Anchor(keras.layers.Layer):
             gt_argmax_overlaps_inds, return_index=True
         )
 
-        inverse_labels = keras.backend.gather(-1 * labels, unique_indices)
+        inverse_labels = tensorflow.keras.backend.gather(-1 * labels, unique_indices)
 
-        unique_indices = keras.backend.expand_dims(unique_indices, 1)
+        unique_indices = tensorflow.keras.backend.expand_dims(unique_indices, 1)
 
-        updates = keras.backend.ones_like(
-            keras.backend.reshape(unique_indices, (-1,)), dtype=keras.backend.floatx()
+        updates = tensorflow.keras.backend.ones_like(
+            tensorflow.keras.backend.reshape(unique_indices, (-1,)),
+            dtype=tensorflow.keras.backend.floatx(),
         )
 
         labels = keras_rcnn.backend.scatter_add_tensor(
@@ -212,7 +227,7 @@ class Anchor(keras.layers.Layer):
         # Assign foreground labels based on IoU overlaps that are higher than
         # RPN_POSITIVE_OVERLAP.
         labels = keras_rcnn.backend.where(
-            keras.backend.greater_equal(max_overlaps, self.positive_overlap),
+            tensorflow.keras.backend.greater_equal(max_overlaps, self.positive_overlap),
             ones,
             labels,
         )
@@ -220,7 +235,9 @@ class Anchor(keras.layers.Layer):
         if self.clobber_positives:
             # assign bg labels last so that negative labels can clobber positives
             labels = keras_rcnn.backend.where(
-                keras.backend.less(max_overlaps, self.negative_overlap), zeros, labels
+                tensorflow.keras.backend.less(max_overlaps, self.negative_overlap),
+                zeros,
+                labels,
             )
 
         return argmax_overlaps_inds, self._balance(labels)
@@ -235,22 +252,25 @@ class Anchor(keras.layers.Layer):
         :return:
         """
 
-        assert keras.backend.ndim(output) == 2
-        assert keras.backend.ndim(target) == 2
+        assert tensorflow.keras.backend.ndim(output) == 2
+        assert tensorflow.keras.backend.ndim(target) == 2
 
         reference = keras_rcnn.backend.intersection_over_union(output, target)
 
-        gt_argmax_overlaps_inds = keras.backend.argmax(reference, axis=0)
+        gt_argmax_overlaps_inds = tensorflow.keras.backend.argmax(reference, axis=0)
 
-        argmax_overlaps_inds = keras.backend.argmax(reference, axis=1)
+        argmax_overlaps_inds = tensorflow.keras.backend.argmax(reference, axis=1)
 
-        arranged = keras.backend.arange(0, keras.backend.shape(inds_inside)[0])
-
-        indices = keras.backend.stack(
-            [arranged, keras.backend.cast(argmax_overlaps_inds, "int32")], axis=0
+        arranged = tensorflow.keras.backend.arange(
+            0, tensorflow.keras.backend.shape(inds_inside)[0]
         )
 
-        indices = keras.backend.transpose(indices)
+        indices = tensorflow.keras.backend.stack(
+            [arranged, tensorflow.keras.backend.cast(argmax_overlaps_inds, "int32")],
+            axis=0,
+        )
+
+        indices = tensorflow.keras.backend.transpose(indices)
 
         max_overlaps = keras_rcnn.backend.gather_nd(reference, indices)
 
@@ -267,34 +287,36 @@ class Anchor(keras.layers.Layer):
         """
         num_bg = (
             rpn_batchsize
-            - keras.backend.shape(
-                keras_rcnn.backend.where(keras.backend.equal(labels, 1))
+            - tensorflow.keras.backend.shape(
+                keras_rcnn.backend.where(tensorflow.keras.backend.equal(labels, 1))
             )[0]
         )
 
-        bg_inds = keras_rcnn.backend.where(keras.backend.equal(labels, 0))
+        bg_inds = keras_rcnn.backend.where(tensorflow.keras.backend.equal(labels, 0))
 
-        num_bg_inds = keras.backend.shape(bg_inds)[0]
+        num_bg_inds = tensorflow.keras.backend.shape(bg_inds)[0]
 
         size = num_bg_inds - num_bg
 
         def more_negative():
-            indices = keras.backend.reshape(bg_inds, (-1,))
+            indices = tensorflow.keras.backend.reshape(bg_inds, (-1,))
             indices = keras_rcnn.backend.shuffle(indices)[:size]
 
             updates = tensorflow.ones((size,)) * -1
 
-            inverse_labels = keras.backend.gather(labels, indices) * -1
+            inverse_labels = tensorflow.keras.backend.gather(labels, indices) * -1
 
-            indices = keras.backend.reshape(indices, (-1, 1))
+            indices = tensorflow.keras.backend.reshape(indices, (-1, 1))
 
             return keras_rcnn.backend.scatter_add_tensor(
                 labels, indices, inverse_labels + updates
             )
 
-        condition = keras.backend.less_equal(size, 0)
+        condition = tensorflow.keras.backend.less_equal(size, 0)
 
-        return keras.backend.switch(condition, labels, lambda: more_negative())
+        return tensorflow.keras.backend.switch(
+            condition, labels, lambda: more_negative()
+        )
 
     @staticmethod
     def _subsample_positive_labels(labels, rpn_fg_fraction=0.5, rpn_batchsize=256):
@@ -309,54 +331,61 @@ class Anchor(keras.layers.Layer):
 
         num_fg = int(rpn_fg_fraction * rpn_batchsize)
 
-        fg_inds = keras_rcnn.backend.where(keras.backend.equal(labels, 1))
-        num_fg_inds = keras.backend.shape(fg_inds)[0]
+        fg_inds = keras_rcnn.backend.where(tensorflow.keras.backend.equal(labels, 1))
+        num_fg_inds = tensorflow.keras.backend.shape(fg_inds)[0]
 
         size = num_fg_inds - num_fg
 
         def more_positive():
-            indices = keras.backend.reshape(fg_inds, (-1,))
+            indices = tensorflow.keras.backend.reshape(fg_inds, (-1,))
             indices = keras_rcnn.backend.shuffle(indices)[:size]
 
             updates = tensorflow.ones((size,)) * -1
 
-            inverse_labels = keras.backend.gather(labels, indices) * -1
+            inverse_labels = tensorflow.keras.backend.gather(labels, indices) * -1
 
-            indices = keras.backend.reshape(indices, (-1, 1))
+            indices = tensorflow.keras.backend.reshape(indices, (-1, 1))
 
             updates = inverse_labels + updates
 
             return keras_rcnn.backend.scatter_add_tensor(labels, indices, updates)
 
-        condition = keras.backend.less_equal(size, 0)
+        condition = tensorflow.keras.backend.less_equal(size, 0)
 
-        return keras.backend.switch(condition, labels, lambda: more_positive())
+        return tensorflow.keras.backend.switch(
+            condition, labels, lambda: more_positive()
+        )
 
     def _unmap(self, data, inds_inside, fill=0):
         """ Unmap a subset of item (data) back to the original set of items (of
         size count) """
 
-        if keras.backend.ndim(data) == 1:
-            ret = tensorflow.ones((self.k,), dtype=keras.backend.floatx()) * fill
+        if tensorflow.keras.backend.ndim(data) == 1:
+            ret = (
+                tensorflow.ones((self.k,), dtype=tensorflow.keras.backend.floatx())
+                * fill
+            )
 
-            inds_nd = keras.backend.expand_dims(inds_inside)
+            inds_nd = tensorflow.keras.backend.expand_dims(inds_inside)
         else:
-            ret = (self.k, keras.backend.shape(data)[1])
-            ret = tensorflow.ones(ret, dtype=keras.backend.floatx()) * fill
+            ret = (self.k, tensorflow.keras.backend.shape(data)[1])
+            ret = tensorflow.ones(ret, dtype=tensorflow.keras.backend.floatx()) * fill
 
-            data = keras.backend.transpose(data)
-            data = keras.backend.reshape(data, (-1,))
+            data = tensorflow.keras.backend.transpose(data)
+            data = tensorflow.keras.backend.reshape(data, (-1,))
 
-            inds_ii = keras.backend.tile(inds_inside, [4])
-            inds_ii = keras.backend.expand_dims(inds_ii)
+            inds_ii = tensorflow.keras.backend.tile(inds_inside, [4])
+            inds_ii = tensorflow.keras.backend.expand_dims(inds_ii)
 
-            ones = keras.backend.expand_dims(keras.backend.ones_like(inds_inside), 1)
+            ones = tensorflow.keras.backend.expand_dims(
+                tensorflow.keras.backend.ones_like(inds_inside), 1
+            )
 
-            inds_coords = keras.backend.concatenate(
+            inds_coords = tensorflow.keras.backend.concatenate(
                 [ones * 0, ones, ones * 2, ones * 3], 0
             )
 
-            inds_nd = keras.backend.concatenate([inds_ii, inds_coords], 1)
+            inds_nd = tensorflow.keras.backend.concatenate([inds_ii, inds_coords], 1)
 
         inverse_ret = keras_rcnn.backend.gather_nd(-1 * ret, inds_nd)
         inverse_ret = keras_rcnn.backend.squeeze(inverse_ret)
@@ -391,11 +420,11 @@ class Anchor(keras.layers.Layer):
             & (boxes[:, 3] < self.padding + self.metadata[1])  # width  # height
         )
 
-        indices = keras.backend.cast(indices, "int32")
+        indices = tensorflow.keras.backend.cast(indices, "int32")
 
-        gathered = keras.backend.gather(boxes, indices)
+        gathered = tensorflow.keras.backend.gather(boxes, indices)
 
-        return indices[:, 0], keras.backend.reshape(gathered, [-1, 4])
+        return indices[:, 0], tensorflow.keras.backend.reshape(gathered, [-1, 4])
 
     @staticmethod
     def _inside_and_outside_weights(
@@ -414,56 +443,60 @@ class Anchor(keras.layers.Layer):
             inside_weights:  Inside bounding-box weights.
             outside_weights: Outside bounding-box weights.
         """
-        number_of_anchors = keras.backend.int_shape(anchors)[0]
+        number_of_anchors = tensorflow.keras.backend.int_shape(anchors)[0]
 
-        proposed_inside_weights = keras.backend.constant([proposed_inside_weights])
-        proposed_inside_weights = keras.backend.tile(
+        proposed_inside_weights = tensorflow.keras.backend.constant(
+            [proposed_inside_weights]
+        )
+        proposed_inside_weights = tensorflow.keras.backend.tile(
             proposed_inside_weights, (number_of_anchors, 1)
         )
 
-        positive_condition = keras.backend.equal(subsample, 1)
-        negative_condition = keras.backend.equal(subsample, 0)
+        positive_condition = tensorflow.keras.backend.equal(subsample, 1)
+        negative_condition = tensorflow.keras.backend.equal(subsample, 0)
 
         if positive_weight < 0:
             # Assign equal weights to both positive_weights and negative_weights
             # labels.
-            examples = keras.backend.cast(negative_condition, keras.backend.floatx())
-            examples = keras.backend.sum(examples)
+            examples = tensorflow.keras.backend.cast(
+                negative_condition, tensorflow.keras.backend.floatx()
+            )
+            examples = tensorflow.keras.backend.sum(examples)
 
-            positive_weights = keras.backend.ones_like(anchors) / examples
-            negative_weights = keras.backend.ones_like(anchors) / examples
+            positive_weights = tensorflow.keras.backend.ones_like(anchors) / examples
+            negative_weights = tensorflow.keras.backend.ones_like(anchors) / examples
         else:
             # Assign weights that favor either the positive or the
             # negative_weights labels.
             assert (positive_weight > 0) & (positive_weight < 1)
 
-            positive_examples = keras.backend.cast(
-                positive_condition, keras.backend.floatx()
+            positive_examples = tensorflow.keras.backend.cast(
+                positive_condition, tensorflow.keras.backend.floatx()
             )
-            positive_examples = keras.backend.sum(positive_examples)
+            positive_examples = tensorflow.keras.backend.sum(positive_examples)
 
-            negative_examples = keras.backend.cast(
-                negative_condition, keras.backend.floatx()
+            negative_examples = tensorflow.keras.backend.cast(
+                negative_condition, tensorflow.keras.backend.floatx()
             )
-            negative_examples = keras.backend.sum(negative_examples)
+            negative_examples = tensorflow.keras.backend.sum(negative_examples)
 
             positive_weights = (
-                keras.backend.ones_like(anchors)
+                tensorflow.keras.backend.ones_like(anchors)
                 * (0 + positive_weight)
                 / positive_examples
             )
             negative_weights = (
-                keras.backend.ones_like(anchors)
+                tensorflow.keras.backend.ones_like(anchors)
                 * (1 - positive_weight)
                 / negative_examples
             )
 
-        inside_weights = keras.backend.zeros_like(anchors)
+        inside_weights = tensorflow.keras.backend.zeros_like(anchors)
         inside_weights = keras_rcnn.backend.where(
             positive_condition, proposed_inside_weights, inside_weights
         )
 
-        outside_weights = keras.backend.zeros_like(anchors)
+        outside_weights = tensorflow.keras.backend.zeros_like(anchors)
         outside_weights = keras_rcnn.backend.where(
             positive_condition, positive_weights, outside_weights
         )

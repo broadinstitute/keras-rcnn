@@ -1,9 +1,9 @@
-import os.path
 import io
-import keras.callbacks
+
 import matplotlib.pyplot
 import numpy
 import tensorflow
+import tensorflow.keras.callbacks
 
 import keras_rcnn.utils
 
@@ -31,7 +31,7 @@ def _generate_image(image, bounding_boxes):
     return buffer
 
 
-class TensorBoard(keras.callbacks.TensorBoard):
+class TensorBoard(tensorflow.keras.callbacks.TensorBoard):
     """
 
     """
@@ -56,7 +56,7 @@ class TensorBoard(keras.callbacks.TensorBoard):
 
         summary = self._summarize_image()
 
-        summary = keras.backend.eval(summary)
+        summary = tensorflow.keras.backend.eval(summary)
 
         self.writer.add_summary(summary)
 
@@ -76,7 +76,7 @@ class TensorBoard(keras.callbacks.TensorBoard):
 
             image = tensorflow.expand_dims(image, 0)
 
-            image = keras.backend.eval(image)
+            image = tensorflow.keras.backend.eval(image)
 
             images[generator_index] = image
 

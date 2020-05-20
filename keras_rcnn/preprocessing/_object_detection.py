@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
 
-import keras.preprocessing.image
 import numpy
 import skimage.color
 import skimage.exposure
 import skimage.io
 import skimage.transform
+import tensorflow.keras.preprocessing.image
 
 
 class BoundingBoxException(Exception):
@@ -16,7 +16,7 @@ class MissingImageException(Exception):
     pass
 
 
-class DictionaryIterator(keras.preprocessing.image.Iterator):
+class DictionaryIterator(tensorflow.keras.preprocessing.image.Iterator):
     def __init__(
         self,
         dictionary,
@@ -45,7 +45,7 @@ class DictionaryIterator(keras.preprocessing.image.Iterator):
         self.color_mode = color_mode
 
         if data_format is None:
-            data_format = keras.backend.image_data_format()
+            data_format = tensorflow.keras.backend.image_data_format()
 
         if data_format not in {"channels_first", "channels_last"}:
             raise ValueError

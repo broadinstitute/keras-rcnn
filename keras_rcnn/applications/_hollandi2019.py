@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-import keras.utils.data_utils
+import tensorflow.keras.utils.data_utils
 
 import keras_rcnn.models
 
@@ -11,7 +11,7 @@ class Hollandi2019(keras_rcnn.models.MaskRCNN):
 
         origin = "http://keras-rcnn.storage.googleapis.com/Hollandi2019.tar.gz"
 
-        pathname = keras.utils.data_utils.get_file(
+        pathname = tensorflow.keras.utils.data_utils.get_file(
             cache_subdir="models", fname="Hollandi2019", origin=origin, untar=True,
         )
 

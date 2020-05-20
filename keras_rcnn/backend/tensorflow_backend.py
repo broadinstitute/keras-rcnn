@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
-import keras.backend
 import tensorflow
+import tensorflow.keras.backend
 
 
 def resize(image, output_shape):
@@ -79,7 +79,7 @@ def matmul(
 
 # TODO: emulate NumPy semantics
 def argsort(a):
-    _, indices = tensorflow.compat.v1.nn.top_k(a, keras.backend.shape(a)[-1])
+    _, indices = tensorflow.compat.v1.nn.top_k(a, tensorflow.keras.backend.shape(a)[-1])
 
     return indices
 
@@ -142,25 +142,27 @@ def crop_and_resize(image, boxes, size):
     4D Tensor (number of regions, slice_height, slice_width, channels)
     """
 
-    box_ind = keras.backend.zeros_like(boxes, "int32")
+    box_ind = tensorflow.keras.backend.zeros_like(boxes, "int32")
     box_ind = box_ind[:, 0]
-    box_ind = keras.backend.reshape(box_ind, [-1])
+    box_ind = tensorflow.keras.backend.reshape(box_ind, [-1])
 
-    boxes = keras.backend.cast(keras.backend.reshape(boxes, [-1, 4]), "float32")
+    boxes = tensorflow.keras.backend.cast(
+        tensorflow.keras.backend.reshape(boxes, [-1, 4]), "float32"
+    )
 
     return tensorflow.compat.v1.image.crop_and_resize(image, boxes, box_ind, size)
 
 
 def smooth_l1(output, target, anchored=False, weights=None):
-    difference = keras.backend.abs(output - target)
+    difference = tensorflow.keras.backend.abs(output - target)
 
     p = difference < 1
-    q = 0.5 * keras.backend.square(difference)
+    q = 0.5 * tensorflow.keras.backend.square(difference)
     r = difference - 0.5
 
     difference = tensorflow.compat.v1.where(p, q, r)
 
-    loss = keras.backend.sum(difference, axis=2)
+    loss = tensorflow.keras.backend.sum(difference, axis=2)
 
     if weights is not None:
         loss *= weights
@@ -168,7 +170,7 @@ def smooth_l1(output, target, anchored=False, weights=None):
     if anchored:
         return loss
 
-    return keras.backend.sum(loss)
+    return tensorflow.keras.backend.sum(loss)
 
 
 def squeeze(a, axis=None):

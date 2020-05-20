@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
 
-import keras.engine.topology
+import tensorflow.keras.engine.topology
 
 import keras_rcnn.backend
 
 
-class Upsample(keras.layers.Layer):
+class Upsample(tensorflow.keras.layers.Layer):
     def __init__(self, **kwargs):
         super(Upsample, self).__init__(**kwargs)
 
@@ -15,7 +15,7 @@ class Upsample(keras.layers.Layer):
     def call(self, inputs, **kwargs):
         output, target = inputs
 
-        shape = keras.backend.shape(target)
+        shape = tensorflow.keras.backend.shape(target)
 
         return keras_rcnn.backend.resize(output, (shape[1], shape[2]))
 

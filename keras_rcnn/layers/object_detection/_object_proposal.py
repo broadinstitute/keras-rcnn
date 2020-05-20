@@ -1,13 +1,13 @@
 # -*- coding: utf-8 -*-
 
-import keras.backend
-import keras.engine
+import tensorflow.keras.backend
+import tensorflow.keras.engine
 
 import keras_rcnn.backend
 import keras_rcnn.layers
 
 
-class ObjectProposal(keras.layers.Layer):
+class ObjectProposal(tensorflow.keras.layers.Layer):
     """Propose object-containing regions from anchors
 
     # Arguments
@@ -40,7 +40,7 @@ class ObjectProposal(keras.layers.Layer):
         `image_shape_and_scale` has the shape [width, height, scale]
         """
         anchors, image_shape_and_scale, deltas, scores = inputs
-        anchors = keras.backend.reshape(anchors, (-1, 4))
+        anchors = tensorflow.keras.backend.reshape(anchors, (-1, 4))
 
         # TODO: Fix usage of batch index
         batch_index = 0
@@ -50,8 +50,8 @@ class ObjectProposal(keras.layers.Layer):
 
         # 1. generate proposals from bbox deltas and shifted anchors
 
-        deltas = keras.backend.reshape(deltas, (-1, 4))
-        scores = keras.backend.reshape(scores, (-1, 1))
+        deltas = tensorflow.keras.backend.reshape(deltas, (-1, 4))
+        scores = tensorflow.keras.backend.reshape(scores, (-1, 1))
 
         deltas = keras_rcnn.backend.bbox_transform_inv(anchors, deltas)
 
@@ -61,12 +61,12 @@ class ObjectProposal(keras.layers.Layer):
         # 3. remove predicted boxes with either height or width < threshold
         # (NOTE: convert min_size to input image scale stored in im_info[2])
         indices = filter_boxes(proposals, self.minimum_size * image_scale)
-        proposals = keras.backend.gather(proposals, indices)
+        proposals = tensorflow.keras.backend.gather(proposals, indices)
 
         scores = scores[..., (scores.shape[-1] // 2) :]
-        scores = keras.backend.reshape(scores, (-1, 1))
-        scores = keras.backend.gather(scores, indices)
-        scores = keras.backend.flatten(scores)
+        scores = tensorflow.keras.backend.reshape(scores, (-1, 1))
+        scores = tensorflow.keras.backend.gather(scores, indices)
+        scores = tensorflow.keras.backend.flatten(scores)
 
         # 4. sort all (proposal, score) pairs by score from highest to lowest
         indices = keras_rcnn.backend.argsort(scores)
@@ -78,8 +78,8 @@ class ObjectProposal(keras.layers.Layer):
         if rpn_pre_nms_top_n > 0:
             indices = indices[:rpn_pre_nms_top_n]
 
-        proposals = keras.backend.gather(proposals, indices)
-        scores = keras.backend.gather(scores, indices)
+        proposals = tensorflow.keras.backend.gather(proposals, indices)
+        scores = tensorflow.keras.backend.gather(scores, indices)
 
         # 6. apply nms (e.g. threshold = 0.7)
         indices = keras_rcnn.backend.non_maximum_suppression(
@@ -89,10 +89,10 @@ class ObjectProposal(keras.layers.Layer):
             threshold=0.7,
         )
 
-        proposals = keras.backend.gather(proposals, indices)
+        proposals = tensorflow.keras.backend.gather(proposals, indices)
 
         # 8. return the top proposals (-> RoIs top)
-        return keras.backend.expand_dims(proposals, 0)
+        return tensorflow.keras.backend.expand_dims(proposals, 0)
 
     def compute_output_shape(self, input_shape):
         return None, None, 4
@@ -117,6 +117,6 @@ def filter_boxes(proposals, minimum):
 
     indices = keras_rcnn.backend.where((ws >= minimum) & (hs >= minimum))
 
-    indices = keras.backend.flatten(indices)
+    indices = tensorflow.keras.backend.flatten(indices)
 
-    return keras.backend.cast(indices, "int32")
+    return tensorflow.keras.backend.cast(indices, "int32")

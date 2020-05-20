@@ -1,13 +1,13 @@
 # -*- coding: utf-8 -*-
 
-import keras.backend
-import keras.engine
 import tensorflow
+import tensorflow.keras.backend
+import tensorflow.keras.engine
 
 import keras_rcnn.backend
 
 
-class ProposalTarget(keras.layers.Layer):
+class ProposalTarget(tensorflow.keras.layers.Layer):
     """
     # Arguments
     fg_fraction: percent foreground objects
@@ -50,7 +50,7 @@ class ProposalTarget(keras.layers.Layer):
         self.maximum_proposals = maximum_proposals
 
         self.rois_per_image = self.maximum_proposals / self.batch_size
-        self.fg_rois_per_image = keras.backend.cast(
+        self.fg_rois_per_image = tensorflow.keras.backend.cast(
             self.foreground * self.rois_per_image, "int32"
         )
 
@@ -88,8 +88,8 @@ class ProposalTarget(keras.layers.Layer):
             output_proposal_bounding_boxes,
         ) = inputs
 
-        output_proposal_bounding_boxes = keras.backend.in_train_phase(
-            x=keras.backend.concatenate(
+        output_proposal_bounding_boxes = tensorflow.keras.backend.in_train_phase(
+            x=tensorflow.keras.backend.concatenate(
                 (output_proposal_bounding_boxes, target_bounding_boxes), axis=1
             ),
             alt=output_proposal_bounding_boxes,
@@ -109,11 +109,13 @@ class ProposalTarget(keras.layers.Layer):
         target_categories = target_categories[batch_index, :, :]
 
         # TODO: Fix hack
-        condition = keras.backend.not_equal(keras.backend.sum(target_bounding_boxes), 0)
+        condition = tensorflow.keras.backend.not_equal(
+            tensorflow.keras.backend.sum(target_bounding_boxes), 0
+        )
 
         def test(proposals, gt_boxes, gt_labels):
-            N = keras.backend.shape(proposals)[0]
-            number_of_classes = keras.backend.shape(gt_labels)[1]
+            N = tensorflow.keras.backend.shape(proposals)[0]
+            number_of_classes = tensorflow.keras.backend.shape(gt_labels)[1]
             number_of_coordinates = 4 * number_of_classes
             return (
                 proposals,
@@ -121,7 +123,7 @@ class ProposalTarget(keras.layers.Layer):
                 tensorflow.zeros((N, number_of_coordinates)),
             )
 
-        sample_outputs = keras.backend.switch(
+        sample_outputs = tensorflow.keras.backend.switch(
             condition,
             lambda: self.sample(
                 output_proposal_bounding_boxes, target_bounding_boxes, target_categories
@@ -131,9 +133,13 @@ class ProposalTarget(keras.layers.Layer):
             ),
         )
 
-        output_proposal_bounding_boxes = keras.backend.expand_dims(sample_outputs[0], 0)
-        target_categories = keras.backend.expand_dims(sample_outputs[1], 0)
-        bounding_box_targets = keras.backend.expand_dims(sample_outputs[2], 0)
+        output_proposal_bounding_boxes = tensorflow.keras.backend.expand_dims(
+            sample_outputs[0], 0
+        )
+        target_categories = tensorflow.keras.backend.expand_dims(sample_outputs[1], 0)
+        bounding_box_targets = tensorflow.keras.backend.expand_dims(
+            sample_outputs[2], 0
+        )
 
         return [bounding_box_targets, target_categories, output_proposal_bounding_boxes]
 
@@ -157,23 +163,23 @@ class ProposalTarget(keras.layers.Layer):
 
         gt_labels is in one hot form
         """
-        number_of_classes = keras.backend.shape(true_labels)[1]
+        number_of_classes = tensorflow.keras.backend.shape(true_labels)[1]
 
-        true_labels = keras.backend.argmax(true_labels, axis=1)
+        true_labels = tensorflow.keras.backend.argmax(true_labels, axis=1)
 
         intersection_over_union = keras_rcnn.backend.intersection_over_union(
             proposals, true_bounding_boxes
         )
 
-        gt_assignment = keras.backend.argmax(intersection_over_union, axis=1)
+        gt_assignment = tensorflow.keras.backend.argmax(intersection_over_union, axis=1)
 
-        maximum_intersection_over_union = keras.backend.max(
+        maximum_intersection_over_union = tensorflow.keras.backend.max(
             intersection_over_union, axis=1
         )
 
         # finds the ground truth labels corresponding to the ground truth boxes with greatest overlap for each predicted regions of interest
         # TODO: rename `all_labels`
-        all_labels = keras.backend.gather(true_labels, gt_assignment)
+        all_labels = tensorflow.keras.backend.gather(true_labels, gt_assignment)
 
         # Select proposals with given parameters for fg/bg objects
         # TODO: rename `find_foreground_and_background_proposal_indices`
@@ -184,18 +190,18 @@ class ProposalTarget(keras.layers.Layer):
         )
 
         # Select sampled values from various arrays:
-        sampled_labels = keras.backend.gather(
+        sampled_labels = tensorflow.keras.backend.gather(
             all_labels, foreground_and_background_proposal_indices
         )
-        sampled_proposal_bounding_boxes = keras.backend.gather(
+        sampled_proposal_bounding_boxes = tensorflow.keras.backend.gather(
             proposals, foreground_and_background_proposal_indices
         )
 
         sampled_labels = self.set_label_background(sampled_labels)
 
-        true_bounding_boxes = keras.backend.gather(
+        true_bounding_boxes = tensorflow.keras.backend.gather(
             true_bounding_boxes,
-            keras.backend.gather(
+            tensorflow.keras.backend.gather(
                 gt_assignment, foreground_and_background_proposal_indices
             ),
         )
@@ -207,16 +213,18 @@ class ProposalTarget(keras.layers.Layer):
             number_of_classes,
         )
 
-        sampled_labels = keras.backend.one_hot(sampled_labels, number_of_classes)
+        sampled_labels = tensorflow.keras.backend.one_hot(
+            sampled_labels, number_of_classes
+        )
 
         return sampled_proposal_bounding_boxes, sampled_labels, bbox_targets
 
     def set_label_background(self, labels):
         # Clamp labels for the background RoIs to 0
-        update_indices = keras.backend.arange(
-            self.fg_rois_per_this_image, keras.backend.shape(labels)[0]
+        update_indices = tensorflow.keras.backend.arange(
+            self.fg_rois_per_this_image, tensorflow.keras.backend.shape(labels)[0]
         )
-        update_indices = keras.backend.reshape(update_indices, (-1, 1))
+        update_indices = tensorflow.keras.backend.reshape(update_indices, (-1, 1))
 
         # By making the label = background
         inverse_labels = keras_rcnn.backend.gather_nd(labels, update_indices) * -1
@@ -241,7 +249,9 @@ class ProposalTarget(keras.layers.Layer):
         return [None, None, None]
 
     def get_bbox_targets(self, rois, gt_boxes, labels, num_classes):
-        gt_boxes = keras.backend.cast(gt_boxes, keras.backend.floatx())
+        gt_boxes = tensorflow.keras.backend.cast(
+            gt_boxes, tensorflow.keras.backend.floatx()
+        )
         targets = keras_rcnn.backend.bbox_transform(rois, gt_boxes)
         return self.get_bbox_regression_labels(targets, labels, num_classes)
 
@@ -254,8 +264,8 @@ class ProposalTarget(keras.layers.Layer):
 
         # Guard against the case when an image has fewer than fg_rois_per_image
         # foreground RoIs
-        self.fg_rois_per_this_image = keras.backend.minimum(
-            self.fg_rois_per_image, keras.backend.shape(fg_inds)[0]
+        self.fg_rois_per_this_image = tensorflow.keras.backend.minimum(
+            self.fg_rois_per_image, tensorflow.keras.backend.shape(fg_inds)[0]
         )
 
         # Sample foreground regions without replacement
@@ -270,24 +280,28 @@ class ProposalTarget(keras.layers.Layer):
         # Compute number of background RoIs to take from this image (guarding
         # against there being fewer than desired)
         bg_rois_per_this_image = (
-            keras.backend.cast(self.rois_per_image, "int32")
+            tensorflow.keras.backend.cast(self.rois_per_image, "int32")
             - self.fg_rois_per_this_image
         )
-        bg_rois_per_this_image = keras.backend.cast(bg_rois_per_this_image, "int32")
-        bg_rois_per_this_image = keras.backend.minimum(
-            bg_rois_per_this_image, keras.backend.shape(bg_inds)[0]
+        bg_rois_per_this_image = tensorflow.keras.backend.cast(
+            bg_rois_per_this_image, "int32"
+        )
+        bg_rois_per_this_image = tensorflow.keras.backend.minimum(
+            bg_rois_per_this_image, tensorflow.keras.backend.shape(bg_inds)[0]
         )
 
         # Sample background regions without replacement
         bg_inds = self.sample_indices(bg_inds, bg_rois_per_this_image)
 
         # The indices that we're selecting (both fg and bg)
-        keep_inds = keras.backend.concatenate([fg_inds, bg_inds])
+        keep_inds = tensorflow.keras.backend.concatenate([fg_inds, bg_inds])
 
         return keep_inds
 
     def sample_indices(self, indices, size):
-        return keras_rcnn.backend.shuffle(keras.backend.reshape(indices, (-1,)))[:size]
+        return keras_rcnn.backend.shuffle(
+            tensorflow.keras.backend.reshape(indices, (-1,))
+        )[:size]
 
     def get_bbox_regression_labels(self, bbox_target_data, labels, num_classes):
         """Bounding-box regression targets (bbox_target_data) are stored in a
@@ -298,33 +312,39 @@ class ProposalTarget(keras.layers.Layer):
             bbox_target: N x 4K blob of regression targets
         """
 
-        n = keras.backend.shape(bbox_target_data)[0]
+        n = tensorflow.keras.backend.shape(bbox_target_data)[0]
 
         bbox_targets = tensorflow.zeros(
-            (n, 4 * num_classes), dtype=keras.backend.floatx()
+            (n, 4 * num_classes), dtype=tensorflow.keras.backend.floatx()
         )
 
-        inds = keras.backend.reshape(keras_rcnn.backend.where(labels > 0), (-1,))
+        inds = tensorflow.keras.backend.reshape(
+            keras_rcnn.backend.where(labels > 0), (-1,)
+        )
 
-        labels = keras.backend.gather(labels, inds)
+        labels = tensorflow.keras.backend.gather(labels, inds)
 
         start = 4 * labels
 
-        ii = keras.backend.expand_dims(inds)
-        ii = keras.backend.tile(ii, [4, 1])
+        ii = tensorflow.keras.backend.expand_dims(inds)
+        ii = tensorflow.keras.backend.tile(ii, [4, 1])
 
-        aa = keras.backend.expand_dims(
-            keras.backend.concatenate([start, start + 1, start + 2, start + 3], 0)
+        aa = tensorflow.keras.backend.expand_dims(
+            tensorflow.keras.backend.concatenate(
+                [start, start + 1, start + 2, start + 3], 0
+            )
         )
-        aa = keras.backend.cast(aa, dtype="int64")
+        aa = tensorflow.keras.backend.cast(aa, dtype="int64")
 
-        indices = keras.backend.concatenate([ii, aa], 1)
+        indices = tensorflow.keras.backend.concatenate([ii, aa], 1)
 
-        updates = keras.backend.gather(bbox_target_data, inds)
-        updates = keras.backend.transpose(updates)
-        updates = keras.backend.reshape(updates, (-1,))
+        updates = tensorflow.keras.backend.gather(bbox_target_data, inds)
+        updates = tensorflow.keras.backend.transpose(updates)
+        updates = tensorflow.keras.backend.reshape(updates, (-1,))
 
-        updates = keras.backend.cast(updates, keras.backend.floatx())
+        updates = tensorflow.keras.backend.cast(
+            updates, tensorflow.keras.backend.floatx()
+        )
         bbox_targets = keras_rcnn.backend.scatter_add_tensor(
             bbox_targets, indices, updates
         )

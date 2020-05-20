@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
-import keras
 import keras_resnet.models
+import tensorflow
 
 
 def ResNet50():
@@ -17,7 +17,7 @@ def ResNet50():
 
 def VGG16():
     def f(x):
-        y = keras.applications.VGG16(include_top=False, input_tensor=x)
+        y = tensorflow.keras.applications.VGG16(include_top=False, input_tensor=x)
 
         return y.layers[-3].output
 
@@ -26,7 +26,7 @@ def VGG16():
 
 def VGG19():
     def f(x):
-        y = keras.applications.VGG19(include_top=False, input_tensor=x)
+        y = tensorflow.keras.applications.VGG19(include_top=False, input_tensor=x)
 
         return y.layers[-3].output
 
