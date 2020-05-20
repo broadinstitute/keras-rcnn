@@ -3,7 +3,7 @@
 import json
 import os.path
 
-import tensorflow.keras.utils
+import tensorflow
 
 
 def load_data():

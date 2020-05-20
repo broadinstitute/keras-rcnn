@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-import tensorflow.keras.utils
+import tensorflow
 
 import keras_rcnn.models
 

@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
 
 import tensorflow
-import tensorflow.keras.backend
-import tensorflow.keras.layers
 
 
 class RCNNMaskLoss(tensorflow.keras.layers.Layer):

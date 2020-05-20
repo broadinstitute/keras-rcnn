@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 
 import tensorflow
-import tensorflow.keras.backend
 
 
 def resize(image, output_shape):

@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 
-import keras_rcnn.backend
 import tensorflow
+
+import keras_rcnn.backend
 
 
 class RegionOfInterest(tensorflow.keras.layers.Layer):

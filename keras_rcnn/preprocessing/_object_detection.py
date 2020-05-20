@@ -5,7 +5,7 @@ import skimage.color
 import skimage.exposure
 import skimage.io
 import skimage.transform
-import tensorflow.keras.preprocessing.image
+import tensorflow
 
 
 class BoundingBoxException(Exception):

@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 
-import tensorflow.keras.backend
-import tensorflow.keras.layers
+import tensorflow
 
 import keras_rcnn.backend
 from ._mask_rcnn import RCNNMaskLoss

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import numpy
-import tensorflow.keras.utils
+import tensorflow
 
 import keras_rcnn.models
 

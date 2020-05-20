@@ -3,7 +3,6 @@ import io
 import matplotlib.pyplot
 import numpy
 import tensorflow
-import tensorflow.keras.callbacks
 
 import keras_rcnn.utils
 
