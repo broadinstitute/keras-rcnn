@@ -8,7 +8,7 @@ import keras_rcnn.models
 
 class JHung2019(keras_rcnn.models.RCNN):
     def compile(self, optimizer, **kwargs):
-        super(JHung2019, self).compile(optimizer)
+        super(JHung2019, self).compile(optimizer,)
 
         origin = (
             "http://keras-rcnn-applications.storage.googleapis.com/JHung2019.tar.gz"

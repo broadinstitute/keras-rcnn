@@ -43,7 +43,7 @@ def main():
 
     optimizer = keras.optimizers.Adam()
 
-    model.compile(optimizer)
+    model.compile(optimizer,)
 
     model.fit_generator(epochs=1, generator=generator, validation_data=validation_data)
 

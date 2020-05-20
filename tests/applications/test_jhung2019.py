@@ -20,7 +20,7 @@ class TestJHung2019:
     def test_compile(self):
         optimizer = keras.optimizers.SGD()
 
-        self.instance.compile(optimizer)
+        self.instance.compile(optimizer,)
 
     def test_predict(self):
         image = numpy.random.random((1, 224, 224, 3))
