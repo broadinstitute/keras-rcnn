@@ -2,7 +2,6 @@
 
 import tensorflow
 import tensorflow.keras.backend
-import tensorflow.keras.engine.topology
 
 import keras_rcnn.backend
 

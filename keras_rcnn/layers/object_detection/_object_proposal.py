@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 
-import tensorflow.keras.backend
-import tensorflow.keras.engine
+import tensorflow
 
 import keras_rcnn.backend
 import keras_rcnn.layers
