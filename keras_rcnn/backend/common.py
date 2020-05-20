@@ -20,9 +20,9 @@ def anchor(base_size=16, ratios=None, scales=None):
         )
 
     base_anchor = tensorflow.keras.backend.cast(
-        [1, 1, base_size, base_size], tensorflow.keras.backend.floatx()
+        [-base_size / 2, -base_size / 2, base_size / 2, base_size / 2],
+        tensorflow.keras.backend.floatx(),
     )
-    # base_anchor = tensorflow.keras.backend.cast([-base_size / 2, -base_size / 2, base_size / 2, base_size / 2], tensorflow.keras.backend.floatx())
 
     base_anchor = tensorflow.keras.backend.expand_dims(base_anchor, 0)
 
