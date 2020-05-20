@@ -3,15 +3,13 @@
 import json
 import os
 
-import tensorflow.keras.utils.data_utils
+import tensorflow.keras.utils
 
 
 def load_data(name):
     origin = "http://keras-rcnn.storage.googleapis.com/{}.tar.gz".format(name)
 
-    pathname = tensorflow.keras.utils.data_utils.get_file(
-        fname=name, origin=origin, untar=True
-    )
+    pathname = tensorflow.keras.utils.get_file(fname=name, origin=origin, untar=True)
 
     filename = os.path.join(pathname, "training.json")
 

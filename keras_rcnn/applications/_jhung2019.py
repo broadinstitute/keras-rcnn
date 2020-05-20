@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import numpy
-import tensorflow.keras.utils.data_utils
+import tensorflow.keras.utils
 
 import keras_rcnn.models
 
@@ -14,7 +14,7 @@ class JHung2019(keras_rcnn.models.RCNN):
             "http://keras-rcnn-applications.storage.googleapis.com/JHung2019.tar.gz"
         )
 
-        pathname = tensorflow.keras.utils.data_utils.get_file(
+        pathname = tensorflow.keras.utils.get_file(
             cache_subdir="models", fname="JHung2019.hdf5", origin=origin, untar=True,
         )
 
